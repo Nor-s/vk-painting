@@ -1,0 +1,42 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        //C++ 컴파일
+        {
+            "type": "shell",
+            "label": "glfw",
+			"command": "C:\\msys64\\mingw64\\bin\\g++.exe",
+            "args": [
+                "-std=c++17", 
+                "-g",
+                "${workspaceRoot}/src/*.cpp",
+                "${workspaceRoot}/src/vk_class/*.cpp",
+                "${workspaceRoot}/src/class/*.cpp",
+                "-o",
+                "${workspaceRoot}/builds/main",
+                "-IC:/VulkanSDK/1.2.182.0/Include",
+                "-LC:/VulkanSDK/1.2.182.0/Lib",
+                "-I${workspaceRoot}/external",
+                "-L${workspaceRoot}/lib",
+                "-lmingw32",
+             //   "--static",
+                "-lglfw3",
+                "-lpthread",
+                "-lvulkan-1",
+                "-lgdi32",
+          //      "-ldl",
+              //  "-lXxf86vm",
+               // "-lXrandr", 
+               // "-lXi",
+                "-O2"
+            ],
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group":  {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
