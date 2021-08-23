@@ -4,6 +4,10 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
+                "${workspaceFolder}/src/**",
+                "${workspaceFolder}/src/class/**",
+                "${workspaceFolder}/src/core/**",
+                "${workspaceFolder}/src/window/**",
                 "${workspaceFolder}/external/**"
             ],
             "defines": [

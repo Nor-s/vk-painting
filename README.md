@@ -1,1 +1,1 @@
-# vk-genetic-painting
+# vk-painting
