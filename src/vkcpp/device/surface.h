@@ -1,7 +1,7 @@
-#ifndef VKCPP_SURFACE_H
-#define VKCPP_SURFACE_H
+#ifndef VKCPP_DEVICE_SURFACE_H
+#define VKCPP_DEVICE_SURFACE_H
 
-#include "vkcpp/vulkan_header.h"
+#include "vulkan_header.h"
 
 namespace vkcpp
 {

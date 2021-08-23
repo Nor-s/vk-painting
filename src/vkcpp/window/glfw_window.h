@@ -1,15 +1,15 @@
-#ifndef VKCPP_GLFW_WINDOW_H
-#define VKCPP_GLFW_WINDOW_H
+#ifndef VKCPP_WINDOW_GLFW_WINDOW_H
+#define VKCPP_WINDOW_GLFW_WINDOW_H
 
 #include "window.hpp"
-#include "vkcpp/pattern/singleton.hpp"
+#include "pattern/singleton.hpp"
 
 struct GLFWwindow;
 namespace vkcpp
 {
     class GlfwWindow : public Window, public Singleton<GlfwWindow>
     {
-        inline static const bool is_instanced = init_instance();
+        inline static const bool is_instanced_ = initInstance();
 
     private:
         GLFWwindow *handle_ = nullptr;

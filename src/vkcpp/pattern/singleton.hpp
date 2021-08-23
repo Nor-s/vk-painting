@@ -1,5 +1,5 @@
-#ifndef VKCPP_SINGLETON_HPP
-#define VKCPP_SINGLETON_HPP
+#ifndef VKCPP_PATTERN_SINGLETON_HPP
+#define VKCPP_PATTERN_SINGLETON_HPP
 
 namespace vkcpp
 {
@@ -9,9 +9,9 @@ namespace vkcpp
     protected:
         inline static T *instance_ = nullptr;
 
-        static bool init_instance()
+        static bool initInstance()
         {
-            if (instance_)
+            if (instance_ != nullptr)
             {
                 return false;
             }
@@ -22,21 +22,21 @@ namespace vkcpp
     public:
         ~Singleton()
         {
-            destroy_instance();
+            destroyInstance();
         }
-        static void destroy_instance()
+        static void destroyInstance()
         {
-            if (instance_)
+            if (instance_ != nullptr)
             {
-                delete instance_;
+                delete[] instance_;
                 instance_ = nullptr;
             }
         }
-        static T *get()
+        static T *getInstance()
         {
             if (instance_ == nullptr)
             {
-                init_instance();
+                initInstance();
             }
             return instance_;
         }

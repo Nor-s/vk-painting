@@ -16,6 +16,7 @@
                 "-o",
                 "${workspaceRoot}/builds/main",
                 "-I${workspaceRoot}/src",
+                "-I${workspaceRoot}/src/vkcpp",
                 "-IC:/VulkanSDK/1.2.182.0/Include",
                 "-LC:/VulkanSDK/1.2.182.0/Lib",
                 "-I${workspaceRoot}/external",

@@ -12,23 +12,26 @@ namespace painting
     }
     void PaintingApplication::init_window(uint32_t width, uint32_t height, std::string title)
     {
-        vkcpp::GlfwWindow::get()->set_window(width, height, title);
+        vkcpp::GlfwWindow::getInstance()->set_window(width, height, title);
     }
     void PaintingApplication::init_vulkan()
     {
-        //   instance_.init_instance();
+        instance_.init_instance();
+        instance_.set_debug_messenger();
     }
     void PaintingApplication::main_loop()
     {
-        while (!vkcpp::GlfwWindow::get()->should_close())
+        while (!vkcpp::GlfwWindow::getInstance()->should_close())
         {
-            vkcpp::GlfwWindow::get()->process_events();
+            vkcpp::GlfwWindow::getInstance()->process_events();
         }
     }
 
     void PaintingApplication::cleanup()
     {
-        vkcpp::GlfwWindow::get()->destroy_window();
+        instance_.destroy_debug_messenger();
+        instance_.destroy_instance();
+        vkcpp::GlfwWindow::getInstance()->destroy_window();
     }
 
 } // namespace painting
