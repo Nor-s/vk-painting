@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "vulkan/vulkan.h"
+#include "vkcpp/vulkan_header.h"
 
 namespace vkcpp
 {
@@ -28,6 +28,11 @@ namespace vkcpp
 
         VkInstance get_handle();
         bool get_enable_validation_layers();
+
+        /**
+        * query support layer 
+        */
+        bool check_validation_layer_support();
 
         void init_instance();
         void destroy_instance();

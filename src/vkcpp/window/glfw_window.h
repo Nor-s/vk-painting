@@ -2,7 +2,7 @@
 #define VKCPP_GLFW_WINDOW_H
 
 #include "window.hpp"
-#include "pattern/singleton.hpp"
+#include "vkcpp/pattern/singleton.hpp"
 
 struct GLFWwindow;
 namespace vkcpp

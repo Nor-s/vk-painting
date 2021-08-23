@@ -9,8 +9,8 @@
 #include <stdexcept>
 #include <cstdlib>
 
-#include "window/glfw_window.h"
-#include "core/instance.h"
+#include "vkcpp/window/glfw_window.h"
+#include "vkcpp/device/instance.h"
 
 namespace painting
 {

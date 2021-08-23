@@ -1,9 +1,12 @@
 #include "instance.h"
 
 #include <iostream>
+#include <cstring>
 
 namespace vkcpp
 {
+    const std::vector<const char *> Instance::validation_layers_ = {
+        "VK_LAYER_KHRONOS_validation"};
     Instance::~Instance()
     {
         if (handle_)
@@ -19,10 +22,39 @@ namespace vkcpp
     {
         return enable_validation_layers_;
     }
+    bool Instance::check_validation_layer_support()
+    {
+        uint32_t layer_count;
+        vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
+
+        std::vector<VkLayerProperties> available_layers(layer_count);
+        vkEnumerateInstanceLayerProperties(&layer_count, available_layers.data());
+
+        for (const char *layerName : validation_layers_)
+        {
+            bool layer_found = false;
+
+            for (const auto &layerProperties : available_layers)
+            {
+                if (strcmp(layerName, layerProperties.layerName) == 0)
+                {
+                    layer_found = true;
+                    break;
+                }
+            }
+
+            if (!layer_found)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
     void Instance::init_instance()
     {
         /*
-        if (enable_validation_layers_ && !checkValidationLayerSupport())
+        if (enable_validation_layers_ && !check_validation_layer_support())
         {
             throw std::runtime_error("validation layers requested, but not available!");
         }
@@ -38,7 +70,7 @@ namespace vkcpp
         VkInstanceCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         createInfo.pApplicationInfo = &appInfo;
-
+        
         auto extensions = getRequiredExtensions();
         createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
         createInfo.ppEnabledExtensionNames = extensions.data();

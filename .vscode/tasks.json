@@ -9,8 +9,8 @@
             "args": [
                 "-std=c++17",
                 "-g",
-                "${workspaceRoot}/src/core/*.cpp",
-                "${workspaceRoot}/src/window/*.cpp",
+                "${workspaceRoot}/src/vkcpp/window/*.cpp",
+                "${workspaceRoot}/src/vkcpp/device/*.cpp",
                 "${workspaceRoot}/src/*.cpp",
                 "${workspaceRoot}/src/class/*.cpp",
                 "-o",

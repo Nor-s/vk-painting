@@ -1,7 +1,7 @@
 #ifndef VKCPP_SURFACE_H
 #define VKCPP_SURFACE_H
 
-#include "vulkan/vulkan.h"
+#include "vkcpp/vulkan_header.h"
 
 namespace vkcpp
 {

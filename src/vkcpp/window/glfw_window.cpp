@@ -81,9 +81,9 @@ namespace vkcpp
 
     std::pair<const char **, uint32_t> GlfwWindow::get_required_instance_extensions() const
     {
-        uint32_t glfwExtensionCount;
-        auto glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-        return std::make_pair(glfwExtensions, glfwExtensionCount);
+        uint32_t glfw_extension_count;
+        auto glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
+        return std::make_pair(glfw_extensions, glfw_extension_count);
     }
 
     void GlfwWindow::set_window(uint32_t width, uint32_t height, const std::string &title)

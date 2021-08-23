@@ -41,6 +41,6 @@ namespace vkcpp
             return instance_;
         }
     };
-}
+} // namespace vkcpp
 
 #endif

@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <string>
 
-#include "vulkan/vulkan.h"
+#include "vkcpp/vulkan_header.h"
 
 namespace vkcpp
 {

@@ -6,8 +6,7 @@
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/src/**",
                 "${workspaceFolder}/src/class/**",
-                "${workspaceFolder}/src/core/**",
-                "${workspaceFolder}/src/window/**",
+                "${workspaceFolder}/src/vkcpp/**",
                 "${workspaceFolder}/external/**"
             ],
             "defines": [
