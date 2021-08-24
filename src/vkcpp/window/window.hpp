@@ -8,6 +8,11 @@
 
 namespace vkcpp
 {
+    /**
+     *  @brief window interface 
+     *  
+     *  handling width, height, title
+     */
     class Window
     {
     protected:

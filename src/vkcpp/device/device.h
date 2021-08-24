@@ -1,55 +1,34 @@
 #ifndef VKCPP_DEVICE_DEVICE_H
 #define VKCPP_DEVICE_DEVICE_H
 
-#include "device/physical_device.h"
+#include "vulkan_header.h"
 
 namespace vkcpp
 {
+    class Instance;
+    class Surface;
+    class PhysicalDevice;
+
+    /**
+     *  @brief A wrapper class for VkDevice
+     */
     class Device
     {
-        // Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<const char *, bool> requested_extensions = {});
+    private:
+        VkQueue graphics_queue_;
+        VkQueue present_queue_;
+        VkDevice handle_;
+        const PhysicalDevice *gpu_;
+        const Surface *surface_;
+
+        //      std::vector<VkExtensionProperties> device_extensions;
+        //        std::vector<const char *> enabled_extensions{};
+
+        //    std::vector<std::vector<Queue>> queues;
+
+    public:
+        Device(const PhysicalDevice *gpu, const Surface *surface, const Instance *instance);
+        ~Device();
     };
 } // namespace vkcpp
-#endif
-/*
-#endif //#ifndef VKCPP_DEVICE_DEVICE_H
-#include "surface.h"
-
-#include "instance.h"
-#include "window/main_window.h"
-
-#include <iostream>
-
-namespace vkcpp
-{
-    Surface::Surface(const Instance *instance)
-    {
-        instance_ = instance;
-    }
-    Surface::~Surface()
-    {
-        destroy_surface();
-    }
-    void Surface::init_surface(const Instance *instance)
-    {
-        instance_ = instance;
-        if (handle_ == VK_NULL_HANDLE)
-        {
-            handle_ = MainWindow::getInstance()->create_surface(*instance_);
-        }
-    }
-    void Surface::destroy_surface()
-    {
-        if (handle_ != VK_NULL_HANDLE)
-        {
-            if (instance_ == nullptr)
-            {
-                throw std::runtime_error("faild to destroy surface : instance_ is nullptr");
-            }
-            vkDestroySurfaceKHR(*instance_, handle_, nullptr);
-            handle_ = VK_NULL_HANDLE;
-        }
-    }
-
-} // namespace vkcp
-*/
+#endif // #ifndef VKCPP_DEVICE_DEVICE_H

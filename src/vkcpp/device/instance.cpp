@@ -2,7 +2,9 @@
 
 #include <iostream>
 #include <cstring>
+#include <assert.h>
 
+#include "device/physical_device.h"
 #include "window/main_window.h"
 
 namespace vkcpp
@@ -11,12 +13,13 @@ namespace vkcpp
     {
         init_instance();
         init_debug_messenger();
+        query_gpus();
     }
     Instance::~Instance()
     {
         destroy();
     }
-    bool Instance::get_enable_validation_layers()
+    const bool Instance::get_enable_validation_layers() const
     {
         return enable_validation_layers_;
     }
@@ -128,9 +131,44 @@ namespace vkcpp
 
     void Instance::destroy()
     {
-        destroy_instance();
         destroy_debug_messenger();
+        destroy_instance();
     }
+} // namespace vkcpp
+
+/**
+ * physical device 
+ */
+namespace vkcpp
+{
+    void Instance::query_gpus()
+    {
+        uint32_t device_count = 0;
+        vkEnumeratePhysicalDevices(handle_, &device_count, nullptr);
+
+        assert(!(device_count == 0) && "No physical devices were found on the system.");
+
+        std::vector<VkPhysicalDevice> physical_devices(device_count);
+        vkEnumeratePhysicalDevices(handle_, &device_count, physical_devices.data());
+        for (auto &physical_device : physical_devices)
+        {
+            gpus_.push_back(std::make_unique<PhysicalDevice>(this, physical_device));
+        }
+    }
+    PhysicalDevice *Instance::get_suitable_gpu(VkSurfaceKHR surface, std::vector<const char *> &requested_extensions)
+    {
+        for (auto &gpu : gpus_)
+        {
+            if (gpu->get_properties().deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && gpu->is_device_suitable(surface, requested_extensions))
+            {
+                return &(*gpu);
+            }
+        }
+
+        // failed to find a discrete physical device, picking default GPU (first one)
+        return &(*gpus_.at(0));
+    }
+
 } // namespace vkcpp
 
 /**
@@ -155,9 +193,10 @@ namespace vkcpp
     }
     void Instance::destroy_debug_messenger()
     {
-        if (enable_validation_layers_)
+        if (enable_validation_layers_ && debug_messenger_ != VK_NULL_HANDLE)
         {
             DestroyDebugUtilsMessengerEXT(handle_, debug_messenger_, nullptr);
+            debug_messenger_ = VK_NULL_HANDLE;
         }
     }
     VKAPI_ATTR VkBool32 VKAPI_CALL Instance::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData)
@@ -204,4 +243,4 @@ namespace vkcpp
             func(instance, debugMessenger, pAllocator);
         }
     }
-}
+} // namespace vkcpp

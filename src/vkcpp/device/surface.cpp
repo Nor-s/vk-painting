@@ -18,7 +18,7 @@ namespace vkcpp
     {
         if (handle_ != VK_NULL_HANDLE)
         {
-            if (instance_ == nullptr || *instance_ == VK_NULL_HANDLE)
+            if (instance_ == nullptr || (VkInstance)(*instance_) == VK_NULL_HANDLE)
             {
                 throw std::runtime_error("faild to destroy surface : instance_ is nullptr");
             }

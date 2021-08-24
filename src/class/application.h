@@ -13,6 +13,7 @@
 #include "window/main_window.h"
 #include "device/instance.h"
 #include "device/device.h"
+#include "device/physical_device.h"
 #include "device/surface.h"
 
 namespace painting
@@ -20,13 +21,14 @@ namespace painting
     class PaintingApplication
     {
     public:
+        std::vector<const char *> device_extensions_;
         PaintingApplication();
         void run(uint32_t width = 512, uint32_t height = 512, std::string title = "painting");
 
     private:
         std::unique_ptr<vkcpp::Instance> instance_{nullptr};
         std::unique_ptr<vkcpp::Surface> surface_{nullptr};
-        //std::unique_ptr<vkcpp::Device> device_{nullptr};
+        std::unique_ptr<vkcpp::Device> device_{nullptr};
 
         void init_window(uint32_t width, uint32_t height, std::string title);
         void init_vulkan();

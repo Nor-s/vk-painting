@@ -2,6 +2,9 @@
 
 namespace painting
 {
+    std::vector<const char *> device_extensions_ = {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+
     PaintingApplication::PaintingApplication() = default;
     void PaintingApplication::run(uint32_t width, uint32_t height, std::string title)
     {
@@ -27,30 +30,21 @@ namespace painting
     void PaintingApplication::init_surface()
     {
         VkSurfaceKHR surface = vkcpp::MainWindow::getInstance()->create_surface(*instance_);
-        surface_ = std::make_unique<vkcpp::Surface>(instance_.release(), surface);
+        surface_ = std::make_unique<vkcpp::Surface>(&(*instance_), surface);
     }
     void PaintingApplication::init_device()
     {
-        /*
-        auto &gpu = instance_->get_suitable_gpu(*surface_);
-        gpu.set_high_priority_graphics_queue_enable(high_priority_graphics_queue);
+        vkcpp::PhysicalDevice *gpu = instance_->get_suitable_gpu(*surface_, device_extensions_);
 
+        /*
         // Request to enable ASTC
         if (gpu.get_features().textureCompressionASTC_LDR)
         {
             gpu.get_mutable_requested_features().textureCompressionASTC_LDR = VK_TRUE;
         }
-
-        // Request sample required GPU features
-        request_gpu_features(gpu);
-
-        // Creating vulkan device, specifying the swapchain extension always
-        if (!is_headless() || instance->is_enabled(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME))
-        {
-            add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-        }
-        device_ = std::make_unique<vkcpp::Device>(gpu, *surface_, get_device_extensions());
         */
+
+        device_ = std::make_unique<vkcpp::Device>(gpu, &(*surface_), &(*instance_));
     }
     void PaintingApplication::main_loop()
     {
@@ -67,7 +61,7 @@ namespace painting
         //state reset
         //gui reset
         //render context reset
-        //device_.reset();
+        device_.reset();
         surface_.reset();
         instance_.reset();
         vkcpp::MainWindow::getInstance()->destroy_window();
