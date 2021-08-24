@@ -3,22 +3,18 @@
 #include <iostream>
 #include <cstring>
 
-#include "window/glfw_window.h"
+#include "window/main_window.h"
 
 namespace vkcpp
 {
-    const std::vector<const char *> Instance::validation_layers_ = {
-        "VK_LAYER_KHRONOS_validation"};
+    Instance::Instance()
+    {
+        init_instance();
+        init_debug_messenger();
+    }
     Instance::~Instance()
     {
-        if (handle_ != VK_NULL_HANDLE)
-        {
-            destroy_instance();
-        }
-    }
-    VkInstance Instance::get_handle()
-    {
-        return handle_;
+        destroy();
     }
     bool Instance::get_enable_validation_layers()
     {
@@ -56,9 +52,9 @@ namespace vkcpp
 
     std::vector<const char *> Instance::get_extensions()
     {
-        auto [glfw_extensions, glfw_count] = GlfwWindow::getInstance()->get_required_instance_extensions();
+        auto [window_extensions, window_count] = MainWindow::getInstance()->get_required_instance_extensions();
 
-        std::vector<const char *> extensions(glfw_extensions, glfw_extensions + glfw_count);
+        std::vector<const char *> extensions(window_extensions, window_extensions + window_count);
 
         if (enable_validation_layers_)
         {
@@ -120,6 +116,7 @@ namespace vkcpp
             throw std::runtime_error("failed to create instance!");
         }
     }
+
     void Instance::destroy_instance()
     {
         if (handle_ != VK_NULL_HANDLE)
@@ -128,7 +125,22 @@ namespace vkcpp
             handle_ = VK_NULL_HANDLE;
         }
     }
-    void Instance::set_debug_messenger()
+
+    void Instance::destroy()
+    {
+        destroy_instance();
+        destroy_debug_messenger();
+    }
+} // namespace vkcpp
+
+/**
+ * Debug 
+ */
+namespace vkcpp
+{
+    const std::vector<const char *> Instance::validation_layers_ = {
+        "VK_LAYER_KHRONOS_validation"};
+    void Instance::init_debug_messenger()
     {
         if (!enable_validation_layers_)
             return;
@@ -148,13 +160,6 @@ namespace vkcpp
             DestroyDebugUtilsMessengerEXT(handle_, debug_messenger_, nullptr);
         }
     }
-} // namespace vkcpp
-
-/**
- * callback  
- */
-namespace vkcpp
-{
     VKAPI_ATTR VkBool32 VKAPI_CALL Instance::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData)
     {
         if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
@@ -177,10 +182,7 @@ namespace vkcpp
 
         return VK_FALSE;
     }
-}
 
-namespace vkcpp
-{
     VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pDebugMessenger)
     {
         auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");

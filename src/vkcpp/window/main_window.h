@@ -1,5 +1,5 @@
-#ifndef VKCPP_WINDOW_GLFW_WINDOW_H
-#define VKCPP_WINDOW_GLFW_WINDOW_H
+#ifndef VKCPP_WINDOW_MAIN_WINDOW_H
+#define VKCPP_WINDOW_MAIN_WINDOW_H
 
 #include "window.hpp"
 #include "pattern/singleton.hpp"
@@ -7,7 +7,7 @@
 struct GLFWwindow;
 namespace vkcpp
 {
-    class GlfwWindow : public Window, public Singleton<GlfwWindow>
+    class MainWindow : public Window, public Singleton<MainWindow>
     {
         inline static const bool is_instanced_ = initInstance();
 
@@ -15,9 +15,9 @@ namespace vkcpp
         GLFWwindow *handle_ = nullptr;
 
     public:
-        GlfwWindow();
-        virtual ~GlfwWindow();
-        virtual VkSurfaceKHR create_surface(VkInstance &instance) override;
+        MainWindow();
+        virtual ~MainWindow();
+        virtual VkSurfaceKHR create_surface(VkInstance instance) override;
         virtual bool should_close() override;
         virtual void close() override;
         virtual void process_events() override;
@@ -32,4 +32,4 @@ namespace vkcpp
         virtual void set_title(const std::string &title) override;
     };
 } // namespace vkcpp
-#endif // #ifndef VKCPP_GLFW_WINDOW_H
+#endif // #ifndef VKCPP_MAIN_WINDOW_H

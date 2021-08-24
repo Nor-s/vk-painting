@@ -8,9 +8,12 @@
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
+#include <memory>
 
-#include "vkcpp/window/glfw_window.h"
-#include "vkcpp/device/instance.h"
+#include "window/main_window.h"
+#include "device/instance.h"
+#include "device/device.h"
+#include "device/surface.h"
 
 namespace painting
 {
@@ -21,10 +24,21 @@ namespace painting
         void run(uint32_t width = 512, uint32_t height = 512, std::string title = "painting");
 
     private:
-        vkcpp::Instance instance_;
+        std::unique_ptr<vkcpp::Instance> instance_{nullptr};
+        std::unique_ptr<vkcpp::Surface> surface_{nullptr};
+        //std::unique_ptr<vkcpp::Device> device_{nullptr};
 
         void init_window(uint32_t width, uint32_t height, std::string title);
         void init_vulkan();
+        void init_instance();
+        void init_surface();
+        void init_device();
+        /*
+        void init_render_context();
+        void int_gui();
+        void init_state();
+        void init_scene();
+        */
         void main_loop();
         void cleanup();
     };

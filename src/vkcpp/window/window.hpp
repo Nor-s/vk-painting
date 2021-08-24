@@ -22,7 +22,7 @@ namespace vkcpp
         }
         Window() = default;
         virtual ~Window() = default;
-        virtual VkSurfaceKHR create_surface(VkInstance &instance) = 0;
+        virtual VkSurfaceKHR create_surface(VkInstance instance) = 0;
         virtual bool should_close() = 0;
         virtual void close() = 0;
         virtual void process_events() = 0;

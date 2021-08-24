@@ -1,6 +1,7 @@
 #ifndef VKCPP_PATTERN_SINGLETON_HPP
 #define VKCPP_PATTERN_SINGLETON_HPP
 
+#include <iostream>
 namespace vkcpp
 {
     template <typename T>
@@ -36,7 +37,7 @@ namespace vkcpp
         {
             if (instance_ == nullptr)
             {
-                initInstance();
+                throw std::runtime_error("faild to get Instance");
             }
             return instance_;
         }

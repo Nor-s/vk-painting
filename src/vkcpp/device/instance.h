@@ -5,6 +5,7 @@
 
 #include "vulkan_header.h"
 
+//#define NDEBUG
 namespace vkcpp
 {
     class PhysicalDevice;
@@ -24,15 +25,15 @@ namespace vkcpp
     public:
         static const std::vector<const char *> validation_layers_;
 
-        Instance() = default;
+        Instance();
         Instance(const Instance &) = delete;
         Instance(Instance &&) = delete;
         ~Instance();
 
         Instance &operator=(const Instance &) = delete;
         Instance &operator=(Instance &&) = delete;
+        operator const VkInstance &() const { return handle_; }
 
-        VkInstance get_handle();
         bool get_enable_validation_layers();
 
         /**
@@ -45,17 +46,16 @@ namespace vkcpp
         std::vector<const char *> get_extensions();
         /**
         * debug messenger create info 
-        * : before create messenger 
-        * : after destroy messenger 
-        * @using instanceCreateInfo.pNext
         */
         void populate_debug_messenger_create_info(VkDebugUtilsMessengerCreateInfoEXT &create_info);
         void init_instance();
         void destroy_instance();
-        void set_debug_messenger();
 
+        void init_debug_messenger();
         void destroy_debug_messenger();
         static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData);
+
+        void destroy();
     };
     VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pDebugMessenger);
     void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks *pAllocator);
