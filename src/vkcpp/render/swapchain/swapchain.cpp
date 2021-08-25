@@ -76,10 +76,10 @@ namespace vkcpp
         properties_.extent = choose_swapchain_extent(swapchain_support.capabilities);
 
         // Decide minimum image count to have in the swap chain, +1 is spare image
-        properties_.min_image_count = swapchain_support.capabilities.minImageCount + 1;
-        if (swapchain_support.capabilities.maxImageCount > 0 && properties_.min_image_count > swapchain_support.capabilities.maxImageCount)
+        properties_.image_count = swapchain_support.capabilities.minImageCount + 1;
+        if (swapchain_support.capabilities.maxImageCount > 0 && properties_.image_count > swapchain_support.capabilities.maxImageCount)
         {
-            properties_.min_image_count = swapchain_support.capabilities.maxImageCount;
+            properties_.image_count = swapchain_support.capabilities.maxImageCount;
         }
 
         // Fill swap chain create info struct
@@ -87,7 +87,7 @@ namespace vkcpp
         create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         create_info.surface = *surface;
 
-        create_info.minImageCount = properties_.min_image_count;
+        create_info.minImageCount = properties_.image_count;
         create_info.imageFormat = properties_.surface_format.format;
         create_info.imageColorSpace = properties_.surface_format.colorSpace;
         create_info.imageExtent = properties_.extent;
@@ -122,17 +122,63 @@ namespace vkcpp
             throw std::runtime_error("failed to create swap chain!");
         }
     }
+
     void Swapchain::destroy_swapchain()
     {
+        for (auto image_view : image_views_)
+        {
+            vkDestroyImageView(*device_, image_view, nullptr);
+        }
         if (handle_ != VK_NULL_HANDLE)
         {
             vkDestroySwapchainKHR(*device_, handle_, nullptr);
         }
     }
+
     void Swapchain::init_images()
     {
-        vkGetSwapchainImagesKHR(*device_, handle_, &properties_.min_image_count, nullptr);
-        images_.resize(properties_.min_image_count);
-        vkGetSwapchainImagesKHR(*device_, handle_, &properties_.min_image_count, images_.data());
+        vkGetSwapchainImagesKHR(*device_, handle_, &properties_.image_count, nullptr);
+        images_.resize(properties_.image_count);
+        vkGetSwapchainImagesKHR(*device_, handle_, &properties_.image_count, images_.data());
+    }
+
+    VkImageView Swapchain::create_image_view(VkImage image, VkFormat format)
+    {
+        // Specify createinfo.
+        VkImageViewCreateInfo view_info{};
+        view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        view_info.image = image;
+        view_info.viewType = VK_IMAGE_VIEW_TYPE_2D; // dimension of texture.
+        view_info.format = format;
+
+        // components field allows to swizzle the color channels around.
+        view_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        view_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        view_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        view_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+        view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        view_info.subresourceRange.baseMipLevel = 0;
+        view_info.subresourceRange.levelCount = 1;
+        view_info.subresourceRange.baseArrayLayer = 0;
+        view_info.subresourceRange.layerCount = 1;
+
+        VkImageView image_view;
+        if (vkCreateImageView(*device_, &view_info, nullptr, &image_view) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create texture image view!");
+        }
+
+        return image_view;
+    }
+
+    void Swapchain::init_image_views()
+    {
+        image_views_.resize(images_.size());
+
+        for (size_t i = 0; i < images_.size(); i++)
+        {
+            image_views_[i] = create_image_view(images_[i], properties_.surface_format.format);
+        }
     }
 } // namespace vkcpp

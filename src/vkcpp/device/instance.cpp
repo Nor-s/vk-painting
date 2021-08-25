@@ -73,6 +73,7 @@ namespace vkcpp
         create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
         create_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
         create_info.pfnUserCallback = debugCallback;
+        create_info.pUserData = nullptr; // Optional
     }
 
     void Instance::init_instance()
@@ -82,6 +83,7 @@ namespace vkcpp
             throw std::runtime_error("validation layers requested, but not available!");
         }
 
+        // Specify app info, this is optional.
         VkApplicationInfo app_info{};
         app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
         app_info.pApplicationName = "Painting";
@@ -90,14 +92,17 @@ namespace vkcpp
         app_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
         app_info.apiVersion = VK_API_VERSION_1_0;
 
+        // Specify instance create info.
         VkInstanceCreateInfo create_info{};
         create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         create_info.pApplicationInfo = &app_info;
 
+        // Get glfw extensions + debug utils extensions.
         auto extensions = get_extensions();
         create_info.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
         create_info.ppEnabledExtensionNames = extensions.data();
 
+        // Specify debug info for debug before create messenger and after destroy messenger
         VkDebugUtilsMessengerCreateInfoEXT debug_create_info{};
         if (enable_validation_layers_)
         {
@@ -164,6 +169,10 @@ namespace vkcpp
                 return gpu.get();
             }
         }
+        if (gpus_.at(0)->is_device_suitable(surface, requested_extensions))
+        {
+            throw std::runtime_error("failed to find a suitable GPU!");
+        }
 
         // failed to find a discrete physical device, picking default GPU (first one)
         return gpus_.at(0).get();
@@ -215,7 +224,6 @@ namespace vkcpp
         }
         else
         {
-            return VK_FALSE;
             std::cerr << ":\n";
         }
         std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;

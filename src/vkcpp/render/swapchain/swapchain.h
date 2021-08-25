@@ -12,7 +12,7 @@ namespace vkcpp
     {
         VkSwapchainKHR old_swapchain;
 
-        uint32_t min_image_count;
+        uint32_t image_count;
 
         VkExtent2D extent;
 
@@ -43,6 +43,8 @@ namespace vkcpp
         VkSwapchainKHR handle_{VK_NULL_HANDLE};
 
         std::vector<VkImage> images_;
+
+        std::vector<VkImageView> image_views_;
 
         SwapchainProperties properties_;
 
@@ -79,6 +81,10 @@ namespace vkcpp
         void destroy_swapchain();
 
         void init_images();
+
+        VkImageView create_image_view(VkImage image, VkFormat format);
+
+        void init_image_views();
     }; // class SwapChain
 
 } // namespace vkcpp
