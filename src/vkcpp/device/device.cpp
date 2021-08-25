@@ -14,6 +14,24 @@ namespace vkcpp
     Device::Device(const PhysicalDevice *gpu, const Surface *surface)
         : gpu_(gpu), surface_(surface)
     {
+        init_device(gpu_);
+        init_queues(gpu_);
+    }
+    Device::~Device()
+    {
+        if (handle_ != VK_NULL_HANDLE)
+        {
+            vkDestroyDevice(handle_, nullptr);
+        }
+    }
+
+    const PhysicalDevice &Device::get_ref_gpu() const
+    {
+        return *gpu_;
+    }
+
+    void Device::init_device(const PhysicalDevice *gpu)
+    {
         const QueueFamilyIndices &indices = gpu->get_ref_queue_family_indices();
         const Instance &instance = gpu->get_instance();
 
@@ -70,8 +88,11 @@ namespace vkcpp
         {
             throw std::runtime_error("failed to create logical device!");
         }
+    }
+    void Device::init_queues(const PhysicalDevice *gpu)
+    {
+        const QueueFamilyIndices &indices = gpu->get_ref_queue_family_indices();
 
-        // Get Queues
         graphics_queue_ = std::make_unique<Queue>(this, indices.graphics_family.value(), 0, false, gpu->get_ref_queue_family_properties()[indices.graphics_family.value()]);
         present_queue_ = std::make_unique<Queue>(this, indices.present_family.value(), 0, true, gpu->get_ref_queue_family_properties()[indices.present_family.value()]);
         if (indices.compute_family.has_value())
@@ -81,13 +102,6 @@ namespace vkcpp
         if (indices.transfer_family.has_value())
         {
             graphics_queue_ = std::make_unique<Queue>(this, indices.transfer_family.value(), 0, false, gpu->get_ref_queue_family_properties()[indices.transfer_family.value()]);
-        }
-    }
-    Device::~Device()
-    {
-        if (handle_ != VK_NULL_HANDLE)
-        {
-            vkDestroyDevice(handle_, nullptr);
         }
     }
 

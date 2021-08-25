@@ -85,6 +85,12 @@ namespace vkcpp
         auto glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
         return std::make_pair(glfw_extensions, glfw_extension_count);
     }
+    std::pair<int, int> MainWindow::get_framebuffer_size()
+    {
+        std::pair<int, int> size;
+        glfwGetFramebufferSize(handle_, &size.first, &size.second);
+        return size;
+    }
 
     void MainWindow::set_window(uint32_t width, uint32_t height, const std::string &title)
     {

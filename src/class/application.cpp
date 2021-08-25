@@ -2,10 +2,6 @@
 
 namespace painting
 {
-    std::vector<const char *> device_extensions_ = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
-    PaintingApplication::PaintingApplication() = default;
     void PaintingApplication::run(uint32_t width, uint32_t height, std::string title)
     {
         init_window(width, height, title);
@@ -22,6 +18,7 @@ namespace painting
         init_instance();
         init_surface();
         init_device();
+        swapchain_ = std::make_unique<vkcpp::Swapchain>(device_.get(), surface_.get());
     }
     void PaintingApplication::init_instance()
     {
@@ -61,6 +58,7 @@ namespace painting
         //state reset
         //gui reset
         //render context reset
+        swapchain_.reset();
         device_.reset();
         surface_.reset();
         instance_.reset();

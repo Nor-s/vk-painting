@@ -12,23 +12,26 @@
 
 #include "window/main_window.h"
 #include "device/instance.h"
-#include "device/device.h"
-#include "device/physical_device.h"
 #include "device/surface.h"
+#include "device/physical_device.h"
+#include "device/device.h"
+#include "render/swapchain/swapchain.h"
 
 namespace painting
 {
     class PaintingApplication
     {
     public:
-        std::vector<const char *> device_extensions_;
-        PaintingApplication();
+        std::vector<const char *> device_extensions_ = {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+        PaintingApplication() = default;
         void run(uint32_t width = 512, uint32_t height = 512, std::string title = "painting");
 
     private:
         std::unique_ptr<vkcpp::Instance> instance_{nullptr};
         std::unique_ptr<vkcpp::Surface> surface_{nullptr};
         std::unique_ptr<vkcpp::Device> device_{nullptr};
+        std::unique_ptr<vkcpp::Swapchain> swapchain_{nullptr};
 
         void init_window(uint32_t width, uint32_t height, std::string title);
         void init_vulkan();

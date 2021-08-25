@@ -50,9 +50,9 @@ namespace vkcpp
     {
         return queue_family_indices_;
     }
-    const SwapChainSupportDetails &PhysicalDevice::get_ref_swap_chain_support() const
+    const SwapchainSupportDetails &PhysicalDevice::get_ref_swapchain_support() const
     {
-        return swap_chain_support_;
+        return swapchain_support_;
     }
 
     QueueFamilyIndices PhysicalDevice::find_queue_families(VkSurfaceKHR surface)
@@ -116,9 +116,9 @@ namespace vkcpp
 
         return required_extensions.empty();
     }
-    SwapChainSupportDetails PhysicalDevice::query_swap_chain_support(VkSurfaceKHR surface)
+    SwapchainSupportDetails PhysicalDevice::query_swapchain_support(VkSurfaceKHR surface)
     {
-        SwapChainSupportDetails details;
+        SwapchainSupportDetails details;
 
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR(handle_, surface, &details.capabilities);
 
@@ -147,14 +147,14 @@ namespace vkcpp
         extensions_ = requested_extensions;
         queue_family_indices_ = find_queue_families(surface);
         bool extensions_supported = check_device_extension_support(requested_extensions);
-        bool swap_chain_adequate = false;
+        bool swapchain_adequate = false;
         if (extensions_supported)
         {
-            swap_chain_support_ = query_swap_chain_support(surface);
-            swap_chain_adequate = !swap_chain_support_.formats.empty() && !swap_chain_support_.present_modes.empty();
+            swapchain_support_ = query_swapchain_support(surface);
+            swapchain_adequate = !swapchain_support_.formats.empty() && !swapchain_support_.present_modes.empty();
         }
 
-        return queue_family_indices_.is_graphics_and_present() && extensions_supported && swap_chain_adequate && supported_features_.samplerAnisotropy;
+        return queue_family_indices_.is_graphics_and_present() && extensions_supported && swapchain_adequate && supported_features_.samplerAnisotropy;
     }
 
 } // namespace vkcpp

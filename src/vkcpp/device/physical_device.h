@@ -27,7 +27,7 @@ namespace vkcpp
             return graphics_family.has_value() && present_family.has_value() && compute_family.has_value() && transfer_family.has_value();
         }
     };
-    struct SwapChainSupportDetails
+    struct SwapchainSupportDetails
     {
         VkSurfaceCapabilitiesKHR capabilities;
         std::vector<VkSurfaceFormatKHR> formats;
@@ -63,7 +63,7 @@ namespace vkcpp
 
         QueueFamilyIndices queue_family_indices_;
 
-        SwapChainSupportDetails swap_chain_support_;
+        SwapchainSupportDetails swapchain_support_;
 
     public:
         PhysicalDevice() = default;
@@ -94,13 +94,13 @@ namespace vkcpp
 
         const QueueFamilyIndices &get_ref_queue_family_indices() const;
 
-        const SwapChainSupportDetails &get_ref_swap_chain_support() const;
+        const SwapchainSupportDetails &get_ref_swapchain_support() const;
 
         QueueFamilyIndices find_queue_families(VkSurfaceKHR surface);
 
         bool check_device_extension_support(std::vector<const char *> &requested_extensions);
 
-        SwapChainSupportDetails query_swap_chain_support(VkSurfaceKHR surface);
+        SwapchainSupportDetails query_swapchain_support(VkSurfaceKHR surface);
 
         bool is_device_suitable(VkSurfaceKHR surface, std::vector<const char *> &requested_extensions);
     }; // class PhysicalDevice

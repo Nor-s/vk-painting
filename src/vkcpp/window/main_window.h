@@ -26,6 +26,7 @@ namespace vkcpp
         void destroy_window();
 
         std::pair<const char **, uint32_t> get_required_instance_extensions() const;
+        std::pair<int, int> get_framebuffer_size();
 
         virtual void set_window(uint32_t width, uint32_t height, const std::string &title) override;
         virtual void set_size(uint32_t width, uint32_t height) override;

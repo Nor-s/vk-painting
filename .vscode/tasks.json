@@ -11,6 +11,7 @@
                 "-g",
                 "${workspaceRoot}/src/vkcpp/window/*.cpp",
                 "${workspaceRoot}/src/vkcpp/device/*.cpp",
+                "${workspaceRoot}/src/vkcpp/render/swapchain/*.cpp",
                 "${workspaceRoot}/src/*.cpp",
                 "${workspaceRoot}/src/class/*.cpp",
                 "-o",

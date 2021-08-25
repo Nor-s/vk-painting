@@ -6,6 +6,7 @@
 namespace vkcpp
 {
     class Device;
+
     /**
      *  @brief  A wrapper class for VkQueue 
      */
