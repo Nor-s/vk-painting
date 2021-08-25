@@ -26,5 +26,9 @@ namespace vkcpp
             handle_ = VK_NULL_HANDLE;
         }
     }
+    const Instance &Surface::get_instance() const
+    {
+        return *instance_;
+    }
 
 } // namespace vkcpp

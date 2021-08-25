@@ -21,6 +21,11 @@ namespace vkcpp
         vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_family_properties_.data());
     }
 
+    const Instance &PhysicalDevice::get_instance() const
+    {
+        return *instance_;
+    }
+
     const VkPhysicalDeviceFeatures &PhysicalDevice::get_ref_features() const
     {
         return supported_features_;

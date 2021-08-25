@@ -30,7 +30,7 @@ namespace painting
     void PaintingApplication::init_surface()
     {
         VkSurfaceKHR surface = vkcpp::MainWindow::getInstance()->create_surface(*instance_);
-        surface_ = std::make_unique<vkcpp::Surface>(&(*instance_), surface);
+        surface_ = std::make_unique<vkcpp::Surface>(instance_.get(), surface);
     }
     void PaintingApplication::init_device()
     {
@@ -44,7 +44,7 @@ namespace painting
         }
         */
 
-        device_ = std::make_unique<vkcpp::Device>(gpu, &(*surface_), &(*instance_));
+        device_ = std::make_unique<vkcpp::Device>(gpu, surface_.get());
     }
     void PaintingApplication::main_loop()
     {

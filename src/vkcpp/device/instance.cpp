@@ -161,12 +161,12 @@ namespace vkcpp
         {
             if (gpu->get_properties().deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && gpu->is_device_suitable(surface, requested_extensions))
             {
-                return &(*gpu);
+                return gpu.get();
             }
         }
 
         // failed to find a discrete physical device, picking default GPU (first one)
-        return &(*gpus_.at(0));
+        return gpus_.at(0).get();
     }
 
 } // namespace vkcpp
@@ -215,6 +215,7 @@ namespace vkcpp
         }
         else
         {
+            return VK_FALSE;
             std::cerr << ":\n";
         }
         std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;

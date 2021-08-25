@@ -43,12 +43,12 @@ namespace vkcpp
     class PhysicalDevice
     {
     private:
-        VkPhysicalDevice handle_{VK_NULL_HANDLE};
-
         const Instance *instance_;
 
+        VkPhysicalDevice handle_{VK_NULL_HANDLE};
+
         // The features that this GPU supports
-        VkPhysicalDeviceFeatures supported_features_{};
+        VkPhysicalDeviceFeatures supported_features_;
 
         // The GPU properties
         VkPhysicalDeviceProperties properties_;
@@ -79,6 +79,8 @@ namespace vkcpp
         PhysicalDevice &operator=(PhysicalDevice &&) = delete;
 
         operator const VkPhysicalDevice &() const { return handle_; };
+
+        const Instance &get_instance() const;
 
         const VkPhysicalDeviceProperties get_properties() const;
 
