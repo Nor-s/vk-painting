@@ -38,6 +38,7 @@ namespace painting
         void init_instance();
         void init_surface();
         void init_device();
+        void init_swapchain();
         /*
         void init_render_context();
         void int_gui();

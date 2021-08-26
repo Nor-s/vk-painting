@@ -55,6 +55,12 @@ namespace vkcpp
 
         operator const VkSwapchainKHR &() const { return handle_; }
 
+        const std::vector<VkImage> &get_ref_images() const;
+
+        const std::vector<VkImageView> &get_ref_image_views() const;
+
+        const SwapchainProperties &get_ref_properties() const;
+
         /**
          * @brief Choose VK_PRESENT_MODE_MAILBOX_KHR and VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
          */
@@ -71,10 +77,10 @@ namespace vkcpp
         VkExtent2D choose_swapchain_extent(const VkSurfaceCapabilitiesKHR &capabilities);
 
         /**
-         *  @brief fill properties and create swapchain
-         *   compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-         *   cliped = false;
-         *   oldSwapchain = VK_NULL_HANDLE;
+         *  @brief Fill properties_ and Create swapchain
+         *  @p compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR
+         *  @p cliped = false
+         *  @p oldSwapchain = VK_NULL_HANDLE
          */
         void init_swapchain(const Device *device, const Surface *surface);
 
@@ -82,6 +88,12 @@ namespace vkcpp
 
         void init_images();
 
+        /**
+         * @p components = VK_COMPONENT_SWIZZLE_IDENTITY;
+         * @p aspectMask = Vk_IMAGE_ASPECT_COLOR_BIT; //for color target
+         * @p miplevel,layer = 0
+         * @p miplevelCount,layerCount = 1
+         */
         VkImageView create_image_view(VkImage image, VkFormat format);
 
         void init_image_views();

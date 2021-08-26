@@ -18,7 +18,7 @@ namespace painting
         init_instance();
         init_surface();
         init_device();
-        swapchain_ = std::make_unique<vkcpp::Swapchain>(device_.get(), surface_.get());
+        init_swapchain();
     }
     void PaintingApplication::init_instance()
     {
@@ -34,7 +34,7 @@ namespace painting
         vkcpp::PhysicalDevice *gpu = instance_->get_suitable_gpu(*surface_, device_extensions_);
 
         /*
-        // Request to enable ASTC
+         Request to enable ASTC
         if (gpu.get_features().textureCompressionASTC_LDR)
         {
             gpu.get_mutable_requested_features().textureCompressionASTC_LDR = VK_TRUE;
@@ -42,6 +42,10 @@ namespace painting
         */
 
         device_ = std::make_unique<vkcpp::Device>(gpu, surface_.get());
+    }
+    void PaintingApplication::init_swapchain()
+    {
+        swapchain_ = std::make_unique<vkcpp::Swapchain>(device_.get(), surface_.get());
     }
     void PaintingApplication::main_loop()
     {

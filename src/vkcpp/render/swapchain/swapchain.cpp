@@ -21,6 +21,21 @@ namespace vkcpp
         destroy_swapchain();
     }
 
+    const std::vector<VkImage> &Swapchain::get_ref_images() const
+    {
+        return images_;
+    }
+
+    const std::vector<VkImageView> &Swapchain::get_ref_image_views() const
+    {
+        return image_views_;
+    }
+
+    const SwapchainProperties &Swapchain::get_ref_properties() const
+    {
+        return properties_;
+    }
+
     VkSurfaceFormatKHR Swapchain::choose_swapchain_surface_format(const std::vector<VkSurfaceFormatKHR> &available_formats)
     {
         for (const auto &available_format : available_formats)
@@ -157,6 +172,7 @@ namespace vkcpp
         view_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
         view_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
+        // Describes what the image's purpose is and which part of the image should be accessed.
         view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         view_info.subresourceRange.baseMipLevel = 0;
         view_info.subresourceRange.levelCount = 1;
