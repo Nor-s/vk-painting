@@ -106,7 +106,7 @@ namespace vkcpp
         create_info.imageFormat = properties_.surface_format.format;
         create_info.imageColorSpace = properties_.surface_format.colorSpace;
         create_info.imageExtent = properties_.extent;
-        create_info.imageArrayLayers = properties_.array_layers = 1; // for 2D
+        create_info.imageArrayLayers = properties_.array_layers = 1; // 2D image: 1, 3D image: >1
         create_info.imageUsage = properties_.image_usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
         // Decide image sharing mode

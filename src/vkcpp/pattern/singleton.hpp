@@ -21,7 +21,7 @@ namespace vkcpp
         }
 
     public:
-        ~Singleton()
+        virtual ~Singleton()
         {
             destroyInstance();
         }

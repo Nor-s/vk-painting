@@ -12,10 +12,17 @@ namespace vkcpp
     {
         init_render_pass();
     }
+
     RenderPass::~RenderPass()
     {
         destroy_rander_pass();
     }
+
+    const Swapchain &RenderPass::get_ref_swapchain() const
+    {
+        return *swapchain_;
+    }
+
     void RenderPass::init_render_pass()
     {
         // Describe color buffer.
@@ -73,6 +80,7 @@ namespace vkcpp
             throw std::runtime_error("failed to create render pass!");
         }
     }
+
     void RenderPass::destroy_rander_pass()
     {
         if (handle_ != VK_NULL_HANDLE)

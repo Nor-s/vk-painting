@@ -29,11 +29,14 @@ namespace vkcpp
         VkPipeline handle_{VK_NULL_HANDLE};
 
     public:
-        GraphicsPipeline(const Device *device, const Swapchain *swapchain_,
+        GraphicsPipeline(const Device *device,
+                         const Swapchain *swapchain,
                          const RenderPass *render_pass,
-                         const DescriptorSetLayout *descriptor_set_layout_,
-                         std::string vert_shader_file_,
-                         std::string frag_shader_file_);
+                         const DescriptorSetLayout *descriptor_set_layout,
+                         std::string &vert_shader_file,
+                         std::string &frag_shader_file);
+
+        ~GraphicsPipeline();
 
         /**
          *  @brief create vert and frag shader module, stage create info.

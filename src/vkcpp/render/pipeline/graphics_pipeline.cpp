@@ -9,6 +9,23 @@
 
 namespace vkcpp
 {
+    GraphicsPipeline::GraphicsPipeline(const Device *device,
+                                       const Swapchain *swapchain,
+                                       const RenderPass *render_pass,
+                                       const DescriptorSetLayout *descriptor_set_layout,
+                                       std::string &vert_shader_file,
+                                       std::string &frag_shader_file)
+        : device_(device), swapchain_(swapchain), render_pass_(render_pass), descriptor_set_layout_(descriptor_set_layout), vert_shader_file_(vert_shader_file), frag_shader_file_(frag_shader_file)
+    {
+        init_pipeline_layout();
+        init_pipeline();
+    }
+
+    GraphicsPipeline::~GraphicsPipeline()
+    {
+        destroy();
+    }
+
     std::vector<VkPipelineShaderStageCreateInfo> GraphicsPipeline::create_shader_stage_create_info_vec()
     {
         vert_shader_module_ = Shader::createShaderModule(device_, vert_shader_file_);
@@ -178,7 +195,7 @@ namespace vkcpp
         VkGraphicsPipelineCreateInfo pipeline_info{};
         pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
         // shader stage
-        pipeline_info.stageCount = 2;
+        pipeline_info.stageCount = shader_stage_info.size();
         pipeline_info.pStages = shader_stage_info.data();
         // fixed-function state
         pipeline_info.pVertexInputState = &vertex_input_info;
