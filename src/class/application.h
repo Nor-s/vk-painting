@@ -23,7 +23,13 @@ namespace painting
     {
     public:
         std::vector<const char *> device_extensions_ = {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME
+#ifdef __APPLE__
+            ,
+            "VK_KHR_portability_subset"
+#endif
+        };
+
         PaintingApplication() = default;
         void run(uint32_t width = 512, uint32_t height = 512, std::string title = "painting");
 

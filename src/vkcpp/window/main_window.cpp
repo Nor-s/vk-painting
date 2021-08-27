@@ -51,9 +51,6 @@ namespace vkcpp
         {
             init_glfw();
         }
-        else
-        {
-        }
     }
     void MainWindow::init_glfw()
     {
@@ -64,7 +61,9 @@ namespace vkcpp
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
+#ifdef __APPLE__
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
         handle_ = glfwCreateWindow(width_, height_, title_.c_str(), nullptr, nullptr);
         if (!handle_)
         {

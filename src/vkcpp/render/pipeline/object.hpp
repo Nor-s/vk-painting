@@ -10,10 +10,12 @@ namespace vkcpp
 {
     class Object
     {
-        class Square2D : public Object
+        class Square2D
         {
+            friend Object;
+
         private:
-            const std::vector<Shader::Vertex> vertices = {
+            const std::vector<Shader::Vertex2D> vertices = {
                 {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
                 {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
                 {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},

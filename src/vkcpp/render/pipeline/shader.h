@@ -17,14 +17,14 @@ namespace vkcpp
     class Shader
     {
     public:
-        struct UniformBufferObject
+        struct TransformUBO
         {
             alignas(16) glm::mat4 model;
             alignas(16) glm::mat4 view;
             alignas(16) glm::mat4 proj;
-        }; // struct UniformBufferObject
+        }; // TransformUBO
 
-        struct Vertex
+        struct Vertex2D
         {
             glm::vec2 pos;
             glm::vec3 color;
@@ -34,7 +34,7 @@ namespace vkcpp
             {
                 VkVertexInputBindingDescription bindingDescription{};
                 bindingDescription.binding = 0;
-                bindingDescription.stride = sizeof(Vertex);
+                bindingDescription.stride = sizeof(Vertex2D);
                 bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
                 return bindingDescription;
@@ -47,26 +47,26 @@ namespace vkcpp
                 attributeDescriptions[0].binding = 0;
                 attributeDescriptions[0].location = 0;
                 attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
-                attributeDescriptions[0].offset = offsetof(Vertex, pos);
+                attributeDescriptions[0].offset = offsetof(Vertex2D, pos);
 
                 attributeDescriptions[1].binding = 0;
                 attributeDescriptions[1].location = 1;
                 attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-                attributeDescriptions[1].offset = offsetof(Vertex, color);
+                attributeDescriptions[1].offset = offsetof(Vertex2D, color);
 
                 attributeDescriptions[2].binding = 0;
                 attributeDescriptions[2].location = 2;
                 attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-                attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
+                attributeDescriptions[2].offset = offsetof(Vertex2D, texCoord);
 
                 return attributeDescriptions;
             }
-        }; // struct Vertex
+        }; // struct Vertex2D
 
         /**
          *  create shaderModule using spirv code
          */
-        static VkShaderModule create_shader_module(const Device *device, std::string &filename);
+        static VkShaderModule createShaderModule(const Device *device, std::string &filename);
     }; // class ShaderModule
 } // namespace vkcpp
 

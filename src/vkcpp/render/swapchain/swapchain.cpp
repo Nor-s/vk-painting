@@ -143,10 +143,12 @@ namespace vkcpp
         for (auto image_view : image_views_)
         {
             vkDestroyImageView(*device_, image_view, nullptr);
+            image_view = VK_NULL_HANDLE;
         }
         if (handle_ != VK_NULL_HANDLE)
         {
             vkDestroySwapchainKHR(*device_, handle_, nullptr);
+            handle_ = VK_NULL_HANDLE;
         }
     }
 

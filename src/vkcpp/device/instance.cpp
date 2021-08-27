@@ -63,6 +63,9 @@ namespace vkcpp
         {
             extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         }
+#ifdef __APPLE__
+        extensions.push_back("VK_KHR_get_physical_device_properties2");
+#endif
 
         return extensions;
     }
@@ -169,7 +172,7 @@ namespace vkcpp
                 return gpu.get();
             }
         }
-        if (gpus_.at(0)->is_device_suitable(surface, requested_extensions))
+        if (!gpus_.at(0)->is_device_suitable(surface, requested_extensions))
         {
             throw std::runtime_error("failed to find a suitable GPU!");
         }
@@ -187,6 +190,7 @@ namespace vkcpp
 {
     const std::vector<const char *> Instance::validation_layers_ = {
         "VK_LAYER_KHRONOS_validation"};
+
     void Instance::init_debug_messenger()
     {
         if (!enable_validation_layers_)
@@ -224,6 +228,7 @@ namespace vkcpp
         }
         else
         {
+            return VK_FALSE;
             std::cerr << ":\n";
         }
         std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;

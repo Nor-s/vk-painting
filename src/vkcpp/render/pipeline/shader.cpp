@@ -7,7 +7,7 @@
 
 namespace vkcpp
 {
-    VkShaderModule Shader::create_shader_module(const Device *device, std::string &filename)
+    VkShaderModule Shader::createShaderModule(const Device *device, std::string &filename)
     {
         VkShaderModule shader_module;
         std::vector<char> code = readFile(filename);
