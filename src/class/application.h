@@ -51,6 +51,7 @@ namespace painting
         void init_state();
         void init_scene();
         */
+        void draw_frame();
         void main_loop();
         void cleanup();
     };

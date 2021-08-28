@@ -1,8 +1,8 @@
 #include "framebuffers.h"
+#include "swapchain.h"
+#include "render_pass.h"
 
 #include "device/device.h"
-#include "render/swapchain/swapchain.h"
-#include "render/render_pass/render_pass.h"
 
 #include <iostream>
 
@@ -11,6 +11,7 @@ namespace vkcpp
     Framebuffers::Framebuffers(const Device *device, const RenderPass *render_pass)
         : device_(device), render_pass_(render_pass)
     {
+        swapchain_ = &(render_pass_->get_ref_swapchain());
         init_framebuffers();
     }
 
@@ -19,17 +20,38 @@ namespace vkcpp
         destroy_framebuffers();
     }
 
+    const uint32_t &Framebuffers::get_framebuffers_size() const
+    {
+        return framebuffers_size_;
+    }
+
+    const Swapchain &Framebuffers::get_ref_swapchain() const
+    {
+        return *swapchain_;
+    }
+
+    const RenderPass &Framebuffers::get_ref_render_pass() const
+    {
+        return *render_pass_;
+    }
+
+    const std::vector<VkFramebuffer> &Framebuffers::get_ref_handle() const
+    {
+        return handle_;
+    }
+
     void Framebuffers::init_framebuffers()
     {
-        const Swapchain &swapchain = render_pass_->get_ref_swapchain();
 
-        const std::vector<VkImageView> &image_views = swapchain.get_ref_image_views();
+        const std::vector<VkImageView> &image_views = swapchain_->get_ref_image_views();
 
-        const VkExtent2D &swapchain_extent = swapchain.get_ref_properties().extent;
+        const VkExtent2D &swapchain_extent = swapchain_->get_ref_properties().extent;
 
-        handle_.resize(image_views.size());
+        framebuffers_size_ = image_views.size();
 
-        for (size_t i = 0; i < image_views.size(); i++)
+        handle_.resize(framebuffers_size_);
+
+        for (size_t i = 0; i < framebuffers_size_; i++)
         {
             VkImageView attachments[] = {image_views[i]};
 
@@ -41,7 +63,7 @@ namespace vkcpp
             framebufferInfo.pAttachments = attachments;
             framebufferInfo.width = swapchain_extent.width;
             framebufferInfo.height = swapchain_extent.height;
-            framebufferInfo.layers = swapchain.get_ref_properties().array_layers; // VkswapchainCreateInfoKHR::imageArrayLayers
+            framebufferInfo.layers = swapchain_->get_ref_properties().array_layers; // VkswapchainCreateInfoKHR::imageArrayLayers
 
             if (vkCreateFramebuffer(*device_, &framebufferInfo, nullptr, &handle_[i]) != VK_SUCCESS)
             {
@@ -58,6 +80,7 @@ namespace vkcpp
             {
                 vkDestroyFramebuffer(*device_, framebuffer, nullptr);
                 framebuffer = VK_NULL_HANDLE;
+                framebuffers_size_ = 0;
             }
         }
     }

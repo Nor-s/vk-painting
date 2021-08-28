@@ -47,11 +47,15 @@ namespace painting
     {
         swapchain_ = std::make_unique<vkcpp::Swapchain>(device_.get(), surface_.get());
     }
+    void PaintingApplication::draw_frame()
+    {
+    }
     void PaintingApplication::main_loop()
     {
         while (!vkcpp::MainWindow::getInstance()->should_close())
         {
             vkcpp::MainWindow::getInstance()->process_events();
+            draw_frame();
         }
     }
 
