@@ -10,29 +10,52 @@ namespace vkcpp
     class Swapchain;
     class RenderPass;
     class Device;
-    class DescriptorSetLayout;
+    class DescriptorSet;
 
     class GraphicsPipeline
     {
     private:
-        const Device *device_;
-        const Swapchain *swapchain_;
-        const RenderPass *render_pass_;
-        const DescriptorSetLayout *descriptor_set_layout_;
+        const Device *device_{nullptr};
+
+        const Swapchain *swapchain_{nullptr};
+
+        const RenderPass *render_pass_{nullptr};
+
+        const DescriptorSet *descriptor_set_{nullptr};
+
         std::string vert_shader_file_;
+
         std::string frag_shader_file_;
 
         VkPipelineLayout layout_{VK_NULL_HANDLE};
+
         VkShaderModule vert_shader_module_{VK_NULL_HANDLE};
+
         VkShaderModule frag_shader_module_{VK_NULL_HANDLE};
 
         VkPipeline handle_{VK_NULL_HANDLE};
+
+        std::vector<VkPipelineShaderStageCreateInfo> shader_stage_;
+
+        VkPipelineVertexInputStateCreateInfo vertex_input_state_{};
+
+        VkPipelineInputAssemblyStateCreateInfo input_assembly_state_{};
+
+        VkPipelineViewportStateCreateInfo viewport_state_{};
+
+        VkPipelineRasterizationStateCreateInfo rasterizer_state_{};
+
+        VkPipelineMultisampleStateCreateInfo multisample_state_{};
+
+        VkPipelineColorBlendStateCreateInfo color_blend_state_{};
+
+        VkPipelineDynamicStateCreateInfo dynamic_state_{};
 
     public:
         GraphicsPipeline(const Device *device,
                          const Swapchain *swapchain,
                          const RenderPass *render_pass,
-                         const DescriptorSetLayout *descriptor_set_layout,
+                         const DescriptorSet *descriptor_set,
                          std::string &vert_shader_file,
                          std::string &frag_shader_file);
 
@@ -42,30 +65,36 @@ namespace vkcpp
          *  @brief create vert and frag shader module, stage create info.
          *  @return vector of vert and frag stage create info
          */
-        std::vector<VkPipelineShaderStageCreateInfo> create_shader_stage_create_info_vec();
+        void init_shader_stage_create_info_vec();
 
         /**
          *  @brief for Shader::Vertex2D data
          */
-        VkPipelineVertexInputStateCreateInfo create_vertex_input_state_create_info();
+        void init_vertex_input_state_create_info();
 
-        VkPipelineInputAssemblyStateCreateInfo create_input_assembly_state_create_info();
+        void init_input_assembly_state_create_info();
 
         /**
          *  @brief viewport size = swapchain extent, sissor = swapchain extent
          */
-        VkPipelineViewportStateCreateInfo create_viewport_state_create_info();
-        VkPipelineRasterizationStateCreateInfo create_rasterization_state_create_info();
-        VkPipelineMultisampleStateCreateInfo create_multisample_state_create_info();
-        VkPipelineColorBlendStateCreateInfo create_color_blend_state_create_info();
+        void init_viewport_state_create_info();
+
+        void init_rasterization_state_create_info();
+
+        void init_multisample_state_create_info();
+
+        void init_color_blend_state_create_info();
+
+        void init_dynamic_state_create_info();
+
         void init_pipeline_layout();
+
         void init_pipeline();
 
         /**
          *  @brief Destroy pipeline and pipeline layout
          */
         void destroy();
-
     }; // class GraphicsPipeline
 } // namespace vkcpp
 

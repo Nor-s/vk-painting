@@ -13,13 +13,10 @@ namespace vkcpp
 
     class Pipeline
     {
-        /*
-    private:
     public:
         /**
-	     * Represents position in the render structure, first value being the renderpass and second for subpass.
-	     */
-        /*
+	 * Represents position in the render structure, first value being the renderpass and second for subpass.
+	 */
         using Stage = std::pair<uint32_t, uint32_t>;
 
         Pipeline() = default;
@@ -31,13 +28,13 @@ namespace vkcpp
             vkCmdBindPipeline(commandBuffer, GetPipelineBindPoint(), GetPipeline());
         }
 
+        virtual const Shader *GetShader() const = 0;
         virtual bool IsPushDescriptors() const = 0;
         virtual const VkDescriptorSetLayout &GetDescriptorSetLayout() const = 0;
-        virtual const VkDescriptorPool &get_descriptorPool() const = 0;
-        virtual const VkPipeline &get_pipeline() const = 0;
-        virtual const VkPipelineLayout &get_pipeline_layout() const = 0;
+        virtual const VkDescriptorPool &GetDescriptorPool() const = 0;
+        virtual const VkPipeline &GetPipeline() const = 0;
+        virtual const VkPipelineLayout &GetPipelineLayout() const = 0;
         virtual const VkPipelineBindPoint &GetPipelineBindPoint() const = 0;
-        */
     }; // class GraphicsPipeline
 } // namespace vkcpp
 

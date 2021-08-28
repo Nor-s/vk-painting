@@ -3,7 +3,7 @@
 #include "shader.h"
 #include "device/device.h"
 #include "render/swapchain/swapchain.h"
-#include "render/render_pass/render_pass.h"
+#include "render/swapchain/render_pass.h"
 
 #include <iostream>
 
@@ -12,11 +12,20 @@ namespace vkcpp
     GraphicsPipeline::GraphicsPipeline(const Device *device,
                                        const Swapchain *swapchain,
                                        const RenderPass *render_pass,
-                                       const DescriptorSetLayout *descriptor_set_layout,
+                                       const DescriptorSet *descriptor_set,
                                        std::string &vert_shader_file,
                                        std::string &frag_shader_file)
-        : device_(device), swapchain_(swapchain), render_pass_(render_pass), descriptor_set_layout_(descriptor_set_layout), vert_shader_file_(vert_shader_file), frag_shader_file_(frag_shader_file)
+        : device_(device), swapchain_(swapchain), render_pass_(render_pass), descriptor_set_(descriptor_set), vert_shader_file_(vert_shader_file), frag_shader_file_(frag_shader_file)
     {
+        init_shader_stage_create_info_vec();
+        init_vertex_input_state_create_info();
+        init_input_assembly_state_create_info();
+        init_viewport_state_create_info();
+        init_rasterization_state_create_info();
+        init_multisample_state_create_info();
+        // Todo: VkPipelineDepthStencilStateCreateInfo = create
+        init_color_blend_state_create_info();
+        init_dynamic_state_create_info();
         init_pipeline_layout();
         init_pipeline();
     }
@@ -26,7 +35,7 @@ namespace vkcpp
         destroy();
     }
 
-    std::vector<VkPipelineShaderStageCreateInfo> GraphicsPipeline::create_shader_stage_create_info_vec()
+    void GraphicsPipeline::init_shader_stage_create_info_vec()
     {
         vert_shader_module_ = Shader::createShaderModule(device_, vert_shader_file_);
         frag_shader_module_ = Shader::createShaderModule(device_, frag_shader_file_);
@@ -48,7 +57,7 @@ namespace vkcpp
         return {vert_shader_stage_create_info, frag_shader_stage_create_info};
     }
 
-    VkPipelineVertexInputStateCreateInfo GraphicsPipeline::create_vertex_input_state_create_info()
+    void GraphicsPipeline::init_vertex_input_state_create_info()
     {
         VkPipelineVertexInputStateCreateInfo vertex_input_info{};
 
@@ -65,7 +74,7 @@ namespace vkcpp
         return vertex_input_info;
     }
 
-    VkPipelineInputAssemblyStateCreateInfo GraphicsPipeline::create_input_assembly_state_create_info()
+    void GraphicsPipeline::init_input_assembly_state_create_info()
     {
         VkPipelineInputAssemblyStateCreateInfo input_assembly{};
 
@@ -76,7 +85,7 @@ namespace vkcpp
         return input_assembly;
     }
 
-    VkPipelineViewportStateCreateInfo GraphicsPipeline::create_viewport_state_create_info()
+    void GraphicsPipeline::init_viewport_state_create_info()
     {
         const VkExtent2D &swapchain_extent = swapchain_->get_ref_properties().extent;
         VkViewport viewport{};
@@ -103,7 +112,7 @@ namespace vkcpp
         return viewport_state;
     }
 
-    VkPipelineRasterizationStateCreateInfo GraphicsPipeline::create_rasterization_state_create_info()
+    void GraphicsPipeline::init_rasterization_state_create_info()
     {
         VkPipelineRasterizationStateCreateInfo rasterizer;
 
@@ -122,7 +131,7 @@ namespace vkcpp
         return rasterizer;
     }
 
-    VkPipelineMultisampleStateCreateInfo GraphicsPipeline::create_multisample_state_create_info()
+    void GraphicsPipeline::init_multisample_state_create_info()
     {
         VkPipelineMultisampleStateCreateInfo multisampling{};
 
@@ -137,7 +146,7 @@ namespace vkcpp
         return multisampling;
     }
 
-    VkPipelineColorBlendStateCreateInfo GraphicsPipeline::create_color_blend_state_create_info()
+    void GraphicsPipeline::init_color_blend_state_create_info()
     {
         VkPipelineColorBlendAttachmentState color_blend_attachment{};
 
@@ -165,6 +174,18 @@ namespace vkcpp
         return color_blending;
     }
 
+    void GraphicsPipeline::init_dynamic_state_create_info()
+    {
+        VkDynamicState dynamic_states[3] = {
+            VK_DYNAMIC_STATE_VIEWPORT,
+            VK_DYNAMIC_STATE_SCISSOR,
+            VK_DYNAMIC_STATE_LINE_WIDTH};
+
+        dynamic_state_.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        dynamic_state_.dynamicStateCount = 3;
+        dynamic_state_.pDynamicStates = dynamic_states;
+    }
+
     void GraphicsPipeline::init_pipeline_layout()
     {
         VkPipelineLayoutCreateInfo pipeline_layout_info{};
@@ -182,30 +203,21 @@ namespace vkcpp
 
     void GraphicsPipeline::init_pipeline()
     {
-        auto shader_stage_info = create_shader_stage_create_info_vec();
-        auto vertex_input_info = create_vertex_input_state_create_info();
-        auto input_assembly_info = create_input_assembly_state_create_info();
-        auto viewport_state_info = create_viewport_state_create_info();
-        auto rasterizer_state_info = create_rasterization_state_create_info();
-        auto multisample_state_info = create_multisample_state_create_info();
-        // Todo: VkPipelineDepthStencilStateCreateInfo = create
-        auto color_blend_state_info = create_color_blend_state_create_info();
-        // Option: VkPipelineDynamicStateCreateInfo = create
 
         VkGraphicsPipelineCreateInfo pipeline_info{};
         pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
         // shader stage
-        pipeline_info.stageCount = shader_stage_info.size();
-        pipeline_info.pStages = shader_stage_info.data();
+        pipeline_info.stageCount = shader_stage_.size();
+        pipeline_info.pStages = shader_stage_.data();
         // fixed-function state
-        pipeline_info.pVertexInputState = &vertex_input_info;
-        pipeline_info.pInputAssemblyState = &input_assembly_info;
-        pipeline_info.pViewportState = &viewport_state_info;
-        pipeline_info.pRasterizationState = &rasterizer_state_info;
-        pipeline_info.pMultisampleState = &multisample_state_info;
+        pipeline_info.pVertexInputState = &vertex_input_state_;
+        pipeline_info.pInputAssemblyState = &input_assembly_state_;
+        pipeline_info.pViewportState = &viewport_state_;
+        pipeline_info.pRasterizationState = &rasterizer_state_;
+        pipeline_info.pMultisampleState = &multisample_state_;
         pipeline_info.pDepthStencilState = nullptr; // Optional
-        pipeline_info.pColorBlendState = &color_blend_state_info;
-        pipeline_info.pDynamicState = nullptr; // Optional
+        pipeline_info.pColorBlendState = &color_blend_state_;
+        pipeline_info.pDynamicState = &dynamic_state_; // Optional
         // pipeline layout
         pipeline_info.layout = layout_;
         // render pass
@@ -224,6 +236,7 @@ namespace vkcpp
 
     void GraphicsPipeline::destroy()
     {
+
         if (handle_ != VK_NULL_HANDLE)
         {
             vkDestroyPipeline(*device_, handle_, nullptr);
