@@ -10,7 +10,7 @@
 #include <cstdlib>
 #include <memory>
 
-#include "window/main_window.h"
+#include "device/window/main_window.h"
 #include "device/instance.h"
 #include "device/surface.h"
 #include "device/physical_device.h"

@@ -3,11 +3,13 @@
         {
             "name": "Win32",
             "includePath": [
+                "/opt/homebrew/include/**",
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/src/**",
                 "${workspaceFolder}/src/class/**",
                 "${workspaceFolder}/src/vkcpp/**",
-                "${workspaceFolder}/external/**"
+                "${workspaceFolder}/external/stb/**",
+                "/Users/soongunno/VulkanSDK/1.2.182.0/macOS/include/**"
             ],
             "defines": [
                 "_DEBUG",
@@ -15,10 +17,10 @@
                 "_UNICODE"
             ],
             "windowsSdkVersion": "10.0.19041.0",
-            "compilerPath": "C:/msys64/mingw64/bin/g++.exe",
+            "compilerPath": "/usr/bin/clang++",
             "cStandard": "c17",
             "cppStandard": "c++17",
-            "intelliSenseMode": "windows-gcc-x64"
+            "intelliSenseMode": "macos-clang-arm64"
         }
     ],
     "version": 4

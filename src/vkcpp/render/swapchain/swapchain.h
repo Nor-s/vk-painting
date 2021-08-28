@@ -55,11 +55,11 @@ namespace vkcpp
 
         operator const VkSwapchainKHR &() const { return handle_; }
 
-        const std::vector<VkImage> &get_ref_images() const;
+        const std::vector<VkImage> &get_images() const { return images_; }
 
-        const std::vector<VkImageView> &get_ref_image_views() const;
+        const std::vector<VkImageView> &get_image_views() const { return image_views_; };
 
-        const SwapchainProperties &get_ref_properties() const;
+        const SwapchainProperties &get_properties() const { return properties_; }
 
         /**
          * @brief Choose VK_PRESENT_MODE_MAILBOX_KHR and VK_COLOR_SPACE_SRGB_NONLINEAR_KHR

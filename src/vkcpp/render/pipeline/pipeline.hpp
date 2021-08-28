@@ -3,38 +3,45 @@
 
 #include "vulkan_header.h"
 
-#include <memory>
+#include <vector>
 
 namespace vkcpp
 {
-    class RenderPass;
-    class ShaderModule;
-    class Device;
+    class CommandBuffer;
 
     class Pipeline
     {
     public:
-        /**
-	 * Represents position in the render structure, first value being the renderpass and second for subpass.
-	 */
-        using Stage = std::pair<uint32_t, uint32_t>;
+        struct CreateInfo
+        {
+            VkPipelineVertexInputStateCreateInfo vertex_input_state{};
+
+            VkPipelineInputAssemblyStateCreateInfo input_assembly_state{};
+
+            VkPipelineViewportStateCreateInfo viewport_state{};
+
+            VkPipelineRasterizationStateCreateInfo rasterizer_state{};
+
+            VkPipelineMultisampleStateCreateInfo multisample_state{};
+
+            VkPipelineColorBlendStateCreateInfo color_blend_state{};
+
+            VkPipelineDynamicStateCreateInfo dynamic_state{};
+
+            std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
+        };
 
         Pipeline() = default;
 
         virtual ~Pipeline() = default;
 
-        void BindPipeline(const CommandBuffer &commandBuffer) const
+        void bind_pipeline(const VkCommandBuffer &command_buffer) const
         {
-            vkCmdBindPipeline(commandBuffer, GetPipelineBindPoint(), GetPipeline());
+            vkCmdBindPipeline(command_buffer, get_pipeline_bind_point(), get_pipeline());
         }
+        virtual const VkPipeline &get_pipeline() const = 0;
+        virtual const VkPipelineBindPoint &get_pipeline_bind_point() const = 0;
 
-        virtual const Shader *GetShader() const = 0;
-        virtual bool IsPushDescriptors() const = 0;
-        virtual const VkDescriptorSetLayout &GetDescriptorSetLayout() const = 0;
-        virtual const VkDescriptorPool &GetDescriptorPool() const = 0;
-        virtual const VkPipeline &GetPipeline() const = 0;
-        virtual const VkPipelineLayout &GetPipelineLayout() const = 0;
-        virtual const VkPipelineBindPoint &GetPipelineBindPoint() const = 0;
     }; // class GraphicsPipeline
 } // namespace vkcpp
 

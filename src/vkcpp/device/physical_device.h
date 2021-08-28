@@ -78,23 +78,23 @@ namespace vkcpp
 
         PhysicalDevice &operator=(PhysicalDevice &&) = delete;
 
-        operator const VkPhysicalDevice &() const { return handle_; };
+        operator const VkPhysicalDevice &() const { return handle_; }
 
-        const Instance &get_instance() const;
+        const Instance &get_instance() const { return *instance_; }
 
-        const VkPhysicalDeviceProperties get_properties() const;
+        const VkPhysicalDeviceProperties &get_properties() const { return properties_; }
 
-        const VkPhysicalDeviceFeatures &get_ref_features() const;
+        const VkPhysicalDeviceFeatures &get_features() const { return supported_features_; }
 
-        const VkPhysicalDeviceMemoryProperties get_memory_properties() const;
+        const VkPhysicalDeviceMemoryProperties &get_memory_properties() const { return memory_properties_; }
 
-        const std::vector<VkQueueFamilyProperties> &get_ref_queue_family_properties() const;
+        const std::vector<VkQueueFamilyProperties> &get_queue_family_properties() const { return queue_family_properties_; }
 
-        const std::vector<const char *> &get_ref_extensions() const;
+        const std::vector<const char *> &get_extensions() const { return extensions_; }
 
-        const QueueFamilyIndices &get_ref_queue_family_indices() const;
+        const QueueFamilyIndices &get_queue_family_indices() const { return queue_family_indices_; }
 
-        const SwapchainSupportDetails &get_ref_swapchain_support() const;
+        const SwapchainSupportDetails &get_swapchain_support() const { return swapchain_support_; }
 
         QueueFamilyIndices find_queue_families(VkSurfaceKHR surface);
 

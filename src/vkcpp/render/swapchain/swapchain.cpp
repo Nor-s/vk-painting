@@ -1,6 +1,6 @@
 #include "swapchain.h"
 
-#include "window/main_window.h"
+#include "device/window/main_window.h"
 #include "device/surface.h"
 #include "device/physical_device.h"
 #include "device/device.h"
@@ -19,21 +19,6 @@ namespace vkcpp
     Swapchain::~Swapchain()
     {
         destroy_swapchain();
-    }
-
-    const std::vector<VkImage> &Swapchain::get_ref_images() const
-    {
-        return images_;
-    }
-
-    const std::vector<VkImageView> &Swapchain::get_ref_image_views() const
-    {
-        return image_views_;
-    }
-
-    const SwapchainProperties &Swapchain::get_ref_properties() const
-    {
-        return properties_;
     }
 
     VkSurfaceFormatKHR Swapchain::choose_swapchain_surface_format(const std::vector<VkSurfaceFormatKHR> &available_formats)
@@ -83,7 +68,7 @@ namespace vkcpp
 
     void Swapchain::init_swapchain(const Device *device, const Surface *surface)
     {
-        const SwapchainSupportDetails &swapchain_support = device->get_ref_gpu().get_ref_swapchain_support();
+        const SwapchainSupportDetails &swapchain_support = device->get_gpu().get_swapchain_support();
 
         // Choose device surfac support detail
         properties_.surface_format = choose_swapchain_surface_format(swapchain_support.formats);
@@ -110,7 +95,7 @@ namespace vkcpp
         create_info.imageUsage = properties_.image_usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
         // Decide image sharing mode
-        const QueueFamilyIndices &indices = device->get_ref_gpu().get_ref_queue_family_indices();
+        const QueueFamilyIndices &indices = device->get_gpu().get_queue_family_indices();
         uint32_t queueFamilyIndices[] = {indices.graphics_family.value(), indices.present_family.value()};
 
         if (indices.graphics_family != indices.present_family)

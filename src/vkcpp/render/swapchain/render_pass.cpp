@@ -27,7 +27,7 @@ namespace vkcpp
     {
         // Describe color buffer.
         VkAttachmentDescription color_attachment{};
-        color_attachment.format = swapchain_->get_ref_properties().surface_format.format;
+        color_attachment.format = swapchain_->get_properties().surface_format.format;
         // The number of samples of the images.
         color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
         // What to do with the data(color, depth) in the attachment before rendering.

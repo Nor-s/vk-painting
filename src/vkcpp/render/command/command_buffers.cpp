@@ -2,6 +2,8 @@
 
 #include "device/device.h"
 #include "command_pool.h"
+#include "render/render_stage.h"
+#include "render/pipeline/pipeline.hpp"
 #include "render/swapchain/framebuffers.h"
 #include "render/swapchain/render_pass.h"
 #include "render/swapchain/swapchain.h"
@@ -10,8 +12,8 @@
 
 namespace vkcpp
 {
-    CommandBuffers::CommandBuffers(const Device *device, const CommandPool *command_pool, uint32_t size)
-        : device_(device), command_pool_(command_pool), size_(size)
+    CommandBuffers::CommandBuffers(const Device *device, const CommandPool *command_pool, uint32_t size, VkCommandBufferLevel level)
+        : device_(device), command_pool_(command_pool), size_(size), level_(level)
     {
         init_command_buffers();
     }
@@ -24,7 +26,7 @@ namespace vkcpp
 
         alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         alloc_info.commandPool = *command_pool_;
-        alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        alloc_info.level = level_;
         alloc_info.commandBufferCount = size_;
 
         if (vkAllocateCommandBuffers(*device_, &alloc_info, handle_.data()) != VK_SUCCESS)
@@ -45,40 +47,23 @@ namespace vkcpp
         {
             throw std::runtime_error("failed to begin recording command buffer!");
         }
-
-        /*
-
-        vkCmdBindPipeline(handle_[command_buffer_idx], VK_PIPELINE_BIND_POINT_GRAPHICS, upcast_pipeline->get_pipeline());
-
-        VkDeviceSize offsets[] = {0};
-        vkCmdBindVertexBuffers(handle_[command_buffer_idx], 0, 1, vertex_buffers.data(), offsets);
-
-        vkCmdBindIndexBuffer(handle_[command_buffer_idx], indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-
-        vkCmdBindDescriptorSets(commandBuffers[command_buffer_idx], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
-
- vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-        */
     }
 
-    void CommandBuffers::begin_render_pass(const RenderPass render_pass, const)
+    void CommandBuffers::begin_render_pass(int command_buffer_idx, const RenderStage *render_stage)
     {
-        const Swapchain &swapchain = framebuffers_->get_ref_swapchain();
-        // Start renderpass
-        VkRenderPassBeginInfo renderPassInfo{};
-
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = *render_pass;
-        renderPassInfo.framebuffer = framebuffers_->get_ref_handle()[command_buffer_idx];
-        renderPassInfo.renderArea.offset = {0, 0};
-        renderPassInfo.renderArea.extent = swapchain.get_ref_properties().extent;
-
-        VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
-        renderPassInfo.clearValueCount = 1;
-        renderPassInfo.pClearValues = &clearColor;
-
-        vkCmdBeginRenderPass(handle_[command_buffer_idx], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+        render_stage->begin_render_pass(handle_[command_buffer_idx], command_buffer_idx);
     }
+
+    void CommandBuffers::bind_pipeline(int command_buffer_idx, const Pipeline *pipeline)
+    {
+        pipeline->bind_pipeline(handle_[command_buffer_idx]);
+    }
+
+    void CommandBuffers::end_render_pass(int command_buffer_idx, const RenderStage *render_stage)
+    {
+        render_stage->end_render_pass(handle_[command_buffer_idx], command_buffer_idx);
+    }
+
     void CommandBuffers::end_command_buffer(int command_buffer_idx)
     {
         vkCmdEndRenderPass(handle_[command_buffer_idx]);

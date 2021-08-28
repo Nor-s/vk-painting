@@ -21,40 +21,6 @@ namespace vkcpp
         vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_family_properties_.data());
     }
 
-    const Instance &PhysicalDevice::get_instance() const
-    {
-        return *instance_;
-    }
-
-    const VkPhysicalDeviceFeatures &PhysicalDevice::get_ref_features() const
-    {
-        return supported_features_;
-    }
-    const VkPhysicalDeviceProperties PhysicalDevice::get_properties() const
-    {
-        return properties_;
-    }
-    const VkPhysicalDeviceMemoryProperties PhysicalDevice::get_memory_properties() const
-    {
-        return memory_properties_;
-    }
-    const std::vector<VkQueueFamilyProperties> &PhysicalDevice::get_ref_queue_family_properties() const
-    {
-        return queue_family_properties_;
-    }
-    const std::vector<const char *> &PhysicalDevice::get_ref_extensions() const
-    {
-        return extensions_;
-    }
-    const QueueFamilyIndices &PhysicalDevice::get_ref_queue_family_indices() const
-    {
-        return queue_family_indices_;
-    }
-    const SwapchainSupportDetails &PhysicalDevice::get_ref_swapchain_support() const
-    {
-        return swapchain_support_;
-    }
-
     QueueFamilyIndices PhysicalDevice::find_queue_families(VkSurfaceKHR surface)
     {
         QueueFamilyIndices indices;

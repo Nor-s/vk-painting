@@ -28,13 +28,13 @@ namespace vkcpp
 
         ~Framebuffers();
 
-        const uint32_t &get_framebuffers_size() const;
+        const uint32_t &get_framebuffers_size() const { return framebuffers_size_; }
 
-        const Swapchain &get_ref_swapchain() const;
+        const Swapchain &get_swapchain() const { return *swapchain_; };
 
-        const RenderPass &get_ref_render_pass() const;
+        const RenderPass &get_render_pass() const { return *render_pass_; };
 
-        const std::vector<VkFramebuffer> &get_ref_handle() const;
+        const std::vector<VkFramebuffer> &get_framebuffers() const { return handle_; };
 
         void init_framebuffers();
 

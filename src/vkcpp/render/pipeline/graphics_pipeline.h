@@ -2,24 +2,22 @@
 #define VKCPP_SWAPCHAIN_PIPELINE_GRAPHICS_PIPELINE_H
 
 #include "vulkan_header.h"
+#include "pipeline.hpp"
 
 #include <memory>
 
 namespace vkcpp
 {
-    class Swapchain;
-    class RenderPass;
     class Device;
+    class RenderStage;
     class DescriptorSet;
 
-    class GraphicsPipeline
+    class GraphicsPipeline : public Pipeline
     {
     private:
         const Device *device_{nullptr};
 
-        const Swapchain *swapchain_{nullptr};
-
-        const RenderPass *render_pass_{nullptr};
+        const RenderStage *render_stage_{nullptr};
 
         const DescriptorSet *descriptor_set_{nullptr};
 
@@ -35,31 +33,30 @@ namespace vkcpp
 
         VkPipeline handle_{VK_NULL_HANDLE};
 
-        std::vector<VkPipelineShaderStageCreateInfo> shader_stage_;
+        CreateInfo info_{};
 
-        VkPipelineVertexInputStateCreateInfo vertex_input_state_{};
+        VkPipelineBindPoint pipeline_bind_point_;
 
-        VkPipelineInputAssemblyStateCreateInfo input_assembly_state_{};
-
-        VkPipelineViewportStateCreateInfo viewport_state_{};
-
-        VkPipelineRasterizationStateCreateInfo rasterizer_state_{};
-
-        VkPipelineMultisampleStateCreateInfo multisample_state_{};
-
-        VkPipelineColorBlendStateCreateInfo color_blend_state_{};
-
-        VkPipelineDynamicStateCreateInfo dynamic_state_{};
+        int subpass_idx_{0};
 
     public:
         GraphicsPipeline(const Device *device,
-                         const Swapchain *swapchain,
-                         const RenderPass *render_pass,
+                         const RenderStage *render_stage,
                          const DescriptorSet *descriptor_set,
                          std::string &vert_shader_file,
-                         std::string &frag_shader_file);
+                         std::string &frag_shader_file,
+                         int subpass_idx);
 
-        ~GraphicsPipeline();
+        virtual ~GraphicsPipeline();
+
+        virtual const VkPipeline &get_pipeline() const override
+        {
+            return handle_;
+        }
+        virtual const VkPipelineBindPoint &get_pipeline_bind_point() const override
+        {
+            return pipeline_bind_point_;
+        }
 
         /**
          *  @brief create vert and frag shader module, stage create info.

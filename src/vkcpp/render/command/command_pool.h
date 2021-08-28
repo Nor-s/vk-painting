@@ -14,6 +14,8 @@ namespace vkcpp
 
         VkCommandPool handle_;
 
+        uint32_t queue_family_idx_;
+
     public:
         CommandPool(const Device *device, VkCommandPoolCreateFlags flags, uint32_t queue_family_index);
 

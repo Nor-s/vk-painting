@@ -41,7 +41,7 @@ namespace vkcpp
 
         operator const VkDevice &() const { return handle_; }
 
-        const PhysicalDevice &get_ref_gpu() const;
+        const PhysicalDevice &get_gpu() const { return *gpu_; };
 
         void init_device(const PhysicalDevice *gpu);
 

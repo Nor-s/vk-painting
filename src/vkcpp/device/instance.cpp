@@ -5,7 +5,7 @@
 #include <assert.h>
 
 #include "device/physical_device.h"
-#include "window/main_window.h"
+#include "device/window/main_window.h"
 
 namespace vkcpp
 {

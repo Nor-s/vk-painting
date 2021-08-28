@@ -43,15 +43,6 @@ namespace vkcpp
         VkQueueFamilyProperties get_properties() const;
 
         VkBool32 support_present() const;
-
-        //        VkResult submit(const std::vector<VkSubmitInfo> &submit_infos, VkFence fence) const;
-
-        //        VkResult submit(const CommandBuffer &command_buffer, VkFence fence) const;
-
-        //        VkResult present(const VkPresentInfoKHR &present_infos) const;
-
-        //    VkResult wait_idle() const;
-
     }; // class Queue
 } // namespace vkcpp
 

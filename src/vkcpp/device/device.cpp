@@ -25,14 +25,9 @@ namespace vkcpp
         }
     }
 
-    const PhysicalDevice &Device::get_ref_gpu() const
-    {
-        return *gpu_;
-    }
-
     void Device::init_device(const PhysicalDevice *gpu)
     {
-        const QueueFamilyIndices &indices = gpu->get_ref_queue_family_indices();
+        const QueueFamilyIndices &indices = gpu->get_queue_family_indices();
         const Instance &instance = gpu->get_instance();
 
         std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
@@ -59,10 +54,10 @@ namespace vkcpp
         }
 
         // Specify device features
-        const VkPhysicalDeviceFeatures &device_features = gpu->get_ref_features();
+        const VkPhysicalDeviceFeatures &device_features = gpu->get_features();
 
         // Specify device extensions
-        const std::vector<const char *> &device_extensions = gpu->get_ref_extensions();
+        const std::vector<const char *> &device_extensions = gpu->get_extensions();
 
         // Specify Device create info
         VkDeviceCreateInfo create_info{};
@@ -91,17 +86,17 @@ namespace vkcpp
     }
     void Device::init_queues(const PhysicalDevice *gpu)
     {
-        const QueueFamilyIndices &indices = gpu->get_ref_queue_family_indices();
+        const QueueFamilyIndices &indices = gpu->get_queue_family_indices();
 
-        graphics_queue_ = std::make_unique<Queue>(this, indices.graphics_family.value(), 0, false, gpu->get_ref_queue_family_properties()[indices.graphics_family.value()]);
-        present_queue_ = std::make_unique<Queue>(this, indices.present_family.value(), 0, true, gpu->get_ref_queue_family_properties()[indices.present_family.value()]);
+        graphics_queue_ = std::make_unique<Queue>(this, indices.graphics_family.value(), 0, false, gpu->get_queue_family_properties()[indices.graphics_family.value()]);
+        present_queue_ = std::make_unique<Queue>(this, indices.present_family.value(), 0, true, gpu->get_queue_family_properties()[indices.present_family.value()]);
         if (indices.compute_family.has_value())
         {
-            graphics_queue_ = std::make_unique<Queue>(this, indices.compute_family.value(), 0, false, gpu->get_ref_queue_family_properties()[indices.compute_family.value()]);
+            graphics_queue_ = std::make_unique<Queue>(this, indices.compute_family.value(), 0, false, gpu->get_queue_family_properties()[indices.compute_family.value()]);
         }
         if (indices.transfer_family.has_value())
         {
-            graphics_queue_ = std::make_unique<Queue>(this, indices.transfer_family.value(), 0, false, gpu->get_ref_queue_family_properties()[indices.transfer_family.value()]);
+            graphics_queue_ = std::make_unique<Queue>(this, indices.transfer_family.value(), 0, false, gpu->get_queue_family_properties()[indices.transfer_family.value()]);
         }
     }
 
