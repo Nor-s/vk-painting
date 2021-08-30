@@ -43,6 +43,8 @@ namespace vkcpp
 
         const PhysicalDevice &get_gpu() const { return *gpu_; };
 
+        const VkQueue &get_graphics_queue() const { return *graphics_queue_; }
+
         void init_device(const PhysicalDevice *gpu);
 
         void init_queues(const PhysicalDevice *gpu);

@@ -13,24 +13,43 @@ namespace vkcpp
     class CommandBuffers
     {
     private:
-        const Device *device_;
+        const Device *device_{nullptr};
 
-        const CommandPool *command_pool_;
+        const CommandPool *command_pool_{nullptr};
 
         std::vector<VkCommandBuffer> handle_;
 
         uint32_t size_{0};
 
-        VkCommandBufferLevel level_;
+        VkCommandBufferLevel level_{};
 
     public:
         CommandBuffers(const Device *device, const CommandPool *command_pool, uint32_t size, VkCommandBufferLevel level);
 
-        ~CommandBuffers() = default;
+        CommandBuffers(const CommandBuffers &) = delete;
+
+        CommandBuffers(CommandBuffers &&a) = default;
+
+        ~CommandBuffers();
+
+        CommandBuffers &operator=(CommandBuffers &&a) = default;
+
+        const VkCommandBuffer &operator[](int idx) const
+        {
+            if (idx < 0 || idx >= size_)
+            {
+                throw std::runtime_error("Command Buffer index out of bound exception.");
+            }
+            return handle_[idx];
+        }
+
+        const std::vector<VkCommandBuffer> &get_command_buffers(int idx) const { return handle_; }
 
         void init_command_buffers();
 
-        void begin_command_buffer(int command_buffer_idx);
+        void free_command_buffers();
+
+        void begin_command_buffer(int command_buffer_idx, VkCommandBufferUsageFlags flags);
 
         void begin_render_pass(int command_buffer_idx, const RenderStage *render_stage);
 

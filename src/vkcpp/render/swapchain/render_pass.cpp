@@ -18,11 +18,6 @@ namespace vkcpp
         destroy_rander_pass();
     }
 
-    const Swapchain &RenderPass::get_ref_swapchain() const
-    {
-        return *swapchain_;
-    }
-
     void RenderPass::init_render_pass()
     {
         // Describe color buffer.

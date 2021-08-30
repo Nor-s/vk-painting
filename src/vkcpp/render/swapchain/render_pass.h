@@ -30,7 +30,7 @@ namespace vkcpp
 
         operator const VkRenderPass &() const { return handle_; }
 
-        const Swapchain &get_ref_swapchain() const;
+        const Swapchain &get_swapchain() const { return *swapchain_; }
 
         void init_render_pass();
 

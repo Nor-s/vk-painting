@@ -2,7 +2,7 @@
 #define VKCPP_COMMAND_COMMAND_POOL_H
 
 #include "vulkan_header.h"
-
+#include <vector>
 namespace vkcpp
 {
     class Device;
@@ -24,6 +24,8 @@ namespace vkcpp
         void init_command_pool(VkCommandPoolCreateFlags flags, uint32_t queue_family_index);
 
         void destroy_command_pool();
+
+        void alloc_buffers(std::vector<VkCommandBuffer> &buffer, uint32_t size, VkCommandBufferLevel level) const;
     }; // class CommandPool
 } // namespace vkcpp
 

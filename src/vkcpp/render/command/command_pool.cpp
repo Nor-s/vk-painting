@@ -31,4 +31,20 @@ namespace vkcpp
             vkDestroyCommandPool(*device_, handle_, nullptr);
         }
     }
+    void CommandPool::alloc_buffers(std::vector<VkCommandBuffer> &buffer, uint32_t size, VkCommandBufferLevel level) const
+    {
+        buffer.resize(size);
+
+        VkCommandBufferAllocateInfo alloc_info{};
+
+        alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        alloc_info.commandPool = *this;
+        alloc_info.level = level;
+        alloc_info.commandBufferCount = size;
+
+        if (vkAllocateCommandBuffers(*device_, &alloc_info, buffer.data()) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to allocate command buffers!");
+        }
+    }
 } // namespace vkcpp
