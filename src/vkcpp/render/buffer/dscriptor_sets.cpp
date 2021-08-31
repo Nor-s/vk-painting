@@ -1,4 +1,4 @@
-#include "descriptor_set.h"
+#include "descriptor_sets.h"
 
 #include "device/device.h"
 
@@ -6,20 +6,20 @@
 
 namespace vkcpp
 {
-    DescriptorSet::DescriptorSet(const Device *device, uint32_t size)
+    DescriptorSets::DescriptorSets(const Device *device, uint32_t size)
         : device_(device), size_(size)
     {
         init_layout();
         init_pool();
         init_descriptor_sets();
     }
-    DescriptorSet::~DescriptorSet()
+    DescriptorSets::~DescriptorSets()
     {
         destroy_pool();
         destroy_layout();
     }
 
-    void DescriptorSet::init_layout_bindings()
+    void DescriptorSets::init_layout_bindings()
     {
         layout_bindings_.resize(2);
         VkDescriptorSetLayoutBinding &layout_binding = layout_bindings_[0];
@@ -37,22 +37,24 @@ namespace vkcpp
         sampler_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     }
 
-    void DescriptorSet::init_layout()
+    void DescriptorSets::init_layout()
     {
         init_layout_bindings();
+        VkDescriptorSetLayout layout;
 
         VkDescriptorSetLayoutCreateInfo layout_info{};
         layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         layout_info.bindingCount = layout_bindings_.size();
         layout_info.pBindings = layout_bindings_.data();
 
-        if (vkCreateDescriptorSetLayout(*device_, &layout_info, nullptr, &layout_) != VK_SUCCESS)
+        if (vkCreateDescriptorSetLayout(*device_, &layout_info, nullptr, &layout) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create descriptor set layout!");
         }
+        layouts_ = std::move(std::vector<VkDescriptorSetLayout>(size_, layout));
     }
 
-    void DescriptorSet::init_pool()
+    void DescriptorSets::init_pool()
     {
         std::array<VkDescriptorPoolSize, 2> pool_sizes{};
         pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -72,14 +74,13 @@ namespace vkcpp
         }
     }
 
-    void DescriptorSet::init_descriptor_sets()
+    void DescriptorSets::init_descriptor_sets()
     {
-        std::vector<VkDescriptorSetLayout> layouts(size_, layout_);
         VkDescriptorSetAllocateInfo alloc_info{};
         alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         alloc_info.descriptorPool = pool_;
         alloc_info.descriptorSetCount = size_;
-        alloc_info.pSetLayouts = layouts.data();
+        alloc_info.pSetLayouts = layouts_.data();
 
         descriptor_sets_.resize(size_);
         if (vkAllocateDescriptorSets(*device_, &alloc_info, descriptor_sets_.data()) != VK_SUCCESS)
@@ -88,15 +89,16 @@ namespace vkcpp
         }
     }
 
-    void DescriptorSet::destroy_layout()
+    void DescriptorSets::destroy_layout()
     {
-        if (layout_ != VK_NULL_HANDLE)
+        for (auto &layout : layouts_)
         {
-            vkDestroyDescriptorSetLayout(*device_, layout_, nullptr);
-            layout_ = VK_NULL_HANDLE;
+            vkDestroyDescriptorSetLayout(*device_, layout, nullptr);
         }
+        layouts_.resize(0);
     }
-    void DescriptorSet::destroy_pool()
+
+    void DescriptorSets::destroy_pool()
     {
         if (pool_ != VK_NULL_HANDLE)
         {
@@ -104,5 +106,4 @@ namespace vkcpp
             pool_ = VK_NULL_HANDLE;
         }
     }
-
 }

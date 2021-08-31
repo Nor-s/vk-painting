@@ -8,14 +8,14 @@ namespace vkcpp
 {
     class Device;
 
-    class DescriptorSet
+    class DescriptorSets
     {
     private:
         const Device *device_{nullptr};
 
         std::vector<VkDescriptorSetLayoutBinding> layout_bindings_;
 
-        VkDescriptorSetLayout layout_{VK_NULL_HANDLE};
+        std::vector<VkDescriptorSetLayout> layouts_;
 
         std::vector<VkDescriptorSet> descriptor_sets_;
 
@@ -24,9 +24,11 @@ namespace vkcpp
         uint32_t size_{};
 
     public:
-        DescriptorSet(const Device *device, uint32_t size);
+        DescriptorSets(const Device *device, uint32_t size);
 
-        ~DescriptorSet();
+        ~DescriptorSets();
+
+        const std::vector<VkDescriptorSetLayout> &get_layouts() const { return layouts_; }
 
         void init_layout_bindings();
 

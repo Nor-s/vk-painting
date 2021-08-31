@@ -10,7 +10,7 @@ namespace vkcpp
 {
     class Device;
     class RenderStage;
-    class DescriptorSet;
+    class DescriptorSets;
 
     class GraphicsPipeline : public Pipeline
     {
@@ -19,7 +19,7 @@ namespace vkcpp
 
         const RenderStage *render_stage_{nullptr};
 
-        const DescriptorSet *descriptor_set_{nullptr};
+        const DescriptorSets *descriptor_sets_{nullptr};
 
         std::string vert_shader_file_;
 
@@ -42,7 +42,7 @@ namespace vkcpp
     public:
         GraphicsPipeline(const Device *device,
                          const RenderStage *render_stage,
-                         const DescriptorSet *descriptor_set,
+                         const DescriptorSets *descriptor_sets,
                          std::string &vert_shader_file,
                          std::string &frag_shader_file,
                          int subpass_idx);

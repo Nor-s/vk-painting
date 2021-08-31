@@ -88,14 +88,6 @@ namespace vkcpp
 
         void init_images();
 
-        /**
-         *  components = VK_COMPONENT_SWIZZLE_IDENTITY;
-         *  aspectMask = Vk_IMAGE_ASPECT_COLOR_BIT; //for color target
-         *  miplevel,layer = 0
-         *  miplevelCount,layerCount = 1
-         */
-        VkImageView create_image_view(VkImage image, VkFormat format);
-
         void init_image_views();
     }; // class SwapChain
 

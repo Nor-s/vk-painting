@@ -5,6 +5,8 @@
 #include "render/render_stage.h"
 #include "render/swapchain/swapchain.h"
 #include "render/swapchain/render_pass.h"
+#include "render/buffer/vertex.hpp"
+#include "render/buffer/descriptor_sets.h"
 
 #include <iostream>
 
@@ -12,13 +14,13 @@ namespace vkcpp
 {
     GraphicsPipeline::GraphicsPipeline(const Device *device,
                                        const RenderStage *render_stage,
-                                       const DescriptorSet *descriptor_set,
+                                       const DescriptorSets *descriptor_sets,
                                        std::string &vert_shader_file,
                                        std::string &frag_shader_file,
                                        int subpass_idx)
         : device_(device),
           render_stage_(render_stage),
-          descriptor_set_(descriptor_set),
+          descriptor_sets_(descriptor_sets),
           vert_shader_file_(vert_shader_file),
           frag_shader_file_(frag_shader_file),
           subpass_idx_(subpass_idx),
@@ -70,11 +72,11 @@ namespace vkcpp
 
         vertex_input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
-        auto bindingDescription = Shader::Vertex2D::getBindingDescription();
+        auto bindingDescription = Vertex2D::getBindingDescription();
         vertex_input_info.vertexBindingDescriptionCount = 1;
         vertex_input_info.pVertexBindingDescriptions = &bindingDescription;
 
-        auto attributeDescriptions = Shader::Vertex2D::getAttributeDescriptions();
+        auto attributeDescriptions = Vertex2D::getAttributeDescriptions();
         vertex_input_info.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
         vertex_input_info.pVertexAttributeDescriptions = attributeDescriptions.data();
     }
@@ -169,8 +171,8 @@ namespace vkcpp
     {
         VkPipelineLayoutCreateInfo pipeline_layout_info{};
         pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipeline_layout_info.setLayoutCount = 1;
-        pipeline_layout_info.pSetLayouts = &descriptor_set_layout_;
+        pipeline_layout_info.setLayoutCount = descriptor_sets_->get_layouts().size();
+        pipeline_layout_info.pSetLayouts = descriptor_sets_->get_layouts().data();
         pipeline_layout_info.pushConstantRangeCount = 0; // Optional
         pipeline_layout_info.pPushConstantRanges = 0;    // Optionnal
 

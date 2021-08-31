@@ -3,11 +3,7 @@
 
 #include "vulkan_header.h"
 
-#include "device/device.h"
-#include "device/physical_device.h"
-#include "render/command/command_pool.h"
-#include "render/command/command_buffers.h"
-#include "vertex.hpp"
+#include "base_buffer.h"
 
 #include <iostream>
 #include <array>
@@ -15,16 +11,11 @@
 
 namespace vkcpp
 {
-    class Device;
-
+    class CommandPool;
     template <typename T>
-    class Buffer
+    class Buffer : public BaseBuffer
     {
     protected:
-        const Device *device_{nullptr};
-
-        const CommandPool *command_pool_{nullptr};
-
         const std::vector<T> *src_data_;
 
         VkBuffer handle_{VK_NULL_HANDLE};
@@ -34,7 +25,7 @@ namespace vkcpp
         VkBufferUsageFlagBits usage_;
 
     public:
-        Buffer() = default;
+        //Buffer() = default;
 
         Buffer(const Device *device,
                const CommandPool *command_pool,
@@ -55,17 +46,6 @@ namespace vkcpp
         void destroy_buffer();
 
         void free_memory();
-
-    private:
-        CommandBuffers begin_single_time_cmd();
-
-        void end_single_time_cmd(CommandBuffers &cmd_buffer);
-
-        uint32_t find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags properties);
-
-        void copy_buffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-
-        void create_buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &memory);
 
         void create_host_memory();
 

@@ -6,21 +6,24 @@
 #include "vertex.hpp"
 #include <memory>
 #include <chrono>
-#include "descriptor_set.h"
+#include "descriptor_sets.h"
+#include "render/image/image.h"
 
 namespace vkcpp
 {
     template <typename T>
-    class UniformBuffers : public DescriptorSet
+    class UniformBuffers : public DescriptorSets
     {
     private:
+        const Image *image_;
+
         std::vector<std::uniq_ptr<Buffer<T>>> handle_;
 
     public:
         UniformBuffers() = delete ();
 
-        UniformBuffers(const Device *device_, uint32_t size)
-            : DescriptorSet(device_, size)
+        UniformBuffers(const Device *device_, const Image *image uint32_t size)
+            : DescriptorSet(device_, size), image_(image)
         {
             init_uniform_buffers();
         }
@@ -67,6 +70,7 @@ namespace vkcpp
             memcpy(*dst_data, &src_data, sizeof(src_data));
             vkUnmapMemory(*device_, handle_[idx]);
         }
+
         void update_descriptor()
         {
             for (size_t i = 0; i < size_; i++)
@@ -78,8 +82,8 @@ namespace vkcpp
 
                 VkDescriptorImageInfo image_info{};
                 image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                image_info.imageView = textureImageView;
-                image_info.sampler = textureSampler;
+                image_info.imageView = image_->get_image_view();
+                image_info.sampler = image_->get_sampler();
 
                 std::array<VkWriteDescriptorSet, 2> descriptor_writes{};
 
