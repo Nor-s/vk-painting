@@ -17,7 +17,7 @@ namespace vkcpp
     void RenderStage::init_render_stage()
     {
         render_pass_ = std::make_unique<RenderPass>(device_, swapchain_);
-        framebuffers_ = std::make_unique<Framebuffers>(device_, render_pass_);
+        framebuffers_ = std::make_unique<Framebuffers>(device_, render_pass_.get());
 
         VkExtent2D extent = swapchain_->get_properties().extent;
         render_area_.offset.x = 0.0;

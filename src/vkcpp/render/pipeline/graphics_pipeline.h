@@ -5,6 +5,7 @@
 #include "pipeline.hpp"
 
 #include <memory>
+#include <string>
 
 namespace vkcpp
 {
@@ -48,12 +49,16 @@ namespace vkcpp
                          int subpass_idx);
 
         virtual ~GraphicsPipeline();
+        const VkPipelineLayout &get_pipeline_layout() const override
+        {
+            return layout_;
+        };
 
-        virtual const VkPipeline &get_pipeline() const override
+        const VkPipeline &get_pipeline() const override
         {
             return handle_;
         }
-        virtual const VkPipelineBindPoint &get_pipeline_bind_point() const override
+        const VkPipelineBindPoint &get_pipeline_bind_point() const override
         {
             return pipeline_bind_point_;
         }

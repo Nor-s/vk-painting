@@ -1,5 +1,7 @@
 #include "application.h"
 
+#include "render/buffer/buffer.h"
+
 namespace painting
 {
     void PaintingApplication::run(uint32_t width, uint32_t height, std::string title)
@@ -13,12 +15,19 @@ namespace painting
     {
         vkcpp::MainWindow::getInstance()->set_window(width, height, title);
     }
+
     void PaintingApplication::init_vulkan()
     {
+        std::vector<uint16_t> indices_ = {0, 1, 2, 2, 3, 0};
         init_instance();
         init_surface();
         init_device();
-        init_swapchain();
+        swapchain_ = std::make_unique<vkcpp::Swapchain>(device_.get(), surface_.get());
+        render_stage_ = std::make_unique<vkcpp::RenderStage>(device_.get(), swapchain_.get());
+        command_pool_ = std::make_unique<vkcpp::CommandPool>(device_.get(), 0, device_->get_gpu().get_queue_family_indices().graphics_family.value());
+
+        vkcpp::Buffer a(device_.get(), command_pool_.get(), &indices_, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, true);
+        //  createSyncObjects();
     }
     void PaintingApplication::init_instance()
     {
@@ -43,10 +52,6 @@ namespace painting
 
         device_ = std::make_unique<vkcpp::Device>(gpu, surface_.get());
     }
-    void PaintingApplication::init_swapchain()
-    {
-        swapchain_ = std::make_unique<vkcpp::Swapchain>(device_.get(), surface_.get());
-    }
     void PaintingApplication::draw_frame()
     {
     }
@@ -66,6 +71,8 @@ namespace painting
         //state reset
         //gui reset
         //render context reset
+        command_pool_.reset();
+        render_stage_.reset();
         swapchain_.reset();
         device_.reset();
         surface_.reset();

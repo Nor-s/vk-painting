@@ -5,18 +5,14 @@
 
 #include "base_buffer.h"
 
-#include <iostream>
-#include <array>
 #include <vector>
 
 namespace vkcpp
 {
-    class CommandPool;
-    template <typename T>
     class Buffer : public BaseBuffer
     {
     protected:
-        const std::vector<T> *src_data_;
+        std::vector<uint16_t> *src_data_;
 
         VkBuffer handle_{VK_NULL_HANDLE};
 
@@ -25,21 +21,23 @@ namespace vkcpp
         VkBufferUsageFlagBits usage_;
 
     public:
-        //Buffer() = default;
+        Buffer() = default;
 
         Buffer(const Device *device,
                const CommandPool *command_pool,
-               const std::vector<T> *src_data,
+               std::vector<uint16_t> *src_data,
                VkBufferUsageFlagBits usage,
                bool is_local);
 
         virtual ~Buffer();
 
-        operator const VkBuffer &() const { return handle_; }
+        operator const VkBuffer &() const;
 
-        virtual VkBuffer &get_mutable_buffer();
+        const VkBuffer &get_buffer() const;
 
-        virtual VkDeviceMemory &get_mutable_memory();
+        VkBuffer &get_mutable_buffer();
+
+        VkDeviceMemory &get_mutable_memory();
 
         void init_buffer(bool is_local);
 

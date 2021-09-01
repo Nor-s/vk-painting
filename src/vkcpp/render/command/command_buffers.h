@@ -3,12 +3,14 @@
 
 #include "vulkan_header.h"
 #include <vector>
+#include <iostream>
 
 namespace vkcpp
 {
     class Device;
     class CommandPool;
     class RenderStage;
+    class Pipeline;
 
     class CommandBuffers
     {
@@ -18,8 +20,6 @@ namespace vkcpp
         const CommandPool *command_pool_{nullptr};
 
         std::vector<VkCommandBuffer> handle_;
-
-        uint32_t size_{0};
 
         VkCommandBufferLevel level_{};
 
@@ -36,14 +36,14 @@ namespace vkcpp
 
         const VkCommandBuffer &operator[](int idx) const
         {
-            if (idx < 0 || idx >= size_)
+            if (idx < 0 || idx >= handle_.size())
             {
                 throw std::runtime_error("Command Buffer index out of bound exception.");
             }
             return handle_[idx];
         }
 
-        const std::vector<VkCommandBuffer> &get_command_buffers(int idx) const { return handle_; }
+        const VkCommandBuffer &get_command_buffers(int idx) const { return handle_[idx]; }
 
         void init_command_buffers();
 

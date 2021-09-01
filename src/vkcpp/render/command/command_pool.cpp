@@ -7,16 +7,21 @@
 
 namespace vkcpp
 {
-    CommandPool::CommandPool(const Device *device, VkCommandPoolCreateFlags flags, uint32_t queue_family_idx)
+    CommandPool::CommandPool(Device *device, VkCommandPoolCreateFlags flags, uint32_t queue_family_idx)
+        : device_(device), queue_family_idx_(queue_family_idx)
     {
         init_command_pool(flags, queue_family_idx);
+    }
+    CommandPool::~CommandPool()
+    {
+        destroy_command_pool();
     }
 
     void CommandPool::init_command_pool(VkCommandPoolCreateFlags flags, uint32_t queue_family_idx)
     {
         VkCommandPoolCreateInfo pool_info{};
         pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        pool_info.queueFamilyIndex = queue_family_idx_ = queue_family_idx;
+        pool_info.queueFamilyIndex = queue_family_idx;
         pool_info.flags = flags;
 
         if (vkCreateCommandPool(*device_, &pool_info, nullptr, &handle_) != VK_SUCCESS)

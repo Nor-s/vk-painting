@@ -10,7 +10,7 @@ namespace vkcpp
 
     class DescriptorSets
     {
-    private:
+    protected:
         const Device *device_{nullptr};
 
         std::vector<VkDescriptorSetLayoutBinding> layout_bindings_;
@@ -26,7 +26,9 @@ namespace vkcpp
     public:
         DescriptorSets(const Device *device, uint32_t size);
 
-        ~DescriptorSets();
+        virtual ~DescriptorSets();
+
+        const std::vector<VkDescriptorSet> &get_sets() const { return descriptor_sets_; }
 
         const std::vector<VkDescriptorSetLayout> &get_layouts() const { return layouts_; }
 

@@ -15,7 +15,9 @@
 #include "device/surface.h"
 #include "device/physical_device.h"
 #include "device/device.h"
+#include "render/render_stage.h"
 #include "render/swapchain/swapchain.h"
+#include "render/command/command_pool.h"
 
 namespace painting
 {
@@ -38,13 +40,14 @@ namespace painting
         std::unique_ptr<vkcpp::Surface> surface_{nullptr};
         std::unique_ptr<vkcpp::Device> device_{nullptr};
         std::unique_ptr<vkcpp::Swapchain> swapchain_{nullptr};
+        std::unique_ptr<vkcpp::RenderStage> render_stage_{nullptr};
+        std::unique_ptr<vkcpp::CommandPool> command_pool_{nullptr};
 
         void init_window(uint32_t width, uint32_t height, std::string title);
         void init_vulkan();
         void init_instance();
         void init_surface();
         void init_device();
-        void init_swapchain();
         /*
         void init_render_context();
         void int_gui();

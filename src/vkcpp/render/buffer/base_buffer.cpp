@@ -2,6 +2,7 @@
 #include "render/command/command_pool.h"
 #include "render/command/command_buffers.h"
 #include "device/physical_device.h"
+#include "device/device.h"
 
 #include <iostream>
 
@@ -12,10 +13,12 @@ namespace vkcpp
     {
     }
 
+    BaseBuffer::~BaseBuffer()
+    {
+    }
     CommandBuffers BaseBuffer::begin_single_time_cmd()
     {
         CommandBuffers cmd_buffer(device_, command_pool_, 1, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-
         cmd_buffer.begin_command_buffer(0, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
         return cmd_buffer;
@@ -28,7 +31,7 @@ namespace vkcpp
         VkSubmitInfo submit_info{};
         submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submit_info.commandBufferCount = 1;
-        submit_info.pCommandBuffers = &cmd_buffer[0];
+        submit_info.pCommandBuffers = &(cmd_buffer.get_command_buffers(0));
 
         vkQueueSubmit(device_->get_graphics_queue(), 1, &submit_info, VK_NULL_HANDLE);
         vkQueueWaitIdle(device_->get_graphics_queue());
@@ -53,15 +56,18 @@ namespace vkcpp
 
     void BaseBuffer::copy_buffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
     {
-        CommandBuffers cmd_buffer = std::move(begin_single_time_cmd());
+        CommandBuffers cmd_buffer = std::move()
 
+        std::cout << "begin \n";
         VkBufferCopy copy_region{};
         copy_region.srcOffset = 0; // Optional
         copy_region.dstOffset = 0; // Optional
         copy_region.size = size;
         vkCmdCopyBuffer(cmd_buffer[0], srcBuffer, dstBuffer, 1, &copy_region);
+        std::cout << "end start \n";
 
         end_single_time_cmd(cmd_buffer);
+        std::cout << "end end \n";
     }
 
     void BaseBuffer::create_buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &memory)
@@ -75,6 +81,7 @@ namespace vkcpp
 
         if (vkCreateBuffer(*device_, &buffer_info, nullptr, &buffer) != VK_SUCCESS)
         {
+            std::cout << "Failed to create buffer\n";
             throw std::runtime_error("failed to create buffer!");
         }
 

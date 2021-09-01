@@ -2,7 +2,9 @@
 #define VKCPP_DEVICE_DEVICE_H
 
 #include "vulkan_header.h"
+#include "queue.h"
 #include <memory>
+#include <iostream>
 
 namespace vkcpp
 {
@@ -11,8 +13,6 @@ namespace vkcpp
     class Surface;
 
     class PhysicalDevice;
-
-    class Queue;
 
     /**
      *  @brief A wrapper class for VkDevice
@@ -39,7 +39,14 @@ namespace vkcpp
 
         ~Device();
 
-        operator const VkDevice &() const { return handle_; }
+        operator const VkDevice &() const
+        {
+            if (handle_ == VK_NULL_HANDLE)
+            {
+                throw std::runtime_error("failed to get device");
+            }
+            return handle_;
+        }
 
         const PhysicalDevice &get_gpu() const { return *gpu_; };
 

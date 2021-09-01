@@ -27,7 +27,7 @@ namespace vkcpp
     public:
         RenderStage(const Device *deivce, const Swapchain *swapchain);
 
-        ~RenderStage();
+        virtual ~RenderStage();
 
         const Swapchain &get_swapchain() const { return *swapchain_; }
 

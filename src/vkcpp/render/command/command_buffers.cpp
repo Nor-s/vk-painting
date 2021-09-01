@@ -13,13 +13,35 @@
 namespace vkcpp
 {
     CommandBuffers::CommandBuffers(const Device *device, const CommandPool *command_pool, uint32_t size, VkCommandBufferLevel level)
-        : device_(device), command_pool_(command_pool), size_(size), level_(level)
+        : device_(device), command_pool_(command_pool), level_(level)
     {
+        handle_.resize(size);
         init_command_buffers();
     }
+
+    CommandBuffers::CommandBuffers(CommandBuffers &&a)
+        : device_(a.device_), command_pool_(a.command_pool_), level_(a.level_), handle_(std::move(a.handle_))
+    {
+    }
+
     CommandBuffers::~CommandBuffers()
     {
         free_command_buffers();
+    }
+
+    CommandBuffers &CommandBuffers::operator=(CommandBuffers &&a)
+    {
+        if (this != &a)
+        {
+            device_ = a.device_;
+            command_pool_ = a.command_pool_;
+            size_ = a.size_;
+            level_ = a.level_;
+            handle_ = std::move(a.handle_);
+
+            a.size_ = 0;
+        }
+        return *this;
     }
 
     void CommandBuffers::init_command_buffers()
@@ -28,14 +50,15 @@ namespace vkcpp
         {
             throw std::runtime_error("failed to allocate command buffers : command pool is nullptr!");
         }
-        command_pool_->alloc_buffers(handle_, size_, level_);
+        command_pool_->alloc_buffers(handle_, handle_.size(), level_);
     }
 
     void CommandBuffers::free_command_buffers()
     {
-        if (size_ > 0)
+        if (handle_.size() > 0)
         {
-            vkFreeCommandBuffers(*device_, *command_pool_, size_, handle_.data());
+            std::cout << handle_.size() << "\n\n";
+            vkFreeCommandBuffers(*device_, *command_pool_, handle_.size(), handle_.data());
         }
     }
 

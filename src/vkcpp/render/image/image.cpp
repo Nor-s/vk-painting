@@ -1,6 +1,5 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "image.h"
-#include "helper_image.hpp"
 #include "device/device.h"
 #include "device/physical_device.h"
 #include "render/command/command_buffers.h"
@@ -9,6 +8,17 @@
 
 namespace vkcpp
 {
+    Image::Image(const Device *device, const CommandPool *command_pool, const std::string &filename)
+        : BaseBuffer(device, command_pool), filename_(filename)
+    {
+        init_texture_image();
+        init_texture_image_view();
+        init_texture_sampler();
+    }
+    Image::~Image()
+    {
+        destroy_image();
+    }
     void Image::init_texture_image()
     {
         int tex_width, tex_height, tex_channels;
@@ -197,7 +207,7 @@ namespace vkcpp
 
     void Image::init_texture_image_view()
     {
-        view_ = createImageView(device_, handle_, VK_FORMAT_R8G8B8A8_SRGB);
+        view_ = create_image_view(device_, handle_, VK_FORMAT_R8G8B8A8_SRGB);
     }
 
     void Image::init_texture_sampler()

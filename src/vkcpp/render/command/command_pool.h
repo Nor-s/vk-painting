@@ -10,14 +10,16 @@ namespace vkcpp
     class CommandPool
     {
     private:
-        const Device *device_;
+        Device *device_;
 
         VkCommandPool handle_;
 
         uint32_t queue_family_idx_;
 
     public:
-        CommandPool(const Device *device, VkCommandPoolCreateFlags flags, uint32_t queue_family_index);
+        CommandPool(Device *device, VkCommandPoolCreateFlags flags, uint32_t queue_family_index);
+
+        ~CommandPool();
 
         operator const VkCommandPool &() const { return handle_; }
 

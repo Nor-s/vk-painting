@@ -3,6 +3,7 @@
 
 #include "vulkan_header.h"
 #include <vector>
+#include "render/image/base_image.h"
 
 namespace vkcpp
 {
@@ -33,7 +34,7 @@ namespace vkcpp
         VkBool32 clipped;
     };
 
-    class Swapchain
+    class Swapchain : BaseImage
     {
     private:
         const Device *device_;

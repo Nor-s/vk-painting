@@ -39,7 +39,10 @@ namespace vkcpp
         {
             vkCmdBindPipeline(command_buffer, get_pipeline_bind_point(), get_pipeline());
         }
+        virtual const VkPipelineLayout &get_pipeline_layout() const = 0;
+
         virtual const VkPipeline &get_pipeline() const = 0;
+
         virtual const VkPipelineBindPoint &get_pipeline_bind_point() const = 0;
 
     }; // class GraphicsPipeline

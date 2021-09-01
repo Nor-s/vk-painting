@@ -1,10 +1,5 @@
-#ifndef VKCPP_RENDER_IMAGE_BASE_IMAGE_HPP
-#define VKCPP_RENDER_IMAGE_BASE_IMAGE_HPP
 
-#include "vulkan_header.h"
-#include "device/device.h"
-#include <iostream>
-
+#include "base_image.h"
 namespace vkcpp
 {
     /**
@@ -13,7 +8,7 @@ namespace vkcpp
      *  miplevel,layer = 0
      *  miplevelCount,layerCount = 1
      */
-    VkImageView createImageView(const Device *device, VkImage image, VkFormat format)
+    VkImageView BaseImage::create_image_view(const Device *device, VkImage image, VkFormat format)
     {
         // Specify createinfo.
         VkImageViewCreateInfo view_info{};
@@ -43,6 +38,4 @@ namespace vkcpp
 
         return image_view;
     }
-} // namespace vkcpp
-
-#endif // #ifndef VKCPP_RENDER_IMAGE_BASE_IMAGE_HPP
+}

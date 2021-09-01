@@ -4,12 +4,13 @@
 #include "stb/stb_image.h"
 #include "vulkan_header.h"
 #include "render/buffer/base_buffer.h"
+#include "base_image.h"
 
 #include <string>
 
 namespace vkcpp
 {
-    class Image : public BaseBuffer
+    class Image : public BaseBuffer, public BaseImage
     {
     private:
         std::string filename_;
@@ -23,10 +24,13 @@ namespace vkcpp
         VkDeviceMemory memory_{VK_NULL_HANDLE};
 
     public:
-        Image(const Device *device, const CommandPool *command_pool);
+        Image(const Device *device, const CommandPool *command_pool, const std::string &filename);
 
-        const VkImageView &get_image_view() { return view_; }
-        const VkSampler &get_sampler() { return sampler_; }
+        virtual ~Image();
+
+        const VkImageView &get_image_view() const { return view_; }
+
+        const VkSampler &get_sampler() const { return sampler_; }
 
         void init_texture_image();
 

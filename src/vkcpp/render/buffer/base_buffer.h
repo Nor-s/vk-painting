@@ -3,14 +3,13 @@
 
 #include "vulkan_header.h"
 
-#include "device/device.h"
-
 namespace vkcpp
 {
     class CommandBuffers;
 
     class CommandPool;
 
+    class Device;
     class BaseBuffer
     {
     protected:
@@ -19,7 +18,9 @@ namespace vkcpp
         const CommandPool *command_pool_{nullptr};
 
     public:
+        BaseBuffer() = default;
         BaseBuffer(const Device *device, const CommandPool *command_pool);
+        virtual ~BaseBuffer();
 
     protected:
         CommandBuffers begin_single_time_cmd();

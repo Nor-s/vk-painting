@@ -1,11 +1,7 @@
 #ifndef VKCPP_RENDER_OBJECT_SHADER_MODULE_H
 #define VKCPP_RENDER_OBJECT_SHADER_MODULE_H
 
-#include "vulkan_header.h"
-
-#define GLM_FORCE_RADIANS
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include "render/buffer/vertex.hpp"
 
 #include <array>
 #include <string>
@@ -16,6 +12,7 @@ namespace vkcpp
 
     class Shader
     {
+    private:
     public:
         /**
          *  create shaderModule using spirv code

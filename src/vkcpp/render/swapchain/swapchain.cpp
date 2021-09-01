@@ -4,7 +4,6 @@
 #include "device/surface.h"
 #include "device/physical_device.h"
 #include "device/device.h"
-#include "image/helper_image.hpp"
 
 #include <algorithm>
 
@@ -151,7 +150,7 @@ namespace vkcpp
 
         for (size_t i = 0; i < images_.size(); i++)
         {
-            image_views_[i] = createImageView(device_, images_[i], properties_.surface_format.format);
+            image_views_[i] = create_image_view(device_, images_[i], properties_.surface_format.format);
         }
     }
 } // namespace vkcpp
