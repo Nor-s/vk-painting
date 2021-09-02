@@ -17,7 +17,7 @@
                 "${workspaceRoot}/src/vkcpp/render/buffer/*.cpp",
                 "${workspaceRoot}/src/vkcpp/render/swapchain/*.cpp",
                 "${workspaceRoot}/src/vkcpp/render/*.cpp",
-                //   "${workspaceRoot}/src/vkcpp/object/*.cpp",
+                "${workspaceRoot}/src/vkcpp/object/*.cpp",
                 "${workspaceRoot}/src/class/*.cpp",
                 "${workspaceRoot}/src/*.cpp",
                 "-o",

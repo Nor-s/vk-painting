@@ -51,7 +51,7 @@ namespace vkcpp
         {
             throw std::runtime_error("failed to create descriptor set layout!");
         }
-        layouts_ = std::move(std::vector<VkDescriptorSetLayout>(size_, layout));
+        layouts_ = std::vector<VkDescriptorSetLayout>(size_, layout);
     }
 
     void DescriptorSets::init_pool()
@@ -91,9 +91,9 @@ namespace vkcpp
 
     void DescriptorSets::destroy_layout()
     {
-        for (auto &layout : layouts_)
+        if (layouts_.size() > 0)
         {
-            vkDestroyDescriptorSetLayout(*device_, layout, nullptr);
+            vkDestroyDescriptorSetLayout(*device_, layouts_[0], nullptr);
         }
         layouts_.resize(0);
     }

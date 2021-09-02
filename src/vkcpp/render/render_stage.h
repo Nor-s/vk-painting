@@ -14,6 +14,7 @@ namespace vkcpp
     {
     private:
         const Device *device_;
+
         const Swapchain *swapchain_;
 
         std::unique_ptr<RenderPass> render_pass_;

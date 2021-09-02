@@ -3,6 +3,7 @@
 
 #include "vulkan_header.h"
 
+#include <iostream>
 namespace vkcpp
 {
     class CommandBuffers;
@@ -20,7 +21,10 @@ namespace vkcpp
     public:
         BaseBuffer() = default;
         BaseBuffer(const Device *device, const CommandPool *command_pool);
+        BaseBuffer(const BaseBuffer &) = delete;
+        BaseBuffer(BaseBuffer &&a);
         virtual ~BaseBuffer();
+        BaseBuffer &operator=(BaseBuffer &&a);
 
     protected:
         CommandBuffers begin_single_time_cmd();

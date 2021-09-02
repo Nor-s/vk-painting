@@ -1,7 +1,4 @@
-#include "uniform_buffers.h"
-#include "device/device.h"
-#include "descriptor_sets.h"
-#include "render/image/image.h"
+
 
 namespace vkcpp
 {
@@ -10,12 +7,12 @@ namespace vkcpp
         : DescriptorSets(device_, size), image_(image)
     {
         init_uniform_buffers();
+        update_descriptor();
     }
 
     template <typename T>
     UniformBuffers<T>::~UniformBuffers()
     {
-        std::cout << "destroy\n";
         destroy_uniform_buffers();
     }
 
@@ -29,7 +26,7 @@ namespace vkcpp
         for (int i = 0; i < size_; i++)
         {
             handle_.emplace_back(
-                Buffer(
+                Buffer<T>(
                     device_,
                     nullptr,
                     nullptr,
@@ -68,7 +65,7 @@ namespace vkcpp
         for (size_t i = 0; i < size_; i++)
         {
             VkDescriptorBufferInfo buffer_info{};
-            buffer_info.buffer = *handle_[i];
+            buffer_info.buffer = handle_[i];
             buffer_info.offset = 0;
             buffer_info.range = sizeof(T); // or VK_WHOLE_SIZE
 

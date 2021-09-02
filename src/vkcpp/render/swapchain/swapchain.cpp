@@ -14,6 +14,7 @@ namespace vkcpp
     {
         init_swapchain(device_, surface_);
         init_images();
+        init_image_views();
     }
 
     Swapchain::~Swapchain()

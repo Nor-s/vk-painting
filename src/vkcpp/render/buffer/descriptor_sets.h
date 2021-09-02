@@ -7,7 +7,9 @@
 namespace vkcpp
 {
     class Device;
-
+    /**
+     * layouts_ : point same layout. therefore destroy one layout.
+     */
     class DescriptorSets
     {
     protected:
@@ -43,6 +45,7 @@ namespace vkcpp
         void destroy_layout();
 
         void destroy_pool();
+
     }; // class
 
 } // namespace vkcpp

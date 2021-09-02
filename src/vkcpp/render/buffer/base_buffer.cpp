@@ -12,10 +12,30 @@ namespace vkcpp
         : device_(device), command_pool_(command_pool)
     {
     }
-
+    BaseBuffer::BaseBuffer(BaseBuffer &&a)
+        : device_(a.device_), command_pool_(a.command_pool_)
+    {
+        a.device_ = nullptr;
+        a.command_pool_ = nullptr;
+    }
     BaseBuffer::~BaseBuffer()
     {
+        device_ = nullptr;
+        command_pool_ = nullptr;
     }
+    BaseBuffer &BaseBuffer::operator=(BaseBuffer &&a)
+    {
+        if (this != &a)
+        {
+            device_ = a.device_;
+            command_pool_ = a.command_pool_;
+            a.device_ = nullptr;
+            a.command_pool_ = nullptr;
+        }
+
+        return *this;
+    }
+
     CommandBuffers BaseBuffer::begin_single_time_cmd()
     {
         CommandBuffers cmd_buffer(device_, command_pool_, 1, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
@@ -56,18 +76,15 @@ namespace vkcpp
 
     void BaseBuffer::copy_buffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
     {
-        CommandBuffers cmd_buffer = std::move()
+        CommandBuffers cmd_buffer = std::move(begin_single_time_cmd());
 
-        std::cout << "begin \n";
         VkBufferCopy copy_region{};
         copy_region.srcOffset = 0; // Optional
         copy_region.dstOffset = 0; // Optional
         copy_region.size = size;
         vkCmdCopyBuffer(cmd_buffer[0], srcBuffer, dstBuffer, 1, &copy_region);
-        std::cout << "end start \n";
 
         end_single_time_cmd(cmd_buffer);
-        std::cout << "end end \n";
     }
 
     void BaseBuffer::create_buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &memory)
@@ -81,7 +98,6 @@ namespace vkcpp
 
         if (vkCreateBuffer(*device_, &buffer_info, nullptr, &buffer) != VK_SUCCESS)
         {
-            std::cout << "Failed to create buffer\n";
             throw std::runtime_error("failed to create buffer!");
         }
 

@@ -18,11 +18,14 @@
 #include "render/render_stage.h"
 #include "render/swapchain/swapchain.h"
 #include "render/command/command_pool.h"
-
+#include "object/object.h"
+#include "render/command/command_buffers.h"
 namespace painting
 {
     class PaintingApplication
     {
+        const int MAX_FRAMES_IN_FLIGHT = 3;
+
     public:
         std::vector<const char *> device_extensions_ = {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME
@@ -42,12 +45,14 @@ namespace painting
         std::unique_ptr<vkcpp::Swapchain> swapchain_{nullptr};
         std::unique_ptr<vkcpp::RenderStage> render_stage_{nullptr};
         std::unique_ptr<vkcpp::CommandPool> command_pool_{nullptr};
+        std::unique_ptr<vkcpp::Object> object_{nullptr};
+        std::unique_ptr<vkcpp::CommandBuffers> command_buffers_{nullptr};
 
         void init_window(uint32_t width, uint32_t height, std::string title);
-        void init_vulkan();
-        void init_instance();
-        void init_surface();
         void init_device();
+        void init_render();
+        void init_synobj();
+        void init_frame();
         /*
         void init_render_context();
         void int_gui();

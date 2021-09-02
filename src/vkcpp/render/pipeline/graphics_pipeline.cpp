@@ -26,14 +26,11 @@ namespace vkcpp
           subpass_idx_(subpass_idx),
           pipeline_bind_point_(VK_PIPELINE_BIND_POINT_GRAPHICS)
     {
-        init_shader_stage_create_info_vec();
-        init_vertex_input_state_create_info();
         init_input_assembly_state_create_info();
         init_viewport_state_create_info();
         init_rasterization_state_create_info();
         init_multisample_state_create_info();
         // Todo: VkPipelineDepthStencilStateCreateInfo = create
-        init_color_blend_state_create_info();
         init_dynamic_state_create_info();
         init_pipeline_layout();
         init_pipeline();
@@ -42,43 +39,6 @@ namespace vkcpp
     GraphicsPipeline::~GraphicsPipeline()
     {
         destroy();
-    }
-
-    void GraphicsPipeline::init_shader_stage_create_info_vec()
-    {
-        vert_shader_module_ = Shader::createShaderModule(device_, vert_shader_file_);
-        frag_shader_module_ = Shader::createShaderModule(device_, frag_shader_file_);
-
-        VkPipelineShaderStageCreateInfo vert_shader_stage_create_info{};
-
-        vert_shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        vert_shader_stage_create_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
-        vert_shader_stage_create_info.module = vert_shader_module_;
-        vert_shader_stage_create_info.pName = "main";
-
-        VkPipelineShaderStageCreateInfo frag_shader_stage_create_info{};
-
-        frag_shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        frag_shader_stage_create_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-        frag_shader_stage_create_info.module = frag_shader_module_;
-        frag_shader_stage_create_info.pName = "main";
-
-        info_.shader_stages = {vert_shader_stage_create_info, frag_shader_stage_create_info};
-    }
-
-    void GraphicsPipeline::init_vertex_input_state_create_info()
-    {
-        VkPipelineVertexInputStateCreateInfo &vertex_input_info = info_.vertex_input_state;
-
-        vertex_input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-
-        auto bindingDescription = Vertex2D::getBindingDescription();
-        vertex_input_info.vertexBindingDescriptionCount = 1;
-        vertex_input_info.pVertexBindingDescriptions = &bindingDescription;
-
-        auto attributeDescriptions = Vertex2D::getAttributeDescriptions();
-        vertex_input_info.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-        vertex_input_info.pVertexAttributeDescriptions = attributeDescriptions.data();
     }
 
     void GraphicsPipeline::init_input_assembly_state_create_info()
@@ -128,8 +88,64 @@ namespace vkcpp
         multisampling.alphaToOneEnable = VK_FALSE;      // Optional
     }
 
-    void GraphicsPipeline::init_color_blend_state_create_info()
+    void GraphicsPipeline::init_dynamic_state_create_info()
     {
+        VkPipelineDynamicStateCreateInfo &dynamic_state = info_.dynamic_state;
+        dynamic_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        dynamic_state.dynamicStateCount = 3;
+        dynamic_state.pDynamicStates = dynamic_states_;
+    }
+
+    void GraphicsPipeline::init_pipeline_layout()
+    {
+        VkPipelineLayoutCreateInfo pipeline_layout_info{};
+        pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipeline_layout_info.setLayoutCount = descriptor_sets_->get_layouts().size();
+        pipeline_layout_info.pSetLayouts = descriptor_sets_->get_layouts().data();
+        pipeline_layout_info.pushConstantRangeCount = 0; // Optional
+        pipeline_layout_info.pPushConstantRanges = 0;    // Optionnal
+
+        if (vkCreatePipelineLayout(*device_, &pipeline_layout_info, nullptr, &layout_) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create pipeline layout!");
+        }
+    }
+
+    void GraphicsPipeline::init_pipeline()
+    {
+        // Shader Stages
+        vert_shader_module_ = Shader::createShaderModule(device_, vert_shader_file_);
+        frag_shader_module_ = Shader::createShaderModule(device_, frag_shader_file_);
+
+        VkPipelineShaderStageCreateInfo vert_shader_stage_create_info{};
+
+        vert_shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        vert_shader_stage_create_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
+        vert_shader_stage_create_info.module = vert_shader_module_;
+        vert_shader_stage_create_info.pName = "main";
+
+        VkPipelineShaderStageCreateInfo frag_shader_stage_create_info{};
+
+        frag_shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        frag_shader_stage_create_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+        frag_shader_stage_create_info.module = frag_shader_module_;
+        frag_shader_stage_create_info.pName = "main";
+        info_.shader_stages = {vert_shader_stage_create_info, frag_shader_stage_create_info};
+
+        // Vertex Input
+        VkPipelineVertexInputStateCreateInfo &vertex_input_info = info_.vertex_input_state;
+
+        vertex_input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+        auto bindingDescription = Vertex2D::getBindingDescription();
+        vertex_input_info.vertexBindingDescriptionCount = 1;
+        vertex_input_info.pVertexBindingDescriptions = &bindingDescription;
+
+        auto attributeDescriptions = Vertex2D::getAttributeDescriptions();
+        vertex_input_info.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+        vertex_input_info.pVertexAttributeDescriptions = attributeDescriptions.data();
+
+        // ColorBlendAttachment
         VkPipelineColorBlendAttachmentState color_blend_attachment{};
 
         color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -152,39 +168,8 @@ namespace vkcpp
         color_blending.blendConstants[1] = 0.0f; // Optional
         color_blending.blendConstants[2] = 0.0f; // Optional
         color_blending.blendConstants[3] = 0.0f; // Optional
-    }
 
-    void GraphicsPipeline::init_dynamic_state_create_info()
-    {
-        VkDynamicState dynamic_states[3] = {
-            VK_DYNAMIC_STATE_VIEWPORT,
-            VK_DYNAMIC_STATE_SCISSOR,
-            VK_DYNAMIC_STATE_LINE_WIDTH};
-
-        VkPipelineDynamicStateCreateInfo &dynamic_state = info_.dynamic_state;
-        dynamic_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-        dynamic_state.dynamicStateCount = 3;
-        dynamic_state.pDynamicStates = dynamic_states;
-    }
-
-    void GraphicsPipeline::init_pipeline_layout()
-    {
-        VkPipelineLayoutCreateInfo pipeline_layout_info{};
-        pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipeline_layout_info.setLayoutCount = descriptor_sets_->get_layouts().size();
-        pipeline_layout_info.pSetLayouts = descriptor_sets_->get_layouts().data();
-        pipeline_layout_info.pushConstantRangeCount = 0; // Optional
-        pipeline_layout_info.pPushConstantRanges = 0;    // Optionnal
-
-        if (vkCreatePipelineLayout(*device_, &pipeline_layout_info, nullptr, &layout_) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to create pipeline layout!");
-        }
-    }
-
-    void GraphicsPipeline::init_pipeline()
-    {
-
+        // Pipeline Create
         VkGraphicsPipelineCreateInfo pipeline_info{};
         pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
         // shader stage

@@ -28,11 +28,11 @@ namespace vkcpp
 
         CommandBuffers(const CommandBuffers &) = delete;
 
-        CommandBuffers(CommandBuffers &&a) = default;
+        CommandBuffers(CommandBuffers &&a);
 
         ~CommandBuffers();
 
-        CommandBuffers &operator=(CommandBuffers &&a) = default;
+        CommandBuffers &operator=(CommandBuffers &&a);
 
         const VkCommandBuffer &operator[](int idx) const
         {
@@ -44,6 +44,8 @@ namespace vkcpp
         }
 
         const VkCommandBuffer &get_command_buffers(int idx) const { return handle_[idx]; }
+
+        const std::vector<VkCommandBuffer> &get_command_buffers() const { return handle_; }
 
         void init_command_buffers();
 

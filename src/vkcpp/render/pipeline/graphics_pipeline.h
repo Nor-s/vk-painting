@@ -15,16 +15,21 @@ namespace vkcpp
 
     class GraphicsPipeline : public Pipeline
     {
+        VkDynamicState dynamic_states_[3] = {VK_DYNAMIC_STATE_VIEWPORT,
+                                             VK_DYNAMIC_STATE_SCISSOR,
+                                             VK_DYNAMIC_STATE_LINE_WIDTH};
+
     private:
-        const Device *device_{nullptr};
+        const Device *
+            device_{nullptr};
 
         const RenderStage *render_stage_{nullptr};
 
         const DescriptorSets *descriptor_sets_{nullptr};
 
-        std::string vert_shader_file_;
+        std::string &vert_shader_file_;
 
-        std::string frag_shader_file_;
+        std::string &frag_shader_file_;
 
         VkPipelineLayout layout_{VK_NULL_HANDLE};
 
@@ -36,7 +41,7 @@ namespace vkcpp
 
         CreateInfo info_{};
 
-        VkPipelineBindPoint pipeline_bind_point_;
+                VkPipelineBindPoint pipeline_bind_point_;
 
         int subpass_idx_{0};
 

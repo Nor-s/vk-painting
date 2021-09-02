@@ -20,8 +20,9 @@ namespace vkcpp
     }
 
     CommandBuffers::CommandBuffers(CommandBuffers &&a)
-        : device_(a.device_), command_pool_(a.command_pool_), level_(a.level_), handle_(std::move(a.handle_))
+        : device_(a.device_), command_pool_(a.command_pool_), level_(std::move(a.level_)), handle_(std::move(a.handle_))
     {
+        a.handle_.resize(0);
     }
 
     CommandBuffers::~CommandBuffers()
@@ -35,11 +36,9 @@ namespace vkcpp
         {
             device_ = a.device_;
             command_pool_ = a.command_pool_;
-            size_ = a.size_;
             level_ = a.level_;
             handle_ = std::move(a.handle_);
-
-            a.size_ = 0;
+            a.handle_.resize(0);
         }
         return *this;
     }
@@ -57,8 +56,8 @@ namespace vkcpp
     {
         if (handle_.size() > 0)
         {
-            std::cout << handle_.size() << "\n\n";
             vkFreeCommandBuffers(*device_, *command_pool_, handle_.size(), handle_.data());
+            handle_.resize(0);
         }
     }
 

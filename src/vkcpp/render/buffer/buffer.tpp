@@ -1,15 +1,11 @@
-#include "buffer.h"
-
-#include "render/command/command_pool.h"
-#include "device/device.h"
-
 namespace vkcpp
 {
-    Buffer::Buffer(const Device *device,
-                   const CommandPool *command_pool,
-                   std::vector<uint16_t> *src_data,
-                   VkBufferUsageFlagBits usage,
-                   bool is_local)
+    template <typename T>
+    Buffer<T>::Buffer(const Device *device,
+                      const CommandPool *command_pool,
+                      std::vector<T> *src_data,
+                      VkBufferUsageFlagBits usage,
+                      bool is_local)
         : BaseBuffer(device, command_pool),
           src_data_(src_data),
           usage_(usage)
@@ -17,21 +13,56 @@ namespace vkcpp
         init_buffer(is_local);
     }
 
-    Buffer::~Buffer()
+    template <typename T>
+    Buffer<T>::Buffer(Buffer &&a)
+        : BaseBuffer(std::move(a)), src_data_(a.src_data_), handle_(a.handle_), memory_(a.memory_), usage_(std::move(a.usage_))
+    {
+
+        a.src_data_ = nullptr;
+        a.handle_ = VK_NULL_HANDLE;
+        a.memory_ = VK_NULL_HANDLE;
+    }
+
+    template <typename T>
+    Buffer<T>::~Buffer()
     {
         destroy_buffer();
         free_memory();
     }
 
-    Buffer::operator const VkBuffer &() const { return handle_; }
+    template <typename T>
+    Buffer<T> &Buffer<T>::operator=(Buffer &&a)
+    {
+        if (this != &a)
+        {
+            BaseBuffer::operator=(std::move(a));
 
-    const VkBuffer &Buffer::get_buffer() const { return handle_; }
+            src_data_ = a.src_data_;
+            handle_ = a.handle_;
+            memory_ = a.memory_;
+            usage_ = std::move(a.usage_);
 
-    VkBuffer &Buffer::get_mutable_buffer() { return handle_; }
+            a.src_data_ = nullptr;
+            a.handle_ = VK_NULL_HANDLE;
+            a.memory_ = VK_NULL_HANDLE;
+        }
+        return *this;
+    }
 
-    VkDeviceMemory &Buffer::get_mutable_memory() { return memory_; }
+    template <typename T>
+    Buffer<T>::operator const VkBuffer &() const { return handle_; }
 
-    void Buffer::init_buffer(bool is_local)
+    template <typename T>
+    const VkBuffer &Buffer<T>::get_buffer() const { return handle_; }
+
+    template <typename T>
+    VkBuffer &Buffer<T>::get_mutable_buffer() { return handle_; }
+
+    template <typename T>
+    VkDeviceMemory &Buffer<T>::get_mutable_memory() { return memory_; }
+
+    template <typename T>
+    void Buffer<T>::init_buffer(bool is_local)
     {
         if (is_local)
         {
@@ -43,7 +74,8 @@ namespace vkcpp
         }
     }
 
-    void Buffer::destroy_buffer()
+    template <typename T>
+    void Buffer<T>::destroy_buffer()
     {
         if (handle_ != VK_NULL_HANDLE)
         {
@@ -52,7 +84,8 @@ namespace vkcpp
         }
     }
 
-    void Buffer::free_memory()
+    template <typename T>
+    void Buffer<T>::free_memory()
     {
         if (memory_ != VK_NULL_HANDLE)
         {
@@ -60,7 +93,9 @@ namespace vkcpp
             memory_ = VK_NULL_HANDLE;
         }
     }
-    void Buffer::create_host_memory()
+
+    template <typename T>
+    void Buffer<T>::create_host_memory()
     {
         VkDeviceSize buffer_size;
         if (src_data_ != nullptr)
@@ -69,7 +104,7 @@ namespace vkcpp
         }
         else // for ubo
         {
-            // buffer_size = sizeof(T);
+            buffer_size = sizeof(T);
         }
 
         create_buffer(buffer_size,
@@ -87,7 +122,8 @@ namespace vkcpp
         }
     }
 
-    void Buffer::create_local_memory()
+    template <typename T>
+    void Buffer<T>::create_local_memory()
     {
         VkDeviceSize buffer_size = sizeof((*src_data_)[0]) * (*src_data_).size();
         VkBuffer staging_buffer;
@@ -98,7 +134,6 @@ namespace vkcpp
                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                       staging_buffer,
                       staging_buffer_memory);
-        std::cout << "create staging \n";
 
         void *dst_data;
         vkMapMemory(*device_, staging_buffer_memory, 0, buffer_size, 0, &dst_data);
@@ -108,12 +143,10 @@ namespace vkcpp
         create_buffer(buffer_size,
                       VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage_,
                       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                      get_mutable_buffer(),
-                      get_mutable_memory());
-        std::cout << "create local \n";
+                      handle_,
+                      memory_);
 
-        copy_buffer(staging_buffer, get_mutable_buffer(), buffer_size);
-        std::cout << "copy \n";
+        copy_buffer(staging_buffer, handle_, buffer_size);
 
         vkDestroyBuffer(*device_, staging_buffer, nullptr);
         vkFreeMemory(*device_, staging_buffer_memory, nullptr);
