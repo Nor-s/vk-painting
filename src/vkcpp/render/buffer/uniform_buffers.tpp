@@ -55,7 +55,7 @@ namespace vkcpp
         }
         void *dst_data;
         vkMapMemory(*device_, handle_[idx].get_mutable_memory(), 0, sizeof(T), 0, &dst_data);
-        memcpy(*dst_data, &src_data, sizeof(src_data));
+        memcpy(dst_data, &src_data, sizeof(src_data));
         vkUnmapMemory(*device_, handle_[idx].get_mutable_memory());
     }
 

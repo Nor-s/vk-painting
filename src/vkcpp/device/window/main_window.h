@@ -24,6 +24,7 @@ namespace vkcpp
         void init_window(uint32_t width, uint32_t height, std::string &title);
         void init_glfw();
         void destroy_window();
+        void wait_events();
 
         std::pair<const char **, uint32_t> get_required_instance_extensions() const;
         std::pair<int, int> get_framebuffer_size();
@@ -31,6 +32,8 @@ namespace vkcpp
         virtual void set_window(uint32_t width, uint32_t height, const std::string &title) override;
         virtual void set_size(uint32_t width, uint32_t height) override;
         virtual void set_title(const std::string &title) override;
+        void set_user_pointer(void *pointer);
+        void set_framebuffer_size_callback(void (*fp)(GLFWwindow *window, int width, int height));
     };
 } // namespace vkcpp
 #endif // #ifndef VKCPP_MAIN_WINDOW_H

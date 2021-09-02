@@ -77,6 +77,10 @@ namespace vkcpp
         handle_ = nullptr;
         glfwTerminate();
     }
+    void MainWindow::wait_events()
+    {
+        glfwWaitEvents();
+    }
 
     std::pair<const char **, uint32_t> MainWindow::get_required_instance_extensions() const
     {
@@ -105,6 +109,14 @@ namespace vkcpp
     {
         Window::set_title(title);
         glfwSetWindowTitle(handle_, title_.c_str());
+    }
+    void MainWindow::set_user_pointer(void *pointer)
+    {
+        glfwSetWindowUserPointer(handle_, pointer);
+    }
+    void MainWindow::set_framebuffer_size_callback(void (*fp)(GLFWwindow *window, int width, int height))
+    {
+        glfwSetFramebufferSizeCallback(handle_, fp);
     }
 
 } // namespace vkcpp

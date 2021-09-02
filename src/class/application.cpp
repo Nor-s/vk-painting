@@ -1,19 +1,34 @@
 #include "application.h"
-
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+#include "render/buffer/vertex.hpp"
+#include <chrono>
 namespace painting
 {
+    void PaintingApplication::framebufferResizeCallback(GLFWwindow *window, int width, int height)
+    {
+        auto app = reinterpret_cast<PaintingApplication *>(glfwGetWindowUserPointer(window));
+        app->framebuffer_resized_ = true;
+    }
+
     void PaintingApplication::run(uint32_t width, uint32_t height, std::string title)
     {
         init_window(width, height, title);
         init_device();
+        command_pool_ = std::make_unique<vkcpp::CommandPool>(device_.get(), 0, device_->get_gpu().get_queue_family_indices().graphics_family.value());
         init_render();
+        object_ = std::make_unique<vkcpp::Object>(device_.get(), render_stage_.get(), command_pool_.get());
         init_frame();
+        init_synobj();
         main_loop();
         cleanup();
     }
     void PaintingApplication::init_window(uint32_t width, uint32_t height, std::string title)
     {
         vkcpp::MainWindow::getInstance()->set_window(width, height, title);
+        vkcpp::MainWindow::getInstance()->set_user_pointer(this);
+        vkcpp::MainWindow::getInstance()->set_framebuffer_size_callback(framebufferResizeCallback);
+
         instance_ = std::make_unique<vkcpp::Instance>();
         surface_ = std::make_unique<vkcpp::Surface>(instance_.get(), vkcpp::MainWindow::getInstance()->create_surface(*instance_));
     }
@@ -22,36 +37,32 @@ namespace painting
     {
         swapchain_ = std::make_unique<vkcpp::Swapchain>(device_.get(), surface_.get());
         render_stage_ = std::make_unique<vkcpp::RenderStage>(device_.get(), swapchain_.get());
-        command_pool_ = std::make_unique<vkcpp::CommandPool>(device_.get(), 0, device_->get_gpu().get_queue_family_indices().graphics_family.value());
         command_buffers_ = std::make_unique<vkcpp::CommandBuffers>(device_.get(), command_pool_.get(), swapchain_->get_image_views().size(), VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-        object_ = std::make_unique<vkcpp::Object>(device_.get(), render_stage_.get(), command_pool_.get());
-        //  createSyncObjects();
     }
     void PaintingApplication::init_synobj()
     {
-        /*
-        imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-        renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-        inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-        imagesInFlight.resize(swapChainImages.size(), VK_NULL_HANDLE);
 
-        VkSemaphoreCreateInfo semaphoreInfo{};
-        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        image_available_semaphores_.resize(MAX_FRAMES_IN_FLIGHT);
+        render_finished_semaphores_.resize(MAX_FRAMES_IN_FLIGHT);
+        in_flight_fences_.resize(MAX_FRAMES_IN_FLIGHT);
+        images_in_flight_.resize(swapchain_->get_image_views().size(), VK_NULL_HANDLE);
 
-        VkFenceCreateInfo fenceInfo{};
-        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-        fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+        VkSemaphoreCreateInfo semaphore_info{};
+        semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+        VkFenceCreateInfo fence_info{};
+        fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
-                vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
-                vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS)
+            if (vkCreateSemaphore(*device_, &semaphore_info, nullptr, &image_available_semaphores_[i]) != VK_SUCCESS ||
+                vkCreateSemaphore(*device_, &semaphore_info, nullptr, &render_finished_semaphores_[i]) != VK_SUCCESS ||
+                vkCreateFence(*device_, &fence_info, nullptr, &in_flight_fences_[i]) != VK_SUCCESS)
             {
                 throw std::runtime_error("failed to create synchronization objects for a frame!");
             }
         }
-        */
     }
     void PaintingApplication::init_device()
     {
@@ -83,47 +94,65 @@ namespace painting
             command_buffers_->end_command_buffer(i);
         }
     }
+    void PaintingApplication::update_uniform_buffer(uint32_t idx)
+    {
+        static auto startTime = std::chrono::high_resolution_clock::now();
+
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+        vkcpp::TransformUBO ubo{};
+        ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.proj = glm::perspective(glm::radians(45.0f), render_stage_->get_render_area().extent.width / (float)render_stage_->get_render_area().extent.height, 0.1f, 10.0f);
+        ubo.proj[1][1] *= -1;
+        object_->get_mutable_uniform_buffers().update_uniform_buffer(idx, ubo);
+    }
     void PaintingApplication::draw_frame()
     {
-        /*
-                vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+        vkWaitForFences(*device_, 1, &in_flight_fences_[current_frame_], VK_TRUE, UINT64_MAX);
 
-        uint32_t imageIndex;
-        VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+        uint32_t image_index;
+        VkResult result = vkAcquireNextImageKHR(*device_, *swapchain_, UINT64_MAX, image_available_semaphores_[current_frame_], VK_NULL_HANDLE, &image_index);
 
-        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-            recreateSwapChain();
+        if (result == VK_ERROR_OUT_OF_DATE_KHR)
+        {
+            recreate_swapchain();
             return;
-        } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+        }
+        else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+        {
             throw std::runtime_error("failed to acquire swap chain image!");
         }
 
-        updateUniformBuffer(imageIndex);
+        update_uniform_buffer(image_index);
 
-        if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
-            vkWaitForFences(device, 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
+        if (images_in_flight_[image_index] != VK_NULL_HANDLE)
+        {
+            vkWaitForFences(*device_, 1, &images_in_flight_[image_index], VK_TRUE, UINT64_MAX);
         }
-        imagesInFlight[imageIndex] = inFlightFences[currentFrame];
+        images_in_flight_[image_index] = in_flight_fences_[current_frame_];
 
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-        VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
+        VkSemaphore waitSemaphores[] = {image_available_semaphores_[current_frame_]};
         VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
         submitInfo.waitSemaphoreCount = 1;
         submitInfo.pWaitSemaphores = waitSemaphores;
         submitInfo.pWaitDstStageMask = waitStages;
 
         submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
+        submitInfo.pCommandBuffers = &(*command_buffers_)[image_index];
 
-        VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
+        VkSemaphore signalSemaphores[] = {render_finished_semaphores_[current_frame_]};
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
-        vkResetFences(device, 1, &inFlightFences[currentFrame]);
+        vkResetFences(*device_, 1, &in_flight_fences_[current_frame_]);
 
-        if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
+        if (vkQueueSubmit(device_->get_graphics_queue(), 1, &submitInfo, in_flight_fences_[current_frame_]) != VK_SUCCESS)
+        {
             throw std::runtime_error("failed to submit draw command buffer!");
         }
 
@@ -133,23 +162,26 @@ namespace painting
         presentInfo.waitSemaphoreCount = 1;
         presentInfo.pWaitSemaphores = signalSemaphores;
 
-        VkSwapchainKHR swapChains[] = {swapChain};
+        VkSwapchainKHR swapChains[] = {*swapchain_};
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = swapChains;
 
-        presentInfo.pImageIndices = &imageIndex;
+        presentInfo.pImageIndices = &image_index;
+        presentInfo.pResults = nullptr; // Optional
 
-        result = vkQueuePresentKHR(presentQueue, &presentInfo);
+        result = vkQueuePresentKHR(device_->get_present_queue(), &presentInfo);
 
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
-            framebufferResized = false;
-            recreateSwapChain();
-        } else if (result != VK_SUCCESS) {
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebuffer_resized_)
+        {
+            framebuffer_resized_ = false;
+            recreate_swapchain();
+        }
+        else if (result != VK_SUCCESS)
+        {
             throw std::runtime_error("failed to present swap chain image!");
         }
 
-        currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-        */
+        current_frame_ = (current_frame_ + 1) % MAX_FRAMES_IN_FLIGHT;
     }
     void PaintingApplication::main_loop()
     {
@@ -162,20 +194,51 @@ namespace painting
 
     void PaintingApplication::cleanup()
     {
-        //device wait_idel()
-        //scene reset
-        //state reset
-        //gui reset
-        //render context reset
+        vkDeviceWaitIdle(*device_);
+
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        {
+            vkDestroySemaphore(*device_, render_finished_semaphores_[i], nullptr);
+            vkDestroySemaphore(*device_, image_available_semaphores_[i], nullptr);
+            vkDestroyFence(*device_, in_flight_fences_[i], nullptr);
+        }
+
+        cleanup_swapchain();
+
         object_.reset();
-        command_buffers_.reset();
         command_pool_.reset();
-        render_stage_.reset();
-        swapchain_.reset();
         device_.reset();
         surface_.reset();
         instance_.reset();
         vkcpp::MainWindow::getInstance()->destroy_window();
+    }
+    void PaintingApplication::cleanup_swapchain()
+    {
+        object_->destroy_dependency_swapchain();
+        command_buffers_.reset();
+        render_stage_.reset();
+        swapchain_.reset();
+    }
+
+    void PaintingApplication::recreate_swapchain()
+    {
+        auto size = vkcpp::MainWindow::getInstance()->get_framebuffer_size();
+
+        while (size.first == 0 || size.second == 0)
+        {
+            size = vkcpp::MainWindow::getInstance()->get_framebuffer_size();
+            vkcpp::MainWindow::getInstance()->wait_events();
+        }
+
+        vkDeviceWaitIdle(*device_);
+
+        cleanup_swapchain();
+
+        init_render();
+        object_->init_dependency_swapchain(render_stage_.get());
+        init_frame();
+
+        images_in_flight_.resize(swapchain_->get_image_views().size(), VK_NULL_HANDLE);
     }
 
 } // namespace painting

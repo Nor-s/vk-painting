@@ -27,6 +27,7 @@ namespace painting
         const int MAX_FRAMES_IN_FLIGHT = 3;
 
     public:
+        static void framebufferResizeCallback(GLFWwindow *window, int width, int height);
         std::vector<const char *> device_extensions_ = {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME
 #ifdef __APPLE__
@@ -48,20 +49,24 @@ namespace painting
         std::unique_ptr<vkcpp::Object> object_{nullptr};
         std::unique_ptr<vkcpp::CommandBuffers> command_buffers_{nullptr};
 
+        std::vector<VkSemaphore> image_available_semaphores_;
+        std::vector<VkSemaphore> render_finished_semaphores_;
+        std::vector<VkFence> in_flight_fences_;
+        std::vector<VkFence> images_in_flight_;
+        size_t current_frame_ = 0;
+        bool framebuffer_resized_ = false;
+
         void init_window(uint32_t width, uint32_t height, std::string title);
         void init_device();
         void init_render();
         void init_synobj();
         void init_frame();
-        /*
-        void init_render_context();
-        void int_gui();
-        void init_state();
-        void init_scene();
-        */
+        void update_uniform_buffer(uint32_t idx);
         void draw_frame();
         void main_loop();
         void cleanup();
+        void cleanup_swapchain();
+        void recreate_swapchain();
     };
 } // namespace painting
 #endif // #ifndef PAINTING_APPLICATION_H

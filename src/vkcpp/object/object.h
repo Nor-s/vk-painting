@@ -46,15 +46,15 @@ namespace vkcpp
 
         std::string filename_{"../textures/img.jpg"};
 
-        std::unique_ptr<Image> texture_;
+        std::unique_ptr<Image> texture_{nullptr};
 
-        std::unique_ptr<UniformBuffers<TransformUBO>> uniform_buffer_;
+        std::unique_ptr<UniformBuffers<TransformUBO>> uniform_buffers_{nullptr};
 
-        std::unique_ptr<Buffer<Vertex2D>> vertex_buffer_;
+        std::unique_ptr<Buffer<Vertex2D>> vertex_buffer_{nullptr};
 
-        std::unique_ptr<Buffer<uint16_t>> index_buffer_;
+        std::unique_ptr<Buffer<uint16_t>> index_buffer_{nullptr};
 
-        std::unique_ptr<GraphicsPipeline> graphics_pipeline_;
+        std::unique_ptr<GraphicsPipeline> graphics_pipeline_{nullptr};
 
         TransformUBO transformation_;
 
@@ -67,7 +67,13 @@ namespace vkcpp
 
         virtual ~Object();
 
+        UniformBuffers<TransformUBO> &get_mutable_uniform_buffers();
+
         void init_object();
+
+        void init_dependency_swapchain(const RenderStage *render_stage);
+
+        void destroy_dependency_swapchain();
 
         void destroy_object();
 

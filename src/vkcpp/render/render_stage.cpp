@@ -23,8 +23,9 @@ namespace vkcpp
         render_area_.offset.x = 0.0;
         render_area_.offset.y = 0.0;
         render_area_.extent = extent;
-
-        clear_values_.push_back({{{0.0f, 0.0f, 0.0f, 1.0f}}});
+        VkRenderPassBeginInfo render_pass_info{};
+        VkClearValue clear_color = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
+        clear_values_.emplace_back(clear_color);
     }
     void RenderStage::destroy()
     {
@@ -56,8 +57,8 @@ namespace vkcpp
         render_pass_info.renderPass = get_render_pass();
         render_pass_info.framebuffer = get_framebuffer(framebuffer_idx);
         render_pass_info.renderArea = get_render_area();
-        render_pass_info.clearValueCount = get_clear_values().size();
-        render_pass_info.pClearValues = get_clear_values().data();
+        render_pass_info.clearValueCount = clear_values_.size(); // get_clear_values().size();
+        render_pass_info.pClearValues = clear_values_.data();    // get_clear_values().data();
 
         vkCmdBeginRenderPass(command_buffer, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
     }

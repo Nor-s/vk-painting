@@ -40,7 +40,7 @@ namespace vkcpp
 
         const VkFramebuffer &get_framebuffer(int idx) const { return framebuffers_->get_framebuffers()[idx]; }
 
-        const std::vector<VkClearValue> get_clear_values() const { return clear_values_; }
+        const std::vector<VkClearValue> &get_clear_values() const { return clear_values_; }
 
         void init_render_stage();
 
