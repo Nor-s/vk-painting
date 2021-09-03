@@ -5,6 +5,7 @@
 #include <assert.h>
 
 #include "device/physical_device.h"
+#include "device/surface.h"
 #include "device/window/main_window.h"
 
 namespace vkcpp
@@ -13,7 +14,6 @@ namespace vkcpp
     {
         init_instance();
         init_debug_messenger();
-        query_gpus();
     }
     Instance::~Instance()
     {
@@ -149,7 +149,7 @@ namespace vkcpp
  */
 namespace vkcpp
 {
-    void Instance::query_gpus()
+    void Instance::query_gpus(const Surface *surface)
     {
         uint32_t device_count = 0;
         vkEnumeratePhysicalDevices(handle_, &device_count, nullptr);
@@ -160,19 +160,19 @@ namespace vkcpp
         vkEnumeratePhysicalDevices(handle_, &device_count, physical_devices.data());
         for (auto &physical_device : physical_devices)
         {
-            gpus_.push_back(std::make_unique<PhysicalDevice>(this, physical_device));
+            gpus_.push_back(std::make_unique<PhysicalDevice>(this, surface, physical_device));
         }
     }
-    PhysicalDevice *Instance::get_suitable_gpu(VkSurfaceKHR surface, std::vector<const char *> &requested_extensions)
+    PhysicalDevice *Instance::get_suitable_gpu(std::vector<const char *> &requested_extensions)
     {
         for (auto &gpu : gpus_)
         {
-            if (gpu->get_properties().deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && gpu->is_device_suitable(surface, requested_extensions))
+            if (gpu->get_properties().deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && gpu->is_device_suitable(requested_extensions))
             {
                 return gpu.get();
             }
         }
-        if (!gpus_.at(0)->is_device_suitable(surface, requested_extensions))
+        if (!gpus_.at(0)->is_device_suitable(requested_extensions))
         {
             throw std::runtime_error("failed to find a suitable GPU!");
         }

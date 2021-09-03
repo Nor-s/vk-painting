@@ -3,8 +3,23 @@
     "tasks": [
         //C++ 컴파일
         {
+            "label": "compile shader",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "${workspaceRoot}/shaders/compile.bat"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": [
+                "compile c++"
+            ]
+        },
+        {
             "type": "shell",
-            "label": "glfw",
+            "label": "compile c++",
             "command": "C:\\msys64\\mingw64\\bin\\g++.exe",
             "args": [
                 "-std=c++17",

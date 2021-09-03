@@ -14,6 +14,7 @@ namespace painting
     void PaintingApplication::run(uint32_t width, uint32_t height, std::string title)
     {
         init_window(width, height, title);
+        //device_->get_graphics_queue().get_family_idx();
         init_device();
         command_pool_ = std::make_unique<vkcpp::CommandPool>(device_.get(), 0, device_->get_gpu().get_queue_family_indices().graphics_family.value());
         init_render();
@@ -66,7 +67,8 @@ namespace painting
     }
     void PaintingApplication::init_device()
     {
-        vkcpp::PhysicalDevice *gpu = instance_->get_suitable_gpu(*surface_, device_extensions_);
+        instance_->query_gpus(surface_.get());
+        vkcpp::PhysicalDevice *gpu = instance_->get_suitable_gpu(device_extensions_);
 
         /*
          Request to enable ASTC
@@ -76,7 +78,7 @@ namespace painting
         }
         */
 
-        device_ = std::make_unique<vkcpp::Device>(gpu, surface_.get());
+        device_ = std::make_unique<vkcpp::Device>(gpu);
     }
     void PaintingApplication::init_frame()
     {
@@ -96,16 +98,15 @@ namespace painting
     }
     void PaintingApplication::update_uniform_buffer(uint32_t idx)
     {
-        static auto startTime = std::chrono::high_resolution_clock::now();
-
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
         vkcpp::TransformUBO ubo{};
-        ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.proj = glm::perspective(glm::radians(45.0f), render_stage_->get_render_area().extent.width / (float)render_stage_->get_render_area().extent.height, 0.1f, 10.0f);
-        ubo.proj[1][1] *= -1;
+        ubo.model = glm::mat4(1.0f);
+        glm::vec3 camera_pos = glm::vec3(0.0f, 0.0f, 3.0f);
+        glm::vec3 camera_front = glm::vec3(0.0f, 0.0f, -10.0f);
+        glm::vec3 camera_up = glm::vec3(0.0f, 1.0f, 0.0f);
+
+        ubo.view = glm::lookAt(camera_pos, camera_pos + camera_front, camera_up);
+        ubo.proj = glm::perspective(glm::radians(45.0f), render_stage_->get_render_area().extent.width / (float)render_stage_->get_render_area().extent.height, 0.1f, 100.0f);
+        //ubo.proj[1][1] *= -1;
         object_->get_mutable_uniform_buffers().update_uniform_buffer(idx, ubo);
     }
     void PaintingApplication::draw_frame()

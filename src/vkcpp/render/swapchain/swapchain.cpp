@@ -69,7 +69,7 @@ namespace vkcpp
 
     void Swapchain::init_swapchain(const Device *device, const Surface *surface)
     {
-        const SwapchainSupportDetails &swapchain_support = device->get_gpu().get_swapchain_support();
+        auto swapchain_support = device->get_gpu().query_swapchain_support();
 
         // Choose device surfac support detail
         properties_.surface_format = choose_swapchain_surface_format(swapchain_support.formats);

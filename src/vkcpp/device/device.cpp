@@ -11,8 +11,8 @@
 
 namespace vkcpp
 {
-    Device::Device(const PhysicalDevice *gpu, const Surface *surface)
-        : gpu_(gpu), surface_(surface)
+    Device::Device(const PhysicalDevice *gpu)
+        : gpu_(gpu)
     {
         init_device(gpu_);
         init_queues(gpu_);

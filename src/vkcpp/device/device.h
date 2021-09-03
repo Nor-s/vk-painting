@@ -10,8 +10,6 @@ namespace vkcpp
 {
     class Instance;
 
-    class Surface;
-
     class PhysicalDevice;
 
     /**
@@ -21,8 +19,6 @@ namespace vkcpp
     {
     private:
         const PhysicalDevice *gpu_;
-
-        const Surface *surface_;
 
         std::unique_ptr<Queue> graphics_queue_{nullptr};
 
@@ -35,7 +31,7 @@ namespace vkcpp
         VkDevice handle_{VK_NULL_HANDLE};
 
     public:
-        Device(const PhysicalDevice *gpu, const Surface *surface);
+        Device(const PhysicalDevice *gpu);
 
         ~Device();
 

@@ -68,7 +68,7 @@ namespace vkcpp
         rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
         rasterizer.lineWidth = 1.0f;
         rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-        rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+        rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
         rasterizer.depthBiasEnable = VK_FALSE;
         rasterizer.depthBiasConstantFactor = 0.0f; // Optional
         rasterizer.depthBiasClamp = 0.0f;          // Optional
@@ -149,13 +149,15 @@ namespace vkcpp
         VkPipelineColorBlendAttachmentState color_blend_attachment{};
 
         color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-        color_blend_attachment.blendEnable = VK_FALSE;
-        color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional
-        color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
-        color_blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;             // Optional
-        color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional
-        color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
-        color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;             // Optional
+        color_blend_attachment.blendEnable = VK_TRUE;
+        // finalColor.rgb = src.a * src.rgb + (1 - src.a) * dst.rgb;
+        color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;           // Optional
+        color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA; // Optional
+        color_blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;                            // Optional
+        // finalColor.a = src.a * src.a + (1-src.a)*dst.a
+        color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;           // Optional
+        color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA; // Optional
+        color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;                            // Optional
 
         VkPipelineColorBlendStateCreateInfo &color_blending = info_.color_blend_state;
 

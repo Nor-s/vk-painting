@@ -92,6 +92,7 @@ namespace vkcpp
     {
         std::pair<int, int> size;
         glfwGetFramebufferSize(handle_, &size.first, &size.second);
+        set_size(size.first, size.second);
         return size;
     }
 

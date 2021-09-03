@@ -1,6 +1,7 @@
 #include "physical_device.h"
 
 #include "instance.h"
+#include "surface.h"
 
 #include <iostream>
 #include <vector>
@@ -8,8 +9,8 @@
 
 namespace vkcpp
 {
-    PhysicalDevice::PhysicalDevice(const Instance *instance, VkPhysicalDevice physical_device)
-        : instance_(instance), handle_(physical_device)
+    PhysicalDevice::PhysicalDevice(const Instance *instance, const Surface *surface, VkPhysicalDevice physical_device)
+        : instance_(instance), surface_(surface), handle_(physical_device)
     {
         vkGetPhysicalDeviceFeatures(physical_device, &supported_features_);
         vkGetPhysicalDeviceProperties(physical_device, &properties_);
@@ -21,7 +22,7 @@ namespace vkcpp
         vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_family_properties_.data());
     }
 
-    QueueFamilyIndices PhysicalDevice::find_queue_families(VkSurfaceKHR surface)
+    QueueFamilyIndices PhysicalDevice::find_queue_families()
     {
         QueueFamilyIndices indices;
         int i = 0;
@@ -36,7 +37,7 @@ namespace vkcpp
 
             // Check for present support.
             VkBool32 present_support = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(handle_, i, surface, &present_support);
+            vkGetPhysicalDeviceSurfaceSupportKHR(handle_, i, *surface_, &present_support);
             if (present_support && queue_family.queueCount > 0)
             {
                 indices.present_family = i;
@@ -82,42 +83,42 @@ namespace vkcpp
 
         return required_extensions.empty();
     }
-    SwapchainSupportDetails PhysicalDevice::query_swapchain_support(VkSurfaceKHR surface)
+    SwapchainSupportDetails PhysicalDevice::query_swapchain_support() const
     {
         SwapchainSupportDetails details;
 
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(handle_, surface, &details.capabilities);
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(handle_, *surface_, &details.capabilities);
 
         uint32_t format_count;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(handle_, surface, &format_count, nullptr);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(handle_, *surface_, &format_count, nullptr);
 
         if (format_count != 0)
         {
             details.formats.resize(format_count);
-            vkGetPhysicalDeviceSurfaceFormatsKHR(handle_, surface, &format_count, details.formats.data());
+            vkGetPhysicalDeviceSurfaceFormatsKHR(handle_, *surface_, &format_count, details.formats.data());
         }
 
         uint32_t present_mode_count;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(handle_, surface, &present_mode_count, nullptr);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(handle_, *surface_, &present_mode_count, nullptr);
 
         if (present_mode_count != 0)
         {
             details.present_modes.resize(present_mode_count);
-            vkGetPhysicalDeviceSurfacePresentModesKHR(handle_, surface, &present_mode_count, details.present_modes.data());
+            vkGetPhysicalDeviceSurfacePresentModesKHR(handle_, *surface_, &present_mode_count, details.present_modes.data());
         }
 
         return details;
     }
-    bool PhysicalDevice::is_device_suitable(VkSurfaceKHR surface, std::vector<const char *> &requested_extensions)
+    bool PhysicalDevice::is_device_suitable(std::vector<const char *> &requested_extensions)
     {
         extensions_ = requested_extensions;
-        queue_family_indices_ = find_queue_families(surface);
+        queue_family_indices_ = find_queue_families();
         bool extensions_supported = check_device_extension_support(requested_extensions);
         bool swapchain_adequate = false;
         if (extensions_supported)
         {
-            swapchain_support_ = query_swapchain_support(surface);
-            swapchain_adequate = !swapchain_support_.formats.empty() && !swapchain_support_.present_modes.empty();
+            auto swapchain_support = query_swapchain_support();
+            swapchain_adequate = !swapchain_support.formats.empty() && !swapchain_support.present_modes.empty();
         }
 
         return queue_family_indices_.is_graphics_and_present() && extensions_supported && swapchain_adequate && supported_features_.samplerAnisotropy;

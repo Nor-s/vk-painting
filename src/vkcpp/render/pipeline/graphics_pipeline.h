@@ -20,8 +20,7 @@ namespace vkcpp
                                              VK_DYNAMIC_STATE_LINE_WIDTH};
 
     private:
-        const Device *
-            device_{nullptr};
+        const Device *device_{nullptr};
 
         const RenderStage *render_stage_{nullptr};
 
@@ -41,7 +40,7 @@ namespace vkcpp
 
         CreateInfo info_{};
 
-                VkPipelineBindPoint pipeline_bind_point_;
+        VkPipelineBindPoint pipeline_bind_point_;
 
         int subpass_idx_{0};
 

@@ -9,6 +9,7 @@
 namespace vkcpp
 {
     class Instance;
+    class Surface;
     struct QueueFamilyIndices
     {
         VkQueueFlags supported_queues = {};
@@ -45,6 +46,8 @@ namespace vkcpp
     private:
         const Instance *instance_;
 
+        const Surface *surface_;
+
         VkPhysicalDevice handle_{VK_NULL_HANDLE};
 
         // The features that this GPU supports
@@ -63,8 +66,6 @@ namespace vkcpp
 
         QueueFamilyIndices queue_family_indices_;
 
-        SwapchainSupportDetails swapchain_support_;
-
     public:
         PhysicalDevice() = default;
 
@@ -72,7 +73,7 @@ namespace vkcpp
 
         PhysicalDevice(PhysicalDevice &&) = delete;
 
-        PhysicalDevice(const Instance *instance, VkPhysicalDevice physical_device);
+        PhysicalDevice(const Instance *instance, const Surface *surface, VkPhysicalDevice physical_device);
 
         PhysicalDevice &operator=(const PhysicalDevice &) = delete;
 
@@ -94,15 +95,13 @@ namespace vkcpp
 
         const QueueFamilyIndices &get_queue_family_indices() const { return queue_family_indices_; }
 
-        const SwapchainSupportDetails &get_swapchain_support() const { return swapchain_support_; }
-
-        QueueFamilyIndices find_queue_families(VkSurfaceKHR surface);
+        QueueFamilyIndices find_queue_families();
 
         bool check_device_extension_support(std::vector<const char *> &requested_extensions);
 
-        SwapchainSupportDetails query_swapchain_support(VkSurfaceKHR surface);
+        SwapchainSupportDetails query_swapchain_support() const;
 
-        bool is_device_suitable(VkSurfaceKHR surface, std::vector<const char *> &requested_extensions);
+        bool is_device_suitable(std::vector<const char *> &requested_extensions);
     }; // class PhysicalDevice
 } // namespace vkcpp
 

@@ -21,6 +21,7 @@ namespace vkcpp
     }
     void Image::init_texture_image()
     {
+
         int tex_width, tex_height, tex_channels;
         stbi_uc *pixels = stbi_load(filename_.c_str(), &tex_width, &tex_height, &tex_channels, STBI_rgb_alpha);
         VkDeviceSize image_size = tex_width * tex_height * 4;

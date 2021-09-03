@@ -10,6 +10,7 @@
 namespace vkcpp
 {
     class PhysicalDevice;
+    class Surface;
     /**
      * @brief A wrapper class for VkInstance 
      * : handling instance, gpues, debug messenger
@@ -78,13 +79,13 @@ namespace vkcpp
         /**
          *  @brief Quries the instance for the physical devices on the machine
          */
-        void query_gpus();
+        void query_gpus(const Surface *surface);
 
         /**
          *  @brief Find the first available discrete GPU that can render to the given surface
          *  @returns A vaild PhysicalDevice  
          */
-        PhysicalDevice *get_suitable_gpu(VkSurfaceKHR surface, std::vector<const char *> &requested_extensions);
+        PhysicalDevice *get_suitable_gpu(std::vector<const char *> &requested_extensions);
     }; // class Instance
 
     VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pDebugMessenger);
