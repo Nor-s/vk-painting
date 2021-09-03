@@ -3,18 +3,24 @@
 
 #include "vulkan_header.h"
 
-#include "base_buffer.h"
 #include "render/command/command_pool.h"
 #include "device/device.h"
+#include "render/command/command_buffers.h"
+
+#include "utility/create.h"
 
 #include <vector>
 
 namespace vkcpp
 {
     template <typename T>
-    class Buffer : public BaseBuffer
+    class Buffer
     {
     protected:
+        const Device *device_{nullptr};
+
+        const CommandPool *command_pool_{nullptr};
+
         std::vector<T> *src_data_;
 
         VkBuffer handle_{VK_NULL_HANDLE};
@@ -31,7 +37,9 @@ namespace vkcpp
                std::vector<T> *src_data,
                VkBufferUsageFlagBits usage,
                bool is_local);
+
         Buffer(const Buffer &) = delete;
+
         Buffer(Buffer &&a);
 
         virtual ~Buffer();

@@ -24,6 +24,7 @@ namespace painting
         main_loop();
         cleanup();
     }
+
     void PaintingApplication::init_window(uint32_t width, uint32_t height, std::string title)
     {
         vkcpp::MainWindow::getInstance()->set_window(width, height, title);
@@ -40,6 +41,7 @@ namespace painting
         render_stage_ = std::make_unique<vkcpp::RenderStage>(device_.get(), swapchain_.get());
         command_buffers_ = std::make_unique<vkcpp::CommandBuffers>(device_.get(), command_pool_.get(), swapchain_->get_image_views().size(), VK_COMMAND_BUFFER_LEVEL_PRIMARY);
     }
+
     void PaintingApplication::init_synobj()
     {
 
@@ -65,6 +67,7 @@ namespace painting
             }
         }
     }
+
     void PaintingApplication::init_device()
     {
         instance_->query_gpus(surface_.get());
@@ -80,6 +83,7 @@ namespace painting
 
         device_ = std::make_unique<vkcpp::Device>(gpu);
     }
+
     void PaintingApplication::init_frame()
     {
         size_t size = command_buffers_->get_command_buffers().size();
@@ -96,6 +100,7 @@ namespace painting
             command_buffers_->end_command_buffer(i);
         }
     }
+
     void PaintingApplication::update_uniform_buffer(uint32_t idx)
     {
         vkcpp::TransformUBO ubo{};
@@ -109,6 +114,7 @@ namespace painting
         //ubo.proj[1][1] *= -1;
         object_->get_mutable_uniform_buffers().update_uniform_buffer(idx, ubo);
     }
+
     void PaintingApplication::draw_frame()
     {
         vkWaitForFences(*device_, 1, &in_flight_fences_[current_frame_], VK_TRUE, UINT64_MAX);
@@ -184,6 +190,7 @@ namespace painting
 
         current_frame_ = (current_frame_ + 1) % MAX_FRAMES_IN_FLIGHT;
     }
+
     void PaintingApplication::main_loop()
     {
         while (!vkcpp::MainWindow::getInstance()->should_close())
@@ -213,6 +220,7 @@ namespace painting
         instance_.reset();
         vkcpp::MainWindow::getInstance()->destroy_window();
     }
+
     void PaintingApplication::cleanup_swapchain()
     {
         object_->destroy_dependency_swapchain();

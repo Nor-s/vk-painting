@@ -12,6 +12,44 @@
 
 namespace vkcpp
 {
+    CommandBuffers CommandBuffers::beginSingleTimeCmd(const Device *device, const CommandPool *command_pool)
+    {
+        CommandBuffers cmd_buffer(device, command_pool, 1, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+        cmd_buffer.begin_command_buffer(0, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+        return cmd_buffer;
+    }
+
+    void CommandBuffers::endSingleTimeCmd(CommandBuffers &cmd_buffer)
+    {
+        auto graphics_queue = cmd_buffer.get_device().get_graphics_queue();
+        cmd_buffer.end_command_buffer(0);
+
+        VkSubmitInfo submit_info{};
+        submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submit_info.commandBufferCount = 1;
+        submit_info.pCommandBuffers = &(cmd_buffer.get_command_buffers(0));
+
+        vkQueueSubmit(graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
+        vkQueueWaitIdle(graphics_queue);
+
+        cmd_buffer.free_command_buffers();
+    }
+    void CommandBuffers::cmdCopyBuffer(const Device *device, const CommandPool *command_pool, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+    {
+        CommandBuffers cmd_buffer = std::move(beginSingleTimeCmd(device, command_pool));
+
+        VkBufferCopy copy_region{};
+        copy_region.srcOffset = 0; // Optional
+        copy_region.dstOffset = 0; // Optional
+        copy_region.size = size;
+        vkCmdCopyBuffer(cmd_buffer[0], srcBuffer, dstBuffer, 1, &copy_region);
+
+        endSingleTimeCmd(cmd_buffer);
+    }
+} // namespace vkcpp
+namespace vkcpp
+{
     CommandBuffers::CommandBuffers(const Device *device, const CommandPool *command_pool, uint32_t size, VkCommandBufferLevel level)
         : device_(device), command_pool_(command_pool), level_(level)
     {

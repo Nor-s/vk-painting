@@ -4,7 +4,8 @@
 #include "device/surface.h"
 #include "device/physical_device.h"
 #include "device/device.h"
-
+#include "render/image/image.h"
+#include "utility/create.h"
 #include <algorithm>
 
 namespace vkcpp
@@ -151,7 +152,11 @@ namespace vkcpp
 
         for (size_t i = 0; i < images_.size(); i++)
         {
-            image_views_[i] = create_image_view(device_, images_[i], properties_.surface_format.format);
+            image_views_[i] = create::imageView(*device_,
+                                                VK_IMAGE_VIEW_TYPE_2D,
+                                                images_[i],
+                                                properties_.surface_format.format,
+                                                {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
         }
     }
 } // namespace vkcpp

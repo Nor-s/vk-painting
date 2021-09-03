@@ -3,16 +3,36 @@
 
 #include "stb/stb_image.h"
 #include "vulkan_header.h"
-#include "render/buffer/base_buffer.h"
-#include "base_image.h"
-
 #include <string>
 
 namespace vkcpp
 {
-    class Image : public BaseBuffer, public BaseImage
+    class Device;
+    class CommandPool;
+    class Image
     {
+    public:
+        static void cmd_image_memory_barrier(VkCommandBuffer cmdbuffer,
+                                             VkImage image,
+                                             VkAccessFlags srcAccessMask,
+                                             VkAccessFlags dstAccessMask,
+                                             VkImageLayout oldImageLayout,
+                                             VkImageLayout newImageLayout,
+                                             VkPipelineStageFlags srcStageMask,
+                                             VkPipelineStageFlags dstStageMask,
+                                             VkImageSubresourceRange subresourceRange);
+
+        static void cmd_copy_buffer_to_image(VkCommandBuffer cmd_buffer,
+                                             VkBuffer buffer,
+                                             VkImage image,
+                                             uint32_t width,
+                                             uint32_t height);
+
     private:
+        const Device *device_;
+
+        const CommandPool *command_pool_;
+
         std::string filename_;
 
         VkImage handle_{VK_NULL_HANDLE};
@@ -37,25 +57,6 @@ namespace vkcpp
         void init_texture_image_view();
 
         void init_texture_sampler();
-
-        void create_image(uint32_t width,
-                          uint32_t height,
-                          VkFormat format,
-                          VkImageTiling tiling,
-                          VkImageUsageFlags usage,
-                          VkMemoryPropertyFlags properties,
-                          VkImage &image,
-                          VkDeviceMemory &imageMemory);
-
-        void transition_image_layout(VkImage image,
-                                     VkFormat format,
-                                     VkImageLayout oldLayout,
-                                     VkImageLayout newLayout);
-
-        void copy_buffer_to_image(VkBuffer buffer,
-                                  VkImage image,
-                                  uint32_t width,
-                                  uint32_t height);
 
         void destroy_image();
     };

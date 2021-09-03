@@ -150,7 +150,7 @@ namespace vkcpp
 
         color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
         color_blend_attachment.blendEnable = VK_TRUE;
-        // finalColor.rgb = src.a * src.rgb + (1 - src.a) * dst.rgb;
+        //Straight alpha : finalColor.rgb = src.a * src.rgb + (1 - src.a) * dst.rgb;
         color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;           // Optional
         color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA; // Optional
         color_blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;                            // Optional

@@ -14,6 +14,13 @@ namespace vkcpp
 
     class CommandBuffers
     {
+    public:
+        static CommandBuffers beginSingleTimeCmd(const Device *device, const CommandPool *command_pool);
+
+        static void endSingleTimeCmd(CommandBuffers &cmd_buffer);
+
+        static void cmdCopyBuffer(const Device *device, const CommandPool *command_pool, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
     private:
         const Device *device_{nullptr};
 
@@ -42,6 +49,8 @@ namespace vkcpp
             }
             return handle_[idx];
         }
+
+        const Device &get_device() const { return *device_; };
 
         const VkCommandBuffer &get_command_buffers(int idx) const { return handle_[idx]; }
 

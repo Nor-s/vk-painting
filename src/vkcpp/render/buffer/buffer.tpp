@@ -6,7 +6,8 @@ namespace vkcpp
                       std::vector<T> *src_data,
                       VkBufferUsageFlagBits usage,
                       bool is_local)
-        : BaseBuffer(device, command_pool),
+        : device_(device),
+          command_pool_(command_pool),
           src_data_(src_data),
           usage_(usage)
     {
@@ -15,9 +16,8 @@ namespace vkcpp
 
     template <typename T>
     Buffer<T>::Buffer(Buffer &&a)
-        : BaseBuffer(std::move(a)), src_data_(a.src_data_), handle_(a.handle_), memory_(a.memory_), usage_(std::move(a.usage_))
+        : device_(a.device_), command_pool_(a.command_pool_), src_data_(a.src_data_), handle_(a.handle_), memory_(a.memory_), usage_(std::move(a.usage_))
     {
-
         a.src_data_ = nullptr;
         a.handle_ = VK_NULL_HANDLE;
         a.memory_ = VK_NULL_HANDLE;
@@ -35,8 +35,8 @@ namespace vkcpp
     {
         if (this != &a)
         {
-            BaseBuffer::operator=(std::move(a));
-
+            device_ = a.device_;
+            command_pool_ = a.command_pool_;
             src_data_ = a.src_data_;
             handle_ = a.handle_;
             memory_ = a.memory_;
@@ -107,11 +107,12 @@ namespace vkcpp
             buffer_size = sizeof(T);
         }
 
-        create_buffer(buffer_size,
-                      usage_,
-                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                      handle_,
-                      memory_);
+        create::buffer(device_,
+                       buffer_size,
+                       usage_,
+                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                       handle_,
+                       memory_);
 
         if (src_data_ != nullptr)
         {
@@ -129,24 +130,26 @@ namespace vkcpp
         VkBuffer staging_buffer;
         VkDeviceMemory staging_buffer_memory;
 
-        create_buffer(buffer_size,
-                      VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                      staging_buffer,
-                      staging_buffer_memory);
+        create::buffer(device_,
+                       buffer_size,
+                       VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                       staging_buffer,
+                       staging_buffer_memory);
 
         void *dst_data;
         vkMapMemory(*device_, staging_buffer_memory, 0, buffer_size, 0, &dst_data);
         memcpy(dst_data, (*src_data_).data(), (size_t)buffer_size);
         vkUnmapMemory(*device_, staging_buffer_memory);
 
-        create_buffer(buffer_size,
-                      VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage_,
-                      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                      handle_,
-                      memory_);
+        create::buffer(device_,
+                       buffer_size,
+                       VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage_,
+                       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                       handle_,
+                       memory_);
 
-        copy_buffer(staging_buffer, handle_, buffer_size);
+        CommandBuffers::cmdCopyBuffer(device_, command_pool_, staging_buffer, handle_, buffer_size);
 
         vkDestroyBuffer(*device_, staging_buffer, nullptr);
         vkFreeMemory(*device_, staging_buffer_memory, nullptr);
