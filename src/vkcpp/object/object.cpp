@@ -14,13 +14,25 @@ namespace vkcpp
 {
     Object::Object(const Device *device,
                    const RenderStage *render_stage,
-                   const CommandPool *command_pool)
-        : device_(device), render_stage_(render_stage), command_pool_(command_pool)
+                   const CommandPool *command_pool,
+                   const char *texture_file)
+        : device_(device), render_stage_(render_stage), command_pool_(command_pool), texture_file_(texture_file)
     {
         init_object();
         init_dependency_swapchain(render_stage);
     }
+    /*
+    Object::Object(Object&& a)
+        : device_(a.device_), render_stage_(a.render_stage_), command_pool_(a.command_pool_), texture_file_(a.texture_file_),
+        vertices_(std::move(a.vertices_)), indices_(std::move(a.indices_)), vert_shader_file_(std::move(a.vert_shader_file_)),
+        texture_{std::move(a.texture_), 
+    {
+    }
 
+    const Object &Object::operator=(Object && rhs)
+    {
+    }
+    */
     Object::~Object()
     {
         destroy_dependency_swapchain();
@@ -37,7 +49,7 @@ namespace vkcpp
         texture_ = std::make_unique<Image>(
             device_,
             command_pool_,
-            filename_);
+            texture_file_);
 
         index_buffer_ = std::make_unique<Buffer<uint16_t>>(
             device_,

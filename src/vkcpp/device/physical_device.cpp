@@ -14,7 +14,6 @@ namespace vkcpp
     {
         vkGetPhysicalDeviceFeatures(physical_device, &supported_features_);
         vkGetPhysicalDeviceProperties(physical_device, &properties_);
-        vkGetPhysicalDeviceMemoryProperties(physical_device, &memory_properties_);
 
         uint32_t queue_family_count = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, nullptr);

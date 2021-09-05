@@ -149,7 +149,7 @@ namespace vkcpp
                        handle_,
                        memory_);
 
-        CommandBuffers::cmdCopyBuffer(device_, command_pool_, staging_buffer, handle_, buffer_size);
+        CommandBuffers::cmdSingleCopyBuffer(device_, command_pool_, staging_buffer, handle_, buffer_size);
 
         vkDestroyBuffer(*device_, staging_buffer, nullptr);
         vkFreeMemory(*device_, staging_buffer_memory, nullptr);

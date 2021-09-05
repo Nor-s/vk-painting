@@ -8,76 +8,9 @@
 
 #include "utility/create.h"
 
-/**
- *  static 
- */
 namespace vkcpp
 {
-    void Image::cmd_image_memory_barrier(
-        VkCommandBuffer cmdbuffer,
-        VkImage image,
-        VkAccessFlags srcAccessMask,
-        VkAccessFlags dstAccessMask,
-        VkImageLayout oldImageLayout,
-        VkImageLayout newImageLayout,
-        VkPipelineStageFlags srcStageMask,
-        VkPipelineStageFlags dstStageMask,
-        VkImageSubresourceRange subresourceRange)
-    {
-        VkImageMemoryBarrier image_memory_barrier{};
-        image_memory_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        image_memory_barrier.srcAccessMask = srcAccessMask;
-        image_memory_barrier.dstAccessMask = dstAccessMask;
-        image_memory_barrier.oldLayout = oldImageLayout;
-        image_memory_barrier.newLayout = newImageLayout;
-        image_memory_barrier.image = image;
-        image_memory_barrier.subresourceRange = subresourceRange;
-        image_memory_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; // For queue family ownership
-        image_memory_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; // For queue family ownership
-
-        vkCmdPipelineBarrier(
-            cmdbuffer,
-            srcStageMask,
-            dstStageMask,
-            0,
-            0, nullptr,
-            0, nullptr,
-            1, &image_memory_barrier);
-    }
-    void Image::cmd_copy_buffer_to_image(VkCommandBuffer cmd_buffer,
-                                         VkBuffer buffer,
-                                         VkImage image,
-                                         uint32_t width,
-                                         uint32_t height)
-    {
-
-        VkBufferImageCopy region{};
-        region.bufferOffset = 0;
-        region.bufferRowLength = 0;
-        region.bufferImageHeight = 0;
-
-        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        region.imageSubresource.mipLevel = 0;
-        region.imageSubresource.baseArrayLayer = 0;
-        region.imageSubresource.layerCount = 1;
-        region.imageOffset = {0, 0, 0};
-        region.imageExtent = {
-            width,
-            height,
-            1};
-
-        vkCmdCopyBufferToImage(
-            cmd_buffer,
-            buffer,
-            image,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            1,
-            &region);
-    }
-}
-namespace vkcpp
-{
-    Image::Image(const Device *device, const CommandPool *command_pool, const std::string &filename)
+    Image::Image(const Device *device, const CommandPool *command_pool, const char *filename)
         : device_(device), command_pool_(command_pool), filename_(filename)
     {
         init_texture_image();
@@ -92,7 +25,7 @@ namespace vkcpp
     {
 
         int tex_width, tex_height, tex_channels;
-        stbi_uc *pixels = stbi_load(filename_.c_str(), &tex_width, &tex_height, &tex_channels, STBI_rgb_alpha);
+        stbi_uc *pixels = stbi_load(filename_, &tex_width, &tex_height, &tex_channels, STBI_rgb_alpha);
         VkDeviceSize image_size = tex_width * tex_height * 4;
 
         if (!pixels)
@@ -119,10 +52,11 @@ namespace vkcpp
 
         create::image(
             device_,
-            tex_width,
-            tex_height,
+            VK_IMAGE_TYPE_2D,
             VK_FORMAT_R8G8B8A8_SRGB,
+            {static_cast<uint32_t>(tex_width), static_cast<uint32_t>(tex_height), 1U},
             VK_IMAGE_TILING_OPTIMAL,
+            VK_SAMPLE_COUNT_1_BIT,
             VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
             handle_,
@@ -130,7 +64,7 @@ namespace vkcpp
 
         CommandBuffers cmd_buffer = std::move(CommandBuffers::beginSingleTimeCmd(device_, command_pool_));
 
-        cmd_image_memory_barrier(
+        CommandBuffers::cmdImageMemoryBarrier(
             cmd_buffer[0],
             handle_,
             0,
@@ -141,14 +75,14 @@ namespace vkcpp
             VK_PIPELINE_STAGE_TRANSFER_BIT,
             {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 
-        cmd_copy_buffer_to_image(
+        CommandBuffers::cmdCopyBufferToImage(
             cmd_buffer[0],
             staging_buffer,
             handle_,
             static_cast<uint32_t>(tex_width),
             static_cast<uint32_t>(tex_height));
 
-        cmd_image_memory_barrier(
+        CommandBuffers::cmdImageMemoryBarrier(
             cmd_buffer[0],
             handle_,
             VK_ACCESS_TRANSFER_WRITE_BIT,

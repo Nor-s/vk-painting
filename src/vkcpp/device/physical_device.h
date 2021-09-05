@@ -56,9 +56,6 @@ namespace vkcpp
         // The GPU properties
         VkPhysicalDeviceProperties properties_;
 
-        // The GPU memory properties
-        VkPhysicalDeviceMemoryProperties memory_properties_;
-
         // The GPU queue family properties
         std::vector<VkQueueFamilyProperties> queue_family_properties_;
 
@@ -87,7 +84,13 @@ namespace vkcpp
 
         const VkPhysicalDeviceFeatures &get_features() const { return supported_features_; }
 
-        const VkPhysicalDeviceMemoryProperties &get_memory_properties() const { return memory_properties_; }
+        const VkPhysicalDeviceMemoryProperties get_memory_properties() const
+        {
+            VkPhysicalDeviceMemoryProperties memory_properties;
+            vkGetPhysicalDeviceMemoryProperties(handle_, &memory_properties);
+
+            return memory_properties;
+        }
 
         const std::vector<VkQueueFamilyProperties> &get_queue_family_properties() const { return queue_family_properties_; }
 

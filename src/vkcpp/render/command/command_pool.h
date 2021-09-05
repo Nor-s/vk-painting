@@ -7,21 +7,27 @@ namespace vkcpp
 {
     class Device;
 
+    class Queue;
+
     class CommandPool
     {
     private:
-        Device *device_;
+        const Device *device_;
+
+        const Queue *queue_;
 
         VkCommandPool handle_;
 
-        uint32_t queue_family_idx_;
-
     public:
-        CommandPool(Device *device, VkCommandPoolCreateFlags flags, uint32_t queue_family_index);
+        CommandPool(const Device *device, const Queue *queue, VkCommandPoolCreateFlags flags);
 
         ~CommandPool();
 
         operator const VkCommandPool &() const { return handle_; }
+
+        const uint32_t get_queue_family_idx() const;
+
+        const Queue &get_queue() const;
 
         void init_command_pool(VkCommandPoolCreateFlags flags, uint32_t queue_family_index);
 

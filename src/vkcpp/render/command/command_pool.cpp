@@ -2,19 +2,31 @@
 
 #include "device/device.h"
 #include "device/physical_device.h"
+#include "device/queue.h"
 
 #include <iostream>
 
 namespace vkcpp
 {
-    CommandPool::CommandPool(Device *device, VkCommandPoolCreateFlags flags, uint32_t queue_family_idx)
-        : device_(device), queue_family_idx_(queue_family_idx)
+    CommandPool::CommandPool(const Device *device, const Queue *queue, VkCommandPoolCreateFlags flags)
+        : device_(device), queue_(queue)
     {
-        init_command_pool(flags, queue_family_idx);
+        init_command_pool(flags, queue->get_family_index());
     }
+
     CommandPool::~CommandPool()
     {
         destroy_command_pool();
+    }
+
+    const uint32_t CommandPool::get_queue_family_idx() const
+    {
+        return queue_->get_family_index();
+    }
+
+    const Queue &CommandPool::get_queue() const
+    {
+        return *queue_;
     }
 
     void CommandPool::init_command_pool(VkCommandPoolCreateFlags flags, uint32_t queue_family_idx)

@@ -43,6 +43,9 @@ namespace vkcpp
     {
         glfwPollEvents();
     }
+    void MainWindow::process_input()
+    {
+    }
 
     void MainWindow::init_window(uint32_t width, uint32_t height, std::string &title)
     {
@@ -60,7 +63,7 @@ namespace vkcpp
         }
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+        //glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 #ifdef __APPLE__
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
@@ -118,6 +121,10 @@ namespace vkcpp
     void MainWindow::set_framebuffer_size_callback(void (*fp)(GLFWwindow *window, int width, int height))
     {
         glfwSetFramebufferSizeCallback(handle_, fp);
+    }
+    void MainWindow::set_drop_callback(void (*fp)(GLFWwindow *window, int count, const char **paths))
+    {
+        glfwSetDropCallback(handle_, fp);
     }
 
 } // namespace vkcpp

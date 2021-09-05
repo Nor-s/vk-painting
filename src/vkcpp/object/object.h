@@ -31,6 +31,8 @@ namespace vkcpp
 
         const CommandPool *command_pool_{nullptr};
 
+        const char *texture_file_;
+
         //interleaving vertex attributes
         std::vector<Vertex2D> vertices_ = {
             {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
@@ -43,8 +45,6 @@ namespace vkcpp
         std::string vert_shader_file_{"../shaders/vs_default.spv"};
 
         std::string frag_shader_file_{"../shaders/fs_default.spv"};
-
-        std::string filename_{"../textures/img.jpg"};
 
         std::unique_ptr<Image> texture_{nullptr};
 
@@ -63,9 +63,13 @@ namespace vkcpp
     public:
         Object(const Device *device,
                const RenderStage *render_stage,
-               const CommandPool *command_pool);
+               const CommandPool *command_pool,
+               const char *texture_file);
 
+        Object(const Object &) = delete;
+        Object(Object &&) = default;
         virtual ~Object();
+        Object &operator=(Object &&) = default;
 
         UniformBuffers<TransformUBO> &get_mutable_uniform_buffers();
 

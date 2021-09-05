@@ -16,11 +16,14 @@ namespace vkcpp
 
     public:
         MainWindow();
+        MainWindow(const MainWindow &) = delete;
+        MainWindow &operator=(const MainWindow &) = delete;
         virtual ~MainWindow();
         virtual VkSurfaceKHR create_surface(VkInstance instance) override;
         virtual bool should_close() override;
         virtual void close() override;
         virtual void process_events() override;
+        void process_input();
         void init_window(uint32_t width, uint32_t height, std::string &title);
         void init_glfw();
         void destroy_window();
@@ -34,6 +37,7 @@ namespace vkcpp
         virtual void set_title(const std::string &title) override;
         void set_user_pointer(void *pointer);
         void set_framebuffer_size_callback(void (*fp)(GLFWwindow *window, int width, int height));
+        void set_drop_callback(void (*fp)(GLFWwindow *window, int count, const char **paths));
     };
 } // namespace vkcpp
 #endif // #ifndef VKCPP_MAIN_WINDOW_H

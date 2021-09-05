@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <cstdlib>
 #include <memory>
+#include <vector>
 
 #include "device/window/main_window.h"
 #include "device/instance.h"
@@ -22,12 +23,17 @@
 #include "render/command/command_buffers.h"
 namespace painting
 {
+    struct input
+    {
+    };
     class PaintingApplication
     {
         const int MAX_FRAMES_IN_FLIGHT = 3;
 
     public:
         static void framebufferResizeCallback(GLFWwindow *window, int width, int height);
+        static void dropCallback(GLFWwindow *window, int count, const char **paths);
+
         std::vector<const char *> device_extensions_ = {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME
 #ifdef __APPLE__
@@ -46,8 +52,8 @@ namespace painting
         std::unique_ptr<vkcpp::Swapchain> swapchain_{nullptr};
         std::unique_ptr<vkcpp::RenderStage> render_stage_{nullptr};
         std::unique_ptr<vkcpp::CommandPool> command_pool_{nullptr};
-        std::unique_ptr<vkcpp::Object> object_{nullptr};
         std::unique_ptr<vkcpp::CommandBuffers> command_buffers_{nullptr};
+        std::vector<std::unique_ptr<vkcpp::Object>> object_;
 
         std::vector<VkSemaphore> image_available_semaphores_;
         std::vector<VkSemaphore> render_finished_semaphores_;
@@ -55,18 +61,23 @@ namespace painting
         std::vector<VkFence> images_in_flight_;
         size_t current_frame_ = 0;
         bool framebuffer_resized_ = false;
+        std::vector<bool> is_command_buffer_updated_;
 
         void init_window(uint32_t width, uint32_t height, std::string title);
         void init_device();
         void init_render();
         void init_synobj();
-        void init_frame();
-        void update_uniform_buffer(uint32_t idx);
+        void record_command_buffers();
+        void record_command_buffer(int idx);
+        void update_uniform_buffer(uint32_t obj_idx, uint32_t ubo_idx);
         void draw_frame();
         void main_loop();
         void cleanup();
+        void reset_command_buffers_update_flag();
         void cleanup_swapchain();
         void recreate_swapchain();
+        void push_object(const char *texture_file);
+        void save_screen_shot(const char *filename, VkFormat swapchain_color_format, VkImage src_image, VkExtent3D extent);
     };
 } // namespace painting
 #endif // #ifndef PAINTING_APPLICATION_H

@@ -15,10 +15,11 @@ namespace vkcpp
                               VkImageSubresourceRange sub_resource_range);
 
         void image(const Device *device,
-                   uint32_t width,
-                   uint32_t height,
+                   VkImageType image_type,
                    VkFormat format,
+                   VkExtent3D extent,
                    VkImageTiling tiling,
+                   VkSampleCountFlagBits samples,
                    VkImageUsageFlags usage,
                    VkMemoryPropertyFlags properties,
                    VkImage &image,

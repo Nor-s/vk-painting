@@ -43,7 +43,20 @@ namespace vkcpp
             vkDestroyDevice(handle_, nullptr);
         }
     }
+    const PhysicalDevice &Device::get_gpu() const
+    {
+        return *gpu_;
+    };
 
+    const Queue *Device::get_graphics_queue() const
+    {
+        return graphics_queue_.get();
+    }
+
+    const Queue *Device::get_present_queue() const
+    {
+        return present_queue_.get();
+    }
     void Device::init_device(const PhysicalDevice *gpu)
     {
         const QueueFamilyIndices &indices = gpu->get_queue_family_indices();
@@ -117,6 +130,30 @@ namespace vkcpp
         {
             graphics_queue_ = std::make_unique<Queue>(this, indices.transfer_family.value(), 0, false, gpu->get_queue_family_properties()[indices.transfer_family.value()]);
         }
+    }
+
+    bool Device::check_support_blit(VkFormat swapchain_color_format)
+    {
+        bool supports_blit = true;
+        // Check blit support for source and destination
+        VkFormatProperties format_props;
+
+        // Check if the device supports blitting from optimal images (the swapchain images are in optimal format)
+        vkGetPhysicalDeviceFormatProperties(*gpu_, swapchain_color_format, &format_props);
+        if (!(format_props.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT))
+        {
+            std::cerr << "Device does not support blitting from optimal tiled images, using copy instead of blit!" << std::endl;
+            supports_blit = false;
+        }
+
+        // Check if the device supports blitting to linear images
+        vkGetPhysicalDeviceFormatProperties(*gpu_, VK_FORMAT_R8G8B8A8_UNORM, &format_props);
+        if (!(format_props.linearTilingFeatures & VK_FORMAT_FEATURE_BLIT_DST_BIT))
+        {
+            std::cerr << "Device does not support blitting to linear tiled images, using copy instead of blit!" << std::endl;
+            supports_blit = false;
+        }
+        return supports_blit;
     }
 
 } // namespace vkcpp

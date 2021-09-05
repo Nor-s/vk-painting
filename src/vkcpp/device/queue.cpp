@@ -15,12 +15,12 @@ namespace vkcpp
         return *device_;
     }
 
-    uint32_t Queue::get_family_index() const
+    const uint32_t Queue::get_family_index() const
     {
         return family_idx_;
     }
 
-    uint32_t Queue::get_index() const
+    const uint32_t Queue::get_index() const
     {
         return queue_idx_;
     }

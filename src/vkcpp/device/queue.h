@@ -36,9 +36,9 @@ namespace vkcpp
 
         const Device &get_device() const;
 
-        uint32_t get_family_index() const;
+        const uint32_t get_family_index() const;
 
-        uint32_t get_index() const;
+        const uint32_t get_index() const;
 
         VkQueueFamilyProperties get_properties() const;
 

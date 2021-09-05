@@ -37,10 +37,11 @@ namespace vkcpp
         }
 
         void image(const Device *device,
-                   uint32_t width,
-                   uint32_t height,
+                   VkImageType image_type,
                    VkFormat format,
+                   VkExtent3D extent,
                    VkImageTiling tiling,
+                   VkSampleCountFlagBits samples,
                    VkImageUsageFlags usage,
                    VkMemoryPropertyFlags properties,
                    VkImage &image,
@@ -48,10 +49,8 @@ namespace vkcpp
         {
             VkImageCreateInfo image_info{};
             image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-            image_info.imageType = VK_IMAGE_TYPE_2D; // for 2D
-            image_info.extent.width = width;
-            image_info.extent.height = height;
-            image_info.extent.depth = 1; // for 2D
+            image_info.imageType = image_type;
+            image_info.extent = extent;
             image_info.mipLevels = 1;
             image_info.arrayLayers = 1;
             image_info.format = format;
@@ -80,7 +79,10 @@ namespace vkcpp
                 throw std::runtime_error("failed to allocate image memory!");
             }
 
-            vkBindImageMemory(*device, image, imageMemory, 0);
+            if (vkBindImageMemory(*device, image, imageMemory, 0) != VK_SUCCESS)
+            {
+                throw std::runtime_error("failed to bind image memory!");
+            }
         }
 
         void buffer(const Device *device, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &memory)

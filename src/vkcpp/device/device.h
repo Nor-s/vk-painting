@@ -2,7 +2,6 @@
 #define VKCPP_DEVICE_DEVICE_H
 
 #include "vulkan_header.h"
-#include "queue.h"
 #include <memory>
 #include <iostream>
 
@@ -11,6 +10,8 @@ namespace vkcpp
     class Instance;
 
     class PhysicalDevice;
+
+    class Queue;
 
     /**
      *  @brief A wrapper class for VkDevice
@@ -47,14 +48,17 @@ namespace vkcpp
             return handle_;
         }
 
-        const PhysicalDevice &get_gpu() const { return *gpu_; };
+        const PhysicalDevice &get_gpu() const;
 
-        const VkQueue &get_graphics_queue() const { return *graphics_queue_; }
-        const VkQueue &get_present_queue() const { return *present_queue_; }
+        const Queue *get_graphics_queue() const;
+
+        const Queue *get_present_queue() const;
 
         void init_device(const PhysicalDevice *gpu);
 
         void init_queues(const PhysicalDevice *gpu);
+
+        bool check_support_blit(VkFormat swapchain_color_format);
     };
 } // namespace vkcpp
 #endif // #ifndef VKCPP_DEVICE_DEVICE_H

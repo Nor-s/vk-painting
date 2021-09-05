@@ -7,9 +7,11 @@
 #include "render/swapchain/framebuffers.h"
 #include "render/swapchain/render_pass.h"
 #include "render/swapchain/swapchain.h"
+#include "device/queue.h"
 
 #include <iostream>
-
+// Default fence timeout in nanoseconds
+#define DEFAULT_FENCE_TIMEOUT 100000000000
 namespace vkcpp
 {
     CommandBuffers CommandBuffers::beginSingleTimeCmd(const Device *device, const CommandPool *command_pool)
@@ -22,7 +24,7 @@ namespace vkcpp
 
     void CommandBuffers::endSingleTimeCmd(CommandBuffers &cmd_buffer)
     {
-        auto graphics_queue = cmd_buffer.get_device().get_graphics_queue();
+        const VkQueue &graphics_queue = *(cmd_buffer.get_device().get_graphics_queue());
         cmd_buffer.end_command_buffer(0);
 
         VkSubmitInfo submit_info{};
@@ -35,19 +37,148 @@ namespace vkcpp
 
         cmd_buffer.free_command_buffers();
     }
-    void CommandBuffers::cmdCopyBuffer(const Device *device, const CommandPool *command_pool, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+    void CommandBuffers::cmdCopyBuffer(VkCommandBuffer cmd_buffer,
+                                       VkBuffer src_buffer,
+                                       VkBuffer dst_buffer,
+                                       VkDeviceSize size)
     {
-        CommandBuffers cmd_buffer = std::move(beginSingleTimeCmd(device, command_pool));
-
         VkBufferCopy copy_region{};
         copy_region.srcOffset = 0; // Optional
         copy_region.dstOffset = 0; // Optional
         copy_region.size = size;
-        vkCmdCopyBuffer(cmd_buffer[0], srcBuffer, dstBuffer, 1, &copy_region);
+        vkCmdCopyBuffer(cmd_buffer, src_buffer, dst_buffer, 1, &copy_region);
+    }
+
+    void CommandBuffers::cmdSingleCopyBuffer(const Device *device,
+                                             const CommandPool *command_pool,
+                                             VkBuffer src_buffer,
+                                             VkBuffer dst_buffer,
+                                             VkDeviceSize size)
+    {
+        CommandBuffers cmd_buffer = std::move(beginSingleTimeCmd(device, command_pool));
+
+        cmdCopyBuffer(cmd_buffer[0],
+                      src_buffer,
+                      dst_buffer,
+                      size);
 
         endSingleTimeCmd(cmd_buffer);
     }
+
+    void CommandBuffers::cmdImageMemoryBarrier(VkCommandBuffer cmd_buffer,
+                                               VkImage image,
+                                               VkAccessFlags src_access_mask,
+                                               VkAccessFlags dst_access_mask,
+                                               VkImageLayout old_image_layout,
+                                               VkImageLayout new_image_layout,
+                                               VkPipelineStageFlags src_stage_mask,
+                                               VkPipelineStageFlags dst_stage_mask,
+                                               VkImageSubresourceRange subresource_range)
+    {
+        VkImageMemoryBarrier image_memory_barrier{};
+        image_memory_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        image_memory_barrier.srcAccessMask = src_access_mask;
+        image_memory_barrier.dstAccessMask = dst_access_mask;
+        image_memory_barrier.oldLayout = old_image_layout;
+        image_memory_barrier.newLayout = new_image_layout;
+        image_memory_barrier.image = image;
+        image_memory_barrier.subresourceRange = subresource_range;
+        image_memory_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; // For queue family ownership
+        image_memory_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; // For queue family ownership
+
+        vkCmdPipelineBarrier(
+            cmd_buffer,
+            src_stage_mask,
+            dst_stage_mask,
+            0,
+            0, nullptr,
+            0, nullptr,
+            1, &image_memory_barrier);
+    }
+
+    void CommandBuffers::cmdCopyBufferToImage(VkCommandBuffer cmd_buffer,
+                                              VkBuffer buffer,
+                                              VkImage image,
+                                              uint32_t width,
+                                              uint32_t height)
+    {
+
+        VkBufferImageCopy region{};
+        region.bufferOffset = 0;
+        region.bufferRowLength = 0;
+        region.bufferImageHeight = 0;
+
+        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.imageSubresource.mipLevel = 0;
+        region.imageSubresource.baseArrayLayer = 0;
+        region.imageSubresource.layerCount = 1;
+        region.imageOffset = {0, 0, 0};
+        region.imageExtent = {
+            width,
+            height,
+            1};
+
+        vkCmdCopyBufferToImage(
+            cmd_buffer,
+            buffer,
+            image,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            1,
+            &region);
+    }
+
+    void CommandBuffers::cmdCopyImage(VkCommandBuffer cmd_buffer,
+                                      bool supports_blit,
+                                      VkExtent3D extent,
+                                      VkImageSubresourceLayers src_subresource,
+                                      VkImageSubresourceLayers dst_subresource,
+                                      VkImage src_image,
+                                      VkImage dst_image)
+    {
+        // If source and destination support blit we'll blit as this also does automatic format conversion (e.g. from BGR to RGB)
+        if (supports_blit)
+        {
+            // Define the region to blit (we will blit the whole swapchain image)
+            VkOffset3D blit_size;
+            blit_size.x = extent.width;
+            blit_size.y = extent.height;
+            blit_size.z = extent.depth;
+
+            VkImageBlit blig_region{};
+            blig_region.srcSubresource = src_subresource;
+            blig_region.srcOffsets[1] = blit_size;
+
+            blig_region.dstSubresource = dst_subresource;
+            blig_region.dstOffsets[1] = blit_size;
+
+            // Issue the blit command
+            vkCmdBlitImage(
+                cmd_buffer,
+                src_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                dst_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                1,
+                &blig_region,
+                VK_FILTER_NEAREST);
+        }
+        else
+        {
+            // Otherwise use image copy (requires us to manually flip components)
+            VkImageCopy copy_region{};
+            copy_region.srcSubresource = src_subresource;
+            copy_region.dstSubresource = dst_subresource;
+            copy_region.extent = extent;
+
+            // Issue the copy command
+            vkCmdCopyImage(
+                cmd_buffer,
+                src_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                dst_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                1,
+                &copy_region);
+        }
+    }
 } // namespace vkcpp
+
 namespace vkcpp
 {
     CommandBuffers::CommandBuffers(const Device *device, const CommandPool *command_pool, uint32_t size, VkCommandBufferLevel level)
@@ -87,14 +218,14 @@ namespace vkcpp
         {
             throw std::runtime_error("failed to allocate command buffers : command pool is nullptr!");
         }
-        command_pool_->alloc_buffers(handle_, handle_.size(), level_);
+        command_pool_->alloc_buffers(handle_, static_cast<uint32_t>(handle_.size()), level_);
     }
 
     void CommandBuffers::free_command_buffers()
     {
         if (handle_.size() > 0)
         {
-            vkFreeCommandBuffers(*device_, *command_pool_, handle_.size(), handle_.data());
+            vkFreeCommandBuffers(*device_, *command_pool_, static_cast<uint32_t>(handle_.size()), handle_.data());
             handle_.resize(0);
         }
     }
@@ -134,6 +265,43 @@ namespace vkcpp
         {
             throw std::runtime_error("failed to record command buffer!");
         }
+    }
+
+    void CommandBuffers::flush_command_buffer(int command_buffer_idx)
+    {
+        auto &command_buffer = handle_[command_buffer_idx];
+        if (command_buffer == VK_NULL_HANDLE)
+        {
+            return;
+        }
+
+        VkSubmitInfo submit_info{};
+        submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submit_info.commandBufferCount = 1;
+        submit_info.pCommandBuffers = &command_buffer;
+        // Create fence to ensure that the command buffer has finished executing
+        VkFenceCreateInfo fence_info{};
+        fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fence_info.flags = 0;
+
+        VkFence fence;
+
+        if (vkCreateFence(*device_, &fence_info, nullptr, &fence) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create fence for a flush command buffer!");
+        }
+        // Submit to the queue
+        if (vkQueueSubmit(command_pool_->get_queue(), 1, &submit_info, fence) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to submit for a flush command buffer!");
+        }
+        // Wait for the fence to signal that command buffer has finished executing
+        if (vkWaitForFences(*device_, 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to wait fence for flush command buffer!");
+        }
+        vkDestroyFence(*device_, fence, nullptr);
+        // free buffer
     }
 
 } // namespace vkcpp
