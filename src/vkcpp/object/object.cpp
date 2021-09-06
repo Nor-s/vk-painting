@@ -1,12 +1,13 @@
 #include "object.h"
 
+#include "model.h"
 #include "device/device.h"
+#include "render/image/image.h"
+#include "render/render_stage.h"
 #include "render/swapchain/swapchain.h"
 #include "render/command/command_pool.h"
 #include "render/command/command_buffers.h"
 #include "render/pipeline/graphics_pipeline.h"
-#include "render/image/image.h"
-#include "render/render_stage.h"
 
 #include <memory>
 
@@ -19,27 +20,16 @@ namespace vkcpp
         : device_(device), render_stage_(render_stage), command_pool_(command_pool), texture_file_(texture_file)
     {
         init_object();
-        init_dependency_swapchain(render_stage);
+        load_2d_model();
+        init_dependency_renderpass(render_stage);
     }
-    /*
-    Object::Object(Object&& a)
-        : device_(a.device_), render_stage_(a.render_stage_), command_pool_(a.command_pool_), texture_file_(a.texture_file_),
-        vertices_(std::move(a.vertices_)), indices_(std::move(a.indices_)), vert_shader_file_(std::move(a.vert_shader_file_)),
-        texture_{std::move(a.texture_), 
-    {
-    }
-
-    const Object &Object::operator=(Object && rhs)
-    {
-    }
-    */
     Object::~Object()
     {
-        destroy_dependency_swapchain();
+        destroy_dependency_renderpass();
         destroy_object();
     }
 
-    UniformBuffers<TransformUBO> &Object::get_mutable_uniform_buffers()
+    UniformBuffers<shader::attribute::TransformUBO> &Object::get_mutable_uniform_buffers()
     {
         return *uniform_buffers_;
     }
@@ -50,35 +40,75 @@ namespace vkcpp
             device_,
             command_pool_,
             texture_file_);
-
-        index_buffer_ = std::make_unique<Buffer<uint16_t>>(
-            device_,
-            command_pool_,
-            &indices_,
-            VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-            true);
-
-        vertex_buffer_ = std::make_unique<Buffer<Vertex2D>>(
-            device_,
-            command_pool_,
-            &vertices_,
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            true);
     }
 
-    void Object::init_dependency_swapchain(const RenderStage *render_stage)
+    void Object::load_2d_model()
+    {
+        float screen_width = static_cast<float>(render_stage_->get_render_area().extent.width);
+        float screen_height = static_cast<float>(render_stage_->get_render_area().extent.height);
+
+        auto [width, height] = texture_->get_size();
+
+        float w = static_cast<float>(width), h = static_cast<float>(height);
+        float screen_ratio = screen_width / screen_height, image_ratio = w / h;
+        w = screen_ratio;
+        h = w / image_ratio;
+        if (h > 1.0f)
+        {
+            w /= h;
+            h = 1.0f;
+        }
+        /*
+        if (image_ratio < screen_ratio)
+        {
+            if (w > h)
+            {
+                h = 1.0f / (w / h);
+                w = 1.0f;
+            }
+            else
+            {
+                w = 1.0f / (h / w);
+                h = 1.0f;
+            }
+        }
+        else
+        {
+            if (h > w)
+            {
+                h = 1.0f / (h / w);
+                w = 1.0f;
+            }
+            else
+            {
+                h = 1.0f / (w / h);
+                w = 1.0f;
+            }
+        }
+        */
+        //interleaving vertex attributes
+        std::vector<shader::attribute::Vertex> vertices = {
+            {{-w, -h, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
+            {{w, -h, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
+            {{w, h, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
+            {{-w, h, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}};
+
+        model_ = std::make_shared<Model>(device_, command_pool_, vertices);
+    }
+
+    void Object::init_dependency_renderpass(const RenderStage *render_stage)
     {
         render_stage_ = render_stage;
-        swapchain_image_size_ = render_stage_->get_swapchain().get_properties().image_count;
+        framebuffers_size_ = render_stage_->get_framebuffers().get_framebuffers_size();
 
         if (uniform_buffers_ != nullptr)
         {
             uniform_buffers_.reset();
         }
-        uniform_buffers_ = std::make_unique<UniformBuffers<TransformUBO>>(
+        uniform_buffers_ = std::make_unique<UniformBuffers<shader::attribute::TransformUBO>>(
             device_,
             texture_.get(),
-            swapchain_image_size_);
+            framebuffers_size_);
 
         if (graphics_pipeline_ != nullptr)
         {
@@ -93,7 +123,7 @@ namespace vkcpp
             0);
     }
 
-    void Object::destroy_dependency_swapchain()
+    void Object::destroy_dependency_renderpass()
     {
         graphics_pipeline_.reset();
         uniform_buffers_.reset();
@@ -101,8 +131,7 @@ namespace vkcpp
 
     void Object::destroy_object()
     {
-        vertex_buffer_.reset();
-        index_buffer_.reset();
+        model_.reset();
         texture_.reset();
     }
 
@@ -110,10 +139,7 @@ namespace vkcpp
     {
         graphics_pipeline_->bind_pipeline(command_buffer);
 
-        VkDeviceSize offsets[] = {0};
-        vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer_->get_buffer(), offsets);
-
-        vkCmdBindIndexBuffer(command_buffer, *index_buffer_, 0, VK_INDEX_TYPE_UINT16);
+        model_->bind(command_buffer);
 
         vkCmdBindDescriptorSets(
             command_buffer,
@@ -125,6 +151,16 @@ namespace vkcpp
             0,
             nullptr);
 
-        vkCmdDrawIndexed(command_buffer, static_cast<uint32_t>(indices_.size()), 1, 0, 0, 0);
+        model_->draw(command_buffer);
     }
+    void Object::sub_texture(const char *path)
+    {
+        texture_->sub_texture_image(path);
+    }
+
+    void Object::sub_texture(VkImage image)
+    {
+        texture_->sub_texture_image(image, {}, render_stage_->get_color_format());
+    }
+
 }

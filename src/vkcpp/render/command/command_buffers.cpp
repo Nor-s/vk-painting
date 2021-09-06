@@ -269,6 +269,8 @@ namespace vkcpp
 
     void CommandBuffers::flush_command_buffer(int command_buffer_idx)
     {
+        end_command_buffer(0);
+
         auto &command_buffer = handle_[command_buffer_idx];
         if (command_buffer == VK_NULL_HANDLE)
         {

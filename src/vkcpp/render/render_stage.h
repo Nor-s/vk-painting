@@ -10,12 +10,16 @@ namespace vkcpp
 {
     class Swapchain;
 
+    class Image;
+
     class RenderStage
     {
     private:
         const Device *device_;
 
         const Swapchain *swapchain_;
+
+        const std::vector<Image> *images_;
 
         std::unique_ptr<RenderPass> render_pass_;
 
@@ -25,14 +29,22 @@ namespace vkcpp
 
         std::vector<VkClearValue> clear_values_;
 
+        VkFormat color_format_;
+
+        VkFormat depth_format_;
+
     public:
         RenderStage(const Device *deivce, const Swapchain *swapchain);
 
+        RenderStage(const Device *device, const std::vector<Image> *image);
+
         virtual ~RenderStage();
 
-        const Swapchain &get_swapchain() const { return *swapchain_; }
-
         const VkRect2D &get_render_area() const { return render_area_; }
+
+        const VkFormat &get_depth_format() const { return depth_format_; }
+
+        const VkFormat &get_color_format() const { return color_format_; }
 
         const RenderPass &get_render_pass() const { return *render_pass_; }
 

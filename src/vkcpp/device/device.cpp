@@ -9,6 +9,9 @@
 #include <vector>
 #include <set>
 
+/**
+ * query
+*/
 namespace vkcpp
 {
     const uint32_t Device::find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags properties) const
@@ -132,7 +135,7 @@ namespace vkcpp
         }
     }
 
-    bool Device::check_support_blit(VkFormat swapchain_color_format)
+    bool Device::check_support_blit(VkFormat swapchain_color_format) const
     {
         bool supports_blit = true;
         // Check blit support for source and destination

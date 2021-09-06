@@ -2,30 +2,56 @@
 
 #include "device/device.h"
 #include "render/swapchain/swapchain.h"
+#include "render/image/image.h"
 
 namespace vkcpp
 {
     RenderStage::RenderStage(const Device *device, const Swapchain *swapchain)
-        : device_(device), swapchain_(swapchain)
+        : device_(device), swapchain_(swapchain), images_(nullptr)
     {
+        color_format_ = swapchain_->get_properties().surface_format.format;
         init_render_stage();
     }
+
+    RenderStage::RenderStage(const Device *device, const std::vector<Image> *images)
+        : device_(device), swapchain_(nullptr), images_(images)
+    {
+        color_format_ = (*images_)[0].get_color_format();
+        init_render_stage();
+    }
+
     RenderStage::~RenderStage()
     {
         destroy();
     }
+
     void RenderStage::init_render_stage()
     {
-        render_pass_ = std::make_unique<RenderPass>(device_, swapchain_);
-        framebuffers_ = std::make_unique<Framebuffers>(device_, render_pass_.get());
+        VkExtent2D extent;
+        VkClearValue clear_color{};
 
-        VkExtent2D extent = swapchain_->get_properties().extent;
+        clear_color.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+        clear_values_.emplace_back(clear_color);
+        if (swapchain_ == nullptr)
+        {
+            render_pass_ = std::make_unique<RenderPass>(device_, &(*images_)[0]);
+            framebuffers_ = std::make_unique<Framebuffers>(device_, render_pass_.get(), images_);
+            extent.width = (*images_)[0].get_extent().width;
+            extent.height = (*images_)[0].get_extent().height;
+            VkClearValue clear_depth{};
+            clear_depth.depthStencil = {1.0f, 0};
+            clear_values_.emplace_back(clear_depth);
+        }
+        else
+        {
+            render_pass_ = std::make_unique<RenderPass>(device_, swapchain_);
+            framebuffers_ = std::make_unique<Framebuffers>(device_, render_pass_.get());
+            extent = swapchain_->get_properties().extent;
+        }
+
         render_area_.offset.x = 0.0;
         render_area_.offset.y = 0.0;
         render_area_.extent = extent;
-        VkRenderPassBeginInfo render_pass_info{};
-        VkClearValue clear_color = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
-        clear_values_.emplace_back(clear_color);
     }
     void RenderStage::destroy()
     {

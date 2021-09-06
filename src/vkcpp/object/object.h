@@ -2,7 +2,7 @@
 #define VKCPP_RENDER_OBJECT_OBJECT_H
 
 #include "vulkan_header.h"
-#include "render/buffer/vertex.hpp"
+#include "shader_attribute.hpp"
 #include "render/buffer/uniform_buffers.hpp"
 #include <vector>
 #include <string>
@@ -20,8 +20,22 @@ namespace vkcpp
 
     class CommandBuffers;
 
-    class Device;
+    class Model;
 
+    class Device;
+    struct TransformComponent
+    {
+        glm::vec3 translation{};
+        glm::vec3 scale{1.f, 1.f, 1.f};
+        glm::vec3 rotation{};
+
+        // Matrix corrsponds to Translate * Ry * Rx * Rz * Scale
+        // Rotations correspond to Tait-bryan angles of Y(1), X(2), Z(3)
+        // https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix
+        glm::mat4 mat4();
+
+        glm::mat3 normal_matrix();
+    };
     class Object
     {
     private:
@@ -33,32 +47,19 @@ namespace vkcpp
 
         const char *texture_file_;
 
-        //interleaving vertex attributes
-        std::vector<Vertex2D> vertices_ = {
-            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-            {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-            {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-            {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}};
-
-        std::vector<uint16_t> indices_ = {0, 1, 2, 2, 3, 0};
-
         std::string vert_shader_file_{"../shaders/vs_default.spv"};
 
         std::string frag_shader_file_{"../shaders/fs_default.spv"};
 
         std::unique_ptr<Image> texture_{nullptr};
 
-        std::unique_ptr<UniformBuffers<TransformUBO>> uniform_buffers_{nullptr};
-
-        std::unique_ptr<Buffer<Vertex2D>> vertex_buffer_{nullptr};
-
-        std::unique_ptr<Buffer<uint16_t>> index_buffer_{nullptr};
+        std::unique_ptr<UniformBuffers<shader::attribute::TransformUBO>> uniform_buffers_{nullptr};
 
         std::unique_ptr<GraphicsPipeline> graphics_pipeline_{nullptr};
 
-        TransformUBO transformation_;
+        std::shared_ptr<Model> model_;
 
-        uint32_t swapchain_image_size_{0};
+        uint32_t framebuffers_size_{0};
 
     public:
         Object(const Device *device,
@@ -71,17 +72,23 @@ namespace vkcpp
         virtual ~Object();
         Object &operator=(Object &&) = default;
 
-        UniformBuffers<TransformUBO> &get_mutable_uniform_buffers();
+        UniformBuffers<shader::attribute::TransformUBO> &get_mutable_uniform_buffers();
 
         void init_object();
 
-        void init_dependency_swapchain(const RenderStage *render_stage);
+        void init_dependency_renderpass(const RenderStage *render_stage);
 
-        void destroy_dependency_swapchain();
+        void destroy_dependency_renderpass();
 
         void destroy_object();
 
+        void load_2d_model();
+
         virtual void draw(VkCommandBuffer command_buffer, int idx);
+
+        void sub_texture(const char *path);
+
+        void sub_texture(VkImage image);
 
     }; // class Object
 } // namespace vkcpp

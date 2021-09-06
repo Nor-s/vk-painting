@@ -2,6 +2,7 @@
 #define VKCPP_UTILITY_CREATE_H
 
 #include "vulkan_header.h"
+#include <string>
 
 namespace vkcpp
 {
@@ -26,6 +27,10 @@ namespace vkcpp
                    VkDeviceMemory &imageMemory);
 
         void buffer(const Device *device, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &memory);
+        /**
+         *  create shaderModule using spirv code
+         */
+        VkShaderModule shaderModule(const Device *device, std::string &filename);
     } // namespace create
 } // namespace vkcpp
 

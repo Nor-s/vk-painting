@@ -5,8 +5,11 @@
 
 namespace vkcpp
 {
-    class Device;    // for create and destroy
+    class Device; // for create and destroy
+
     class Swapchain; // for color attachment format
+
+    class Image; // for off screen rendering
 
     /**
      *  A wrapper class for VkRenderPass 
@@ -17,14 +20,18 @@ namespace vkcpp
     class RenderPass
     {
     private:
-        const Device *device_;
+        const Device *device_{nullptr};
 
-        const Swapchain *swapchain_;
+        const Swapchain *swapchain_{nullptr};
+
+        const Image *image_{nullptr};
 
         VkRenderPass handle_{VK_NULL_HANDLE};
 
     public:
         RenderPass(const Device *device, const Swapchain *swapchain);
+
+        RenderPass(const Device *device, const Image *image);
 
         ~RenderPass();
 
@@ -33,6 +40,8 @@ namespace vkcpp
         const Swapchain &get_swapchain() const { return *swapchain_; }
 
         void init_render_pass();
+
+        void init_render_pass_for_offscreen();
 
         void destroy_rander_pass();
     }; // class RenderPass

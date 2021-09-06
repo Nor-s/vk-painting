@@ -1,17 +1,20 @@
 #include "graphics_pipeline.h"
 
-#include "shader.h"
 #include "device/device.h"
 #include "render/render_stage.h"
 #include "render/swapchain/swapchain.h"
 #include "render/swapchain/render_pass.h"
-#include "render/buffer/vertex.hpp"
+#include "object/shader_attribute.hpp"
 #include "render/buffer/descriptor_sets.h"
+#include "utility/create.h"
 
 #include <iostream>
 
 namespace vkcpp
 {
+    /**
+     *  offscreen : 
+     */
     GraphicsPipeline::GraphicsPipeline(const Device *device,
                                        const RenderStage *render_stage,
                                        const DescriptorSets *descriptor_sets,
@@ -114,8 +117,8 @@ namespace vkcpp
     void GraphicsPipeline::init_pipeline()
     {
         // Shader Stages
-        vert_shader_module_ = Shader::createShaderModule(device_, vert_shader_file_);
-        frag_shader_module_ = Shader::createShaderModule(device_, frag_shader_file_);
+        vert_shader_module_ = create::shaderModule(device_, vert_shader_file_);
+        frag_shader_module_ = create::shaderModule(device_, frag_shader_file_);
 
         VkPipelineShaderStageCreateInfo vert_shader_stage_create_info{};
 
@@ -137,11 +140,11 @@ namespace vkcpp
 
         vertex_input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
-        auto bindingDescription = Vertex2D::getBindingDescription();
+        auto bindingDescription = shader::attribute::Vertex::getBindingDescription();
         vertex_input_info.vertexBindingDescriptionCount = 1;
         vertex_input_info.pVertexBindingDescriptions = &bindingDescription;
 
-        auto attributeDescriptions = Vertex2D::getAttributeDescriptions();
+        auto attributeDescriptions = shader::attribute::Vertex::getAttributeDescriptions();
         vertex_input_info.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
         vertex_input_info.pVertexAttributeDescriptions = attributeDescriptions.data();
 

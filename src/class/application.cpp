@@ -1,7 +1,7 @@
 #include "application.h"
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#include "render/buffer/vertex.hpp"
+#include "object/shader_attribute.hpp"
 #include "utility/create.h"
 #include "device/queue.h"
 #include <fstream>
@@ -110,14 +110,16 @@ namespace painting
 
     void PaintingApplication::update_uniform_buffer(uint32_t object_idx, uint32_t idx)
     {
-        vkcpp::TransformUBO ubo{};
+        vkcpp::shader::attribute::TransformUBO ubo{};
         ubo.model = glm::mat4(1.0f);
+
+        //ubo.model = glm::scale(ubo.model, glm::mat3(0.2f, 0.2f, 0.2f));
         glm::vec3 camera_pos = glm::vec3(0.0f, 0.0f, 3.0f);
         glm::vec3 camera_front = glm::vec3(0.0f, 0.0f, -10.0f);
         glm::vec3 camera_up = glm::vec3(0.0f, 1.0f, 0.0f);
 
         ubo.view = glm::lookAt(camera_pos, camera_pos + camera_front, camera_up);
-        ubo.proj = glm::perspective(glm::radians(45.0f), render_stage_->get_render_area().extent.width / (float)render_stage_->get_render_area().extent.height, 0.1f, 100.0f);
+        ubo.proj = glm::perspective(glm::radians(45.0f), render_stage_->get_render_area().extent.width / (float)render_stage_->get_render_area().extent.height, 0.0f, 100.0f);
         //ubo.proj[1][1] *= -1;
         object_[object_idx]->get_mutable_uniform_buffers().update_uniform_buffer(idx, ubo);
     }
@@ -248,7 +250,7 @@ namespace painting
     {
         for (int i = 0; i < object_.size(); i++)
         {
-            object_[i]->destroy_dependency_swapchain();
+            object_[i]->destroy_dependency_renderpass();
         }
         command_buffers_.reset();
         render_stage_.reset();
@@ -275,7 +277,7 @@ namespace painting
         // there is no need to change the number of buffers.(commandbuffer and etc.)
         for (int i = 0; i < object_.size(); i++)
         {
-            object_[i]->init_dependency_swapchain(render_stage_.get());
+            object_[i]->init_dependency_renderpass(render_stage_.get());
         }
         record_command_buffers();
 
@@ -377,7 +379,6 @@ namespace painting
             VK_PIPELINE_STAGE_TRANSFER_BIT,
             VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 
-        vkcpp::CommandBuffers::endSingleTimeCmd(copy_cmd);
         copy_cmd.flush_command_buffer(0);
 
         // Get layout of the image (including row pitch)
@@ -437,7 +438,6 @@ namespace painting
         vkFreeMemory(*device, dst_image_memory, nullptr);
         vkDestroyImage(*device, dst_image, nullptr);
     }
-
 } // namespace painting
 /**
  * call back
@@ -459,7 +459,14 @@ namespace painting
         }
         for (int i = 0; i < count; i++)
         {
-            app->push_object(paths[i]);
+            if (app->object_.size() == 0)
+            {
+                app->push_object(paths[i]);
+            }
+            else
+            {
+                app->object_[0]->sub_texture(paths[i]);
+            }
         }
     }
 

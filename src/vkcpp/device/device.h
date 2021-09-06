@@ -58,7 +58,7 @@ namespace vkcpp
 
         void init_queues(const PhysicalDevice *gpu);
 
-        bool check_support_blit(VkFormat swapchain_color_format);
+        bool check_support_blit(VkFormat swapchain_color_format) const;
     };
 } // namespace vkcpp
 #endif // #ifndef VKCPP_DEVICE_DEVICE_H

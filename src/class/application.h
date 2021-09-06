@@ -44,6 +44,7 @@ namespace painting
 
         PaintingApplication() = default;
         void run(uint32_t width = 512, uint32_t height = 512, std::string title = "painting");
+        std::vector<std::unique_ptr<vkcpp::Object>> object_;
 
     private:
         std::unique_ptr<vkcpp::Instance> instance_{nullptr};
@@ -53,7 +54,6 @@ namespace painting
         std::unique_ptr<vkcpp::RenderStage> render_stage_{nullptr};
         std::unique_ptr<vkcpp::CommandPool> command_pool_{nullptr};
         std::unique_ptr<vkcpp::CommandBuffers> command_buffers_{nullptr};
-        std::vector<std::unique_ptr<vkcpp::Object>> object_;
 
         std::vector<VkSemaphore> image_available_semaphores_;
         std::vector<VkSemaphore> render_finished_semaphores_;

@@ -9,13 +9,12 @@ namespace vkcpp
     class Device;
     class Swapchain;
     class RenderPass;
+    class Image;
 
     class Framebuffers
     {
     private:
         const Device *device_;
-
-        const Swapchain *swapchain_;
 
         const RenderPass *render_pass_;
 
@@ -24,19 +23,21 @@ namespace vkcpp
         uint32_t framebuffers_size_{0};
 
     public:
-        Framebuffers(const Device *device, const RenderPass *render_pass);
+        Framebuffers(const Device *device, const RenderPass *render_pass, const std::vector<Image> *images = nullptr);
 
         ~Framebuffers();
 
         const uint32_t &get_framebuffers_size() const { return framebuffers_size_; }
 
-        const Swapchain &get_swapchain() const { return *swapchain_; };
-
         const RenderPass &get_render_pass() const { return *render_pass_; };
 
         const std::vector<VkFramebuffer> &get_framebuffers() const { return handle_; };
 
-        void init_framebuffers();
+        void create_framebuffer(int idx, std::vector<VkImageView> &attachments, uint32_t width, uint32_t height, uint32_t layers);
+
+        void init_framebuffers(const Swapchain *swapchain);
+
+        void init_framebuffers_for_offscreen(const std::vector<Image> *images);
 
         void destroy_framebuffers();
     };
