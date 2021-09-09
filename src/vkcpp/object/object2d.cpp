@@ -93,6 +93,15 @@ namespace vkcpp
         return *uniform_buffers_;
     }
 
+    void Object2D::init_color(const glm::vec4 &color)
+    {
+        transform_.color = color;
+    }
+    void Object2D::prod_color(const glm::vec4 &color)
+    {
+        transform_.color *= color;
+    }
+
     void Object2D::init_transform(glm::vec3 translation, glm::vec3 scale, glm::vec3 rotation)
     {
         transform_.translation = translation;
@@ -111,8 +120,8 @@ namespace vkcpp
     {
         vkcpp::shader::attribute::TransformUBO ubo{};
         //TODO this is hard coding.
-        init_transform({1, 1, 1}, {0.001f, 0.001f, 1.0f}, {0.0f, 0.0f, 0.0f});
         ubo.model = transform_.get_mat4();
+        ubo.color = transform_.color;
         ubo.view = MainCamera::getInstance()->get_view();
         ubo.proj = MainCamera::getInstance()->get_proj();
         //ubo.proj[1][1] *= -1;

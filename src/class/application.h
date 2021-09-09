@@ -24,6 +24,7 @@
 #include "render/image/offscreen.h"
 #include "render/swapchain/offscreens.h"
 #include "brush.h"
+#include "picture.h"
 
 namespace painting
 {
@@ -62,13 +63,17 @@ namespace painting
         std::unique_ptr<vkcpp::RenderStage> offscreen_render_stage_{nullptr};
         std::vector<std::unique_ptr<vkcpp::Object2D>> brush_;
         std::vector<std::unique_ptr<vkcpp::Object2D>> object_;
+        //   std::unique_ptr<Picture> picture_;
 
         std::vector<VkSemaphore> image_available_semaphores_;
         std::vector<VkSemaphore> render_finished_semaphores_;
         std::vector<VkFence> in_flight_fences_;
         std::vector<VkFence> images_in_flight_;
+
         size_t current_frame_ = 0;
+
         bool framebuffer_resized_ = false;
+
         std::vector<bool> is_command_buffer_updated_;
 
         void init_offscreen(VkExtent3D extent);

@@ -12,6 +12,8 @@ namespace painting
         texture_file_ = tex_[idx];
         init_texture({});
         init_object2d();
+        init_transform({0.0, 0.0, 1.0}, {0.1, 0.1, 1.0});
+        init_color({0.0, 0.0, 0.0, .4});
     }
 }
 

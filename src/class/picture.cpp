@@ -8,5 +8,6 @@ namespace painting
                      const VkExtent3D &extent)
         : Object2D(device, render_stage, command_pool, extent)
     {
+        init_transform({0.0, 0.0, 0.4});
     }
 }

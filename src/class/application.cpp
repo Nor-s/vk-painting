@@ -29,6 +29,7 @@ namespace painting
         int size = swapchain_->get_image_views().size();
         offscreens_ = std::make_unique<vkcpp::Offscreens>(device_.get(), extent, size);
         offscreen_render_stage_ = std::make_unique<vkcpp::RenderStage>(device_.get(), offscreens_.get());
+        brush_.emplace_back(std::make_unique<Picture>(device_.get(), offscreen_render_stage_.get(), command_pool_.get(), extent));
         brush_.emplace_back(std::make_unique<Brush>(device_.get(), offscreen_render_stage_.get(), command_pool_.get(), 0));
     }
 
@@ -53,7 +54,6 @@ namespace painting
 
     void PaintingApplication::init_synobj()
     {
-
         image_available_semaphores_.resize(MAX_FRAMES_IN_FLIGHT);
         render_finished_semaphores_.resize(MAX_FRAMES_IN_FLIGHT);
         in_flight_fences_.resize(MAX_FRAMES_IN_FLIGHT);
@@ -108,7 +108,7 @@ namespace painting
 
         command_buffers_->begin_render_pass(idx, render_stage_.get());
 
-        for (int j = 1; j < object_.size(); j++)
+        for (int j = 0; j < object_.size(); j++)
         {
             object_[j]->draw((*command_buffers_)[idx], idx);
         }

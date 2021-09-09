@@ -29,6 +29,7 @@ namespace vkcpp
         glm::vec3 translation{};
         glm::vec3 scale{1.f, 1.f, 1.f};
         glm::vec3 rotation{};
+        glm::vec4 color{1.0f, 1.0f, 1.0f, 1.0f};
         // Matrix corrsponds to Translate * Ry * Rx * Rz * Scale
         // Rotations correspond to Tait-bryan angles of Y(1), X(2), Z(3)
         // https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix
@@ -96,6 +97,9 @@ namespace vkcpp
         const VkExtent3D &get_extent_3d() const;
 
         UniformBuffers<shader::attribute::TransformUBO> &get_mutable_uniform_buffers();
+        void init_color(const glm::vec4 &color);
+
+        void prod_color(const glm::vec4 &color);
 
         void init_transform(glm::vec3 translation, glm::vec3 scale = {1.0f, 1.0f, 1.0f}, glm::vec3 rotation = {});
 

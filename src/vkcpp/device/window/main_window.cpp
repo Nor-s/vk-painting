@@ -43,7 +43,7 @@ namespace vkcpp
     {
         glfwPollEvents();
     }
-    //ToDo process input
+    //TODO process input
     void MainWindow::process_input()
     {
     }
@@ -56,6 +56,7 @@ namespace vkcpp
             init_glfw();
         }
     }
+
     void MainWindow::init_glfw()
     {
         if (!glfwInit())
@@ -75,12 +76,14 @@ namespace vkcpp
             throw std::runtime_error("GLFW failed to create window");
         }
     }
+
     void MainWindow::destroy_window()
     {
         glfwDestroyWindow(handle_);
         handle_ = nullptr;
         glfwTerminate();
     }
+
     void MainWindow::wait_events()
     {
         glfwWaitEvents();
@@ -92,6 +95,7 @@ namespace vkcpp
         auto glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
         return std::make_pair(glfw_extensions, glfw_extension_count);
     }
+
     std::pair<int, int> MainWindow::get_framebuffer_size()
     {
         std::pair<int, int> size;
@@ -105,24 +109,29 @@ namespace vkcpp
         MainWindow::set_size(width, height);
         MainWindow::set_title(title);
     }
+
     void MainWindow::set_size(uint32_t width, uint32_t height)
     {
         Window::set_size(width, height);
         glfwSetWindowSize(handle_, width_, height_);
     }
+
     void MainWindow::set_title(const std::string &title)
     {
         Window::set_title(title);
         glfwSetWindowTitle(handle_, title_.c_str());
     }
+
     void MainWindow::set_user_pointer(void *pointer)
     {
         glfwSetWindowUserPointer(handle_, pointer);
     }
+
     void MainWindow::set_framebuffer_size_callback(void (*fp)(GLFWwindow *window, int width, int height))
     {
         glfwSetFramebufferSizeCallback(handle_, fp);
     }
+
     void MainWindow::set_drop_callback(void (*fp)(GLFWwindow *window, int count, const char **paths))
     {
         glfwSetDropCallback(handle_, fp);

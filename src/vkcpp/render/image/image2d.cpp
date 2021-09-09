@@ -52,6 +52,9 @@ namespace vkcpp
                                         1, 1, {0, 0, 1}),
                                   filename_(nullptr)
     {
+#ifdef _DEBUG__
+        std::cout << " image2D Extent : " << extent.width << " " << extent.height << "\n";
+#endif
         extent_ = extent;
         if (load)
         {
@@ -113,7 +116,10 @@ namespace vkcpp
 
         vkUnmapMemory(*device_, staging_memory);
 
-        stbi_image_free(pixels);
+        if (filename_ != nullptr)
+        {
+            stbi_image_free(pixels);
+        }
 
         create::image(
             device_,
