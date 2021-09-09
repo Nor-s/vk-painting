@@ -9,8 +9,7 @@ namespace vkcpp
 
     class Swapchain; // for color attachment format
 
-    class Image; // for off screen rendering
-
+    class Offscreens;
     /**
      *  A wrapper class for VkRenderPass 
      *  Specify:
@@ -24,20 +23,22 @@ namespace vkcpp
 
         const Swapchain *swapchain_{nullptr};
 
-        const Image *image_{nullptr};
+        const Offscreens *offscreens_{nullptr};
 
         VkRenderPass handle_{VK_NULL_HANDLE};
 
     public:
         RenderPass(const Device *device, const Swapchain *swapchain);
 
-        RenderPass(const Device *device, const Image *image);
+        RenderPass(const Device *device, const Offscreens *offscreens);
 
         ~RenderPass();
 
         operator const VkRenderPass &() const { return handle_; }
 
-        const Swapchain &get_swapchain() const { return *swapchain_; }
+        const Offscreens *get_offscreens() const { return offscreens_; }
+
+        const Swapchain *get_swapchain() const { return swapchain_; }
 
         void init_render_pass();
 

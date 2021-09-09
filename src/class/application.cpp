@@ -1,3 +1,5 @@
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define GLM_FORCE_RADIANS
 #include "application.h"
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -20,6 +22,14 @@ namespace painting
         init_synobj();
         main_loop();
         cleanup();
+    }
+
+    void PaintingApplication::init_offscreen(VkExtent3D extent)
+    {
+        int size = swapchain_->get_image_views().size();
+        offscreens_ = std::make_unique<vkcpp::Offscreens>(device_.get(), extent, size);
+        offscreen_render_stage_ = std::make_unique<vkcpp::RenderStage>(device_.get(), offscreens_.get());
+        brush_.emplace_back(std::make_unique<Brush>(device_.get(), offscreen_render_stage_.get(), command_pool_.get(), 0));
     }
 
     void PaintingApplication::init_window(uint32_t width, uint32_t height, std::string title)
@@ -82,6 +92,7 @@ namespace painting
 
         device_ = std::make_unique<vkcpp::Device>(gpu);
     }
+
     void PaintingApplication::record_command_buffers()
     {
         uint32_t size = command_buffers_->size();
@@ -97,31 +108,19 @@ namespace painting
 
         command_buffers_->begin_render_pass(idx, render_stage_.get());
 
-        for (int j = 0; j < object_.size(); j++)
+        for (int j = 1; j < object_.size(); j++)
         {
             object_[j]->draw((*command_buffers_)[idx], idx);
+        }
+        for (int j = 0; j < brush_.size(); j++)
+        {
+            brush_[j]->draw((*command_buffers_)[idx], idx); //object_[0]->get_graphics_pipeline(), idx);
         }
 
         command_buffers_->end_render_pass(idx, render_stage_.get());
 
         command_buffers_->end_command_buffer(idx);
         is_command_buffer_updated_[idx] = true;
-    }
-
-    void PaintingApplication::update_uniform_buffer(uint32_t object_idx, uint32_t idx)
-    {
-        vkcpp::shader::attribute::TransformUBO ubo{};
-        ubo.model = glm::mat4(1.0f);
-
-        //ubo.model = glm::scale(ubo.model, glm::mat3(0.2f, 0.2f, 0.2f));
-        glm::vec3 camera_pos = glm::vec3(0.0f, 0.0f, 3.0f);
-        glm::vec3 camera_front = glm::vec3(0.0f, 0.0f, -10.0f);
-        glm::vec3 camera_up = glm::vec3(0.0f, 1.0f, 0.0f);
-
-        ubo.view = glm::lookAt(camera_pos, camera_pos + camera_front, camera_up);
-        ubo.proj = glm::perspective(glm::radians(45.0f), render_stage_->get_render_area().extent.width / (float)render_stage_->get_render_area().extent.height, 0.0f, 100.0f);
-        //ubo.proj[1][1] *= -1;
-        object_[object_idx]->get_mutable_uniform_buffers().update_uniform_buffer(idx, ubo);
     }
 
     void PaintingApplication::draw_frame()
@@ -143,7 +142,11 @@ namespace painting
 
         for (int i = 0; i < object_.size(); i++)
         {
-            update_uniform_buffer(i, image_index);
+            object_[i]->update(image_index);
+        }
+        for (int i = 0; i < brush_.size(); i++)
+        {
+            brush_[i]->update(image_index);
         }
 
         if (images_in_flight_[image_index] != VK_NULL_HANDLE)
@@ -163,8 +166,8 @@ namespace painting
 
         if (!is_command_buffer_updated_[image_index])
         {
-            record_command_buffer(image_index);
         }
+        record_command_buffer(image_index);
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &(*command_buffers_)[image_index];
 
@@ -232,6 +235,14 @@ namespace painting
             vkDestroySemaphore(*device_, image_available_semaphores_[i], nullptr);
             vkDestroyFence(*device_, in_flight_fences_[i], nullptr);
         }
+        for (auto &obj_ptr : brush_)
+        {
+            obj_ptr.reset();
+        }
+
+        brush_.resize(0);
+        offscreen_render_stage_.reset();
+        offscreens_.reset();
 
         cleanup_swapchain();
 
@@ -239,6 +250,7 @@ namespace painting
         {
             object_[i].reset();
         }
+        object_.resize(0);
         command_pool_.reset();
         device_.reset();
         surface_.reset();
@@ -285,7 +297,9 @@ namespace painting
     }
     void PaintingApplication::push_object(const char *texture_file)
     {
-        object_.emplace_back(std::make_unique<vkcpp::Object>(device_.get(), render_stage_.get(), command_pool_.get(), texture_file));
+        object_.emplace_back(std::make_unique<vkcpp::Object2D>(device_.get(), render_stage_.get(), command_pool_.get(), texture_file));
+        //object_.emplace_back(std::make_unique<Brush>(device_.get(), render_stage_.get(), command_pool_.get(), 0));
+        init_offscreen(object_[0]->get_extent_3d());
     }
     void PaintingApplication::reset_command_buffers_update_flag()
     {

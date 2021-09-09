@@ -1,22 +1,24 @@
 #include "render_stage.h"
 
 #include "device/device.h"
+#include "device/physical_device.h"
 #include "render/swapchain/swapchain.h"
+#include "render/swapchain/offscreens.h"
 #include "render/image/image.h"
 
 namespace vkcpp
 {
     RenderStage::RenderStage(const Device *device, const Swapchain *swapchain)
-        : device_(device), swapchain_(swapchain), images_(nullptr)
+        : device_(device), swapchain_(swapchain), offscreens_(nullptr)
     {
         color_format_ = swapchain_->get_properties().surface_format.format;
         init_render_stage();
     }
 
-    RenderStage::RenderStage(const Device *device, const std::vector<Image> *images)
-        : device_(device), swapchain_(nullptr), images_(images)
+    RenderStage::RenderStage(const Device *device, const Offscreens *offscreens)
+        : device_(device), swapchain_(nullptr), offscreens_(offscreens)
     {
-        color_format_ = (*images_)[0].get_color_format();
+        color_format_ = offscreens_->get_format();
         init_render_stage();
     }
 
@@ -27,20 +29,22 @@ namespace vkcpp
 
     void RenderStage::init_render_stage()
     {
+        Image::getSupportedDepthFormat(device_->get_gpu(), &depth_format_);
+
         VkExtent2D extent;
         VkClearValue clear_color{};
-
-        clear_color.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+        clear_color.color = {{0.0f, 0.0f, 2.0f, 1.0f}};
         clear_values_.emplace_back(clear_color);
+        VkClearValue clear_depth{};
+        clear_depth.depthStencil = {1.0f, 0};
+        clear_values_.emplace_back(clear_depth);
+
         if (swapchain_ == nullptr)
         {
-            render_pass_ = std::make_unique<RenderPass>(device_, &(*images_)[0]);
-            framebuffers_ = std::make_unique<Framebuffers>(device_, render_pass_.get(), images_);
-            extent.width = (*images_)[0].get_extent().width;
-            extent.height = (*images_)[0].get_extent().height;
-            VkClearValue clear_depth{};
-            clear_depth.depthStencil = {1.0f, 0};
-            clear_values_.emplace_back(clear_depth);
+            render_pass_ = std::make_unique<RenderPass>(device_, offscreens_);
+            framebuffers_ = std::make_unique<Framebuffers>(device_, render_pass_.get());
+            extent.width = offscreens_->get_extent().width;
+            extent.height = offscreens_->get_extent().height;
         }
         else
         {
@@ -53,12 +57,14 @@ namespace vkcpp
         render_area_.offset.y = 0.0;
         render_area_.extent = extent;
     }
+
     void RenderStage::destroy()
     {
         framebuffers_.reset();
         render_pass_.reset();
         clear_values_.clear();
     }
+
     void RenderStage::begin_render_pass(const VkCommandBuffer &command_buffer, int framebuffer_idx) const
     {
         VkRect2D render_area = get_render_area();
@@ -88,6 +94,7 @@ namespace vkcpp
 
         vkCmdBeginRenderPass(command_buffer, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
     }
+
     void RenderStage::end_render_pass(const VkCommandBuffer &command_buffer, int framebuffer_idx) const
     {
         vkCmdEndRenderPass(command_buffer);

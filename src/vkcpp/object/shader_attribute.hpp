@@ -2,7 +2,7 @@
 #define VKCPP_RENDER_BUFFER_SHADER_ATTRIBUTE_HPP
 
 #include "vulkan_header.h"
-
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

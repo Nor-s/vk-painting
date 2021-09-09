@@ -3,11 +3,15 @@
 
 #include "vulkan_header.h"
 #include <vector>
+#include <memory>
+#include "render/image/image.h"
+#include "render/image/image_depth.h"
 
 namespace vkcpp
 {
     class Device;
     class Surface;
+
     struct SwapchainProperties
     {
         VkSwapchainKHR old_swapchain;
@@ -46,6 +50,8 @@ namespace vkcpp
 
         std::vector<VkImageView> image_views_;
 
+        std::vector<std::unique_ptr<ImageDepth>> depth_;
+
         SwapchainProperties properties_;
 
     public:
@@ -58,6 +64,10 @@ namespace vkcpp
         const std::vector<VkImage> &get_images() const { return images_; }
 
         const std::vector<VkImageView> &get_image_views() const { return image_views_; };
+
+        const uint32_t get_depth_size() const { return depth_.size(); }
+
+        const VkImageView &get_depth_image_view(int idx) const { return depth_[idx]->get_image_view(); }
 
         const SwapchainProperties &get_properties() const { return properties_; }
 
@@ -89,6 +99,8 @@ namespace vkcpp
         void init_images();
 
         void init_image_views();
+
+        void init_depth();
     }; // class SwapChain
 
 } // namespace vkcpp

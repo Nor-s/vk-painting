@@ -1,20 +1,25 @@
 #include "render_pass.h"
 
 #include "device/device.h"
+#include "device/physical_device.h"
 #include "swapchain.h"
 #include "render/image/image.h"
+
+#include "render/swapchain/offscreens.h"
+#include "render/image/offscreen.h"
 
 #include <iostream>
 
 namespace vkcpp
 {
     RenderPass::RenderPass(const Device *device, const Swapchain *swapchain)
-        : device_(device), swapchain_(swapchain), image_(nullptr)
+        : device_(device), swapchain_(swapchain), offscreens_(nullptr)
     {
         init_render_pass();
     }
-    RenderPass::RenderPass(const Device *device, const Image *image)
-        : device_(device), swapchain_(nullptr), image_(image)
+
+    RenderPass::RenderPass(const Device *device, const Offscreens *offscreens)
+        : device_(device), swapchain_(nullptr), offscreens_(offscreens)
     {
         init_render_pass_for_offscreen();
     }
@@ -26,57 +31,80 @@ namespace vkcpp
 
     void RenderPass::init_render_pass()
     {
+        VkFormat color_format;
+        VkFormat depth_format;
+        Image::getSupportedDepthFormat(device_->get_gpu(), &depth_format);
         if (swapchain_ == nullptr)
         {
-            throw std::runtime_error("failed to init renderpass for offscreen!");
+            color_format = offscreens_->get_format();
+            //throw std::runtime_error("failed to init renderpass for offscreen!");
         }
+        else
+        {
+            color_format = swapchain_->get_properties().surface_format.format;
+        }
+#ifdef _DEBUG__
+        std::cout << "      render pass color format: " << color_format << "\n";
+        std::cout << "      render pass depth format: " << depth_format << "\n";
+#endif
+
         // Describe color buffer.
         VkAttachmentDescription color_attachment{};
-        color_attachment.format = swapchain_->get_properties().surface_format.format;
-        // The number of samples of the images.
+        color_attachment.format = color_format;
         color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-        // What to do with the data(color, depth) in the attachment before rendering.
         color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        // What to do with the data(color, depth) in the attachment after rendefing.
         color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        // For stencil current not using.
         color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        // Image layout before renderpass begin.
         color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        // Image layout after renderpass begin.
         color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
+        VkAttachmentDescription depth_attachment{};
+
+        depth_attachment.format = depth_format;
+        depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+        depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        depth_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        depth_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        depth_attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
         // Evry subpass reference one or more of the attachment, this references are themselves structs.
-        VkAttachmentReference color_attachmentRef{};
-        color_attachmentRef.attachment = 0;
         // Automatically transition the attachment to this layout when the subpass is started.
-        color_attachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        VkAttachmentReference color_attachment_ref{};
+        color_attachment_ref.attachment = 0;
+        color_attachment_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        VkAttachmentReference depth_attachment_ref{};
+        depth_attachment_ref.attachment = 1;
+        depth_attachment_ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
         // For multiple subpasses(ex. post-processing effects).
         VkSubpassDescription subpass{};
         subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         subpass.colorAttachmentCount = 1;
-        subpass.pColorAttachments = &color_attachmentRef;
+        subpass.pColorAttachments = &color_attachment_ref;
+        subpass.pDepthStencilAttachment = &depth_attachment_ref;
 
         // Handle implicit automatically transition.
         VkSubpassDependency dependency{};
         dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
         dependency.dstSubpass = 0;
         // Decide wait stage
-        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         dependency.srcAccessMask = 0; // VK_ACCESS_MEMORY_READ_BIT
         // Decide start stage and access (write)
-        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT; // | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT
+        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        std::array<VkAttachmentDescription, 2> attachments = {color_attachment, depth_attachment};
 
         // Describe renderpass create info
         VkRenderPassCreateInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassInfo.attachmentCount = 1;
-        renderPassInfo.pAttachments = &color_attachment;
+        renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+        renderPassInfo.pAttachments = attachments.data();
         renderPassInfo.subpassCount = 1;
         renderPassInfo.pSubpasses = &subpass;
+        renderPassInfo.dependencyCount = 1;
         renderPassInfo.pDependencies = &dependency;
 
         // Create renderpass
@@ -100,12 +128,14 @@ namespace vkcpp
 {
     void RenderPass::init_render_pass_for_offscreen()
     {
-        if (image_ == nullptr)
+        if (offscreens_ == nullptr)
         {
             throw std::runtime_error("failed to init renderpass for offscreen!");
         }
-        auto color_format = image_->get_color_format();
-        auto depth_format = image_->get_depth_format();
+        VkFormat color_format = offscreens_->get_format();
+        VkFormat depth_format;
+        Image::getSupportedDepthFormat(device_->get_gpu(), &depth_format);
+
         // Create a separate render pass for the offscreen rendering as it may differ from the one used for scene rendering
         std::array<VkAttachmentDescription, 2> attchmentDescriptions = {};
         // Color attachment

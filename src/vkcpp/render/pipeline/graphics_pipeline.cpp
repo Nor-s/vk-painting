@@ -33,7 +33,6 @@ namespace vkcpp
         init_viewport_state_create_info();
         init_rasterization_state_create_info();
         init_multisample_state_create_info();
-        // Todo: VkPipelineDepthStencilStateCreateInfo = create
         init_dynamic_state_create_info();
         init_pipeline_layout();
         init_pipeline();
@@ -158,9 +157,9 @@ namespace vkcpp
         color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA; // Optional
         color_blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;                            // Optional
         // finalColor.a = src.a * src.a + (1-src.a)*dst.a
-        color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;           // Optional
-        color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA; // Optional
-        color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;                            // Optional
+        color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional
+        color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
+        color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;             // Optional
 
         VkPipelineColorBlendStateCreateInfo &color_blending = info_.color_blend_state;
 
@@ -173,6 +172,18 @@ namespace vkcpp
         color_blending.blendConstants[1] = 0.0f; // Optional
         color_blending.blendConstants[2] = 0.0f; // Optional
         color_blending.blendConstants[3] = 0.0f; // Optional
+        // depth stencil
+        VkPipelineDepthStencilStateCreateInfo depth_stencil{};
+        depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+        depth_stencil.depthTestEnable = VK_TRUE;
+        depth_stencil.depthWriteEnable = VK_TRUE;
+        depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS;
+        depth_stencil.depthBoundsTestEnable = VK_FALSE;
+        depth_stencil.minDepthBounds = 0.0f; // Optional
+        depth_stencil.maxDepthBounds = 1.0f; // Optional
+        depth_stencil.stencilTestEnable = VK_FALSE;
+        depth_stencil.front = {}; // Optional
+        depth_stencil.back = {};  // Optional
 
         // Pipeline Create
         VkGraphicsPipelineCreateInfo pipeline_info{};
@@ -186,7 +197,7 @@ namespace vkcpp
         pipeline_info.pViewportState = &info_.viewport_state;
         pipeline_info.pRasterizationState = &info_.rasterizer_state;
         pipeline_info.pMultisampleState = &info_.multisample_state;
-        pipeline_info.pDepthStencilState = nullptr; // Optional
+        pipeline_info.pDepthStencilState = &depth_stencil;
         pipeline_info.pColorBlendState = &info_.color_blend_state;
         pipeline_info.pDynamicState = &info_.dynamic_state; // Optional
         // pipeline layout

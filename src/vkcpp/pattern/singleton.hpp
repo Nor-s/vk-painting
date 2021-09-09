@@ -37,7 +37,10 @@ namespace vkcpp
         {
             if (instance_ == nullptr)
             {
-                throw std::runtime_error("faild to get Instance");
+                if (!initInstance())
+                {
+                    throw std::runtime_error("faild to get Instance");
+                }
             }
             return instance_;
         }

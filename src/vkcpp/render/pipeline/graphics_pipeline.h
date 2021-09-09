@@ -26,9 +26,9 @@ namespace vkcpp
 
         const DescriptorSets *descriptor_sets_{nullptr};
 
-        std::string &vert_shader_file_;
+        std::string vert_shader_file_;
 
-        std::string &frag_shader_file_;
+        std::string frag_shader_file_;
 
         VkPipelineLayout layout_{VK_NULL_HANDLE};
 
@@ -45,6 +45,7 @@ namespace vkcpp
         int subpass_idx_{0};
 
     public:
+        GraphicsPipeline() = default;
         GraphicsPipeline(const Device *device,
                          const RenderStage *render_stage,
                          const DescriptorSets *descriptor_sets,

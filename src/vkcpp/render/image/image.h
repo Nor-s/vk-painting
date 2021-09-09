@@ -1,8 +1,9 @@
 #ifndef VKCPP_RENDER_IMAGE_IMAGE_H
 #define VKCPP_RENDER_IMAGE_IMAGE_H
 
-#include "stb/stb_image.h"
 #include "vulkan_header.h"
+#include <utility>
+#include <vector>
 
 namespace vkcpp
 {
@@ -11,63 +12,70 @@ namespace vkcpp
     class Image
     {
     public:
-        struct Attachment
-        {
-            VkImage image{VK_NULL_HANDLE};
-            VkDeviceMemory memory{VK_NULL_HANDLE};
-            VkImageView view{VK_NULL_HANDLE};
-            VkFormat format{};
-        };
+        static void getSupportedDepthFormat(const VkPhysicalDevice physicalDevice, VkFormat *depthFormat);
+        static bool hasStencilComponent(VkFormat format);
 
-    private:
+    protected:
         const Device *device_{nullptr};
 
         const CommandPool *command_pool_{nullptr};
 
-        const char *filename_{VK_NULL_HANDLE};
+        VkExtent3D extent_;
+        VkSampleCountFlagBits samples_;
+        VkImageUsageFlags usage_;
+        VkFormat format_ = VK_FORMAT_UNDEFINED;
+        uint32_t mip_levels_ = 0;
+        uint32_t array_layers_;
 
-        Attachment color_attachment_{};
+        VkFilter filter_;
 
-        Attachment depth_attachment_{};
+        VkSamplerAddressMode address_mode_;
 
-        VkSampler sampler_{VK_NULL_HANDLE};
+        VkImageLayout layout_;
 
-        VkExtent3D extent_{};
-
-        int tex_width_;
-
-        int tex_height_;
-
-        int tex_channels_;
+        VkImage image_ = VK_NULL_HANDLE;
+        VkDeviceMemory memory_ = VK_NULL_HANDLE;
+        VkSampler sampler_ = VK_NULL_HANDLE;
+        VkImageView view_ = VK_NULL_HANDLE;
+        std::vector<char> is_moved_;
 
     public:
-        Image(const Device *device, const CommandPool *command_pool, const char *filename);
-
-        Image(const Device *device, const CommandPool *command_pool, VkExtent3D extent);
-
+        Image() = default;
+        Image(const Image &) = delete;
+        explicit Image(const Device *device,
+                       const CommandPool *command_pool,
+                       VkFilter filter,
+                       VkSamplerAddressMode addressMode,
+                       VkSampleCountFlagBits samples,
+                       VkImageLayout layout,
+                       VkImageUsageFlags usage,
+                       VkFormat format,
+                       uint32_t mipLevels,
+                       uint32_t arrayLayers,
+                       const VkExtent3D &extent);
         virtual ~Image();
 
-        const VkImageView &get_image_view() const { return color_attachment_.view; }
+        Image(Image &&a) = default;
 
+        Image &operator=(Image &&a) = default;
+
+        const VkImageView &get_image_view() const
+        {
+            return view_;
+        }
+        const VkImage &get_image() const
+        {
+            return image_;
+        }
         const VkSampler &get_sampler() const { return sampler_; }
 
-        const VkFormat &get_color_format() const { return color_attachment_.format; }
-
-        const VkFormat &get_depth_format() const { return depth_attachment_.format; }
-
-        const VkImageView &get_color_view() const { return color_attachment_.view; }
-
-        const VkImageView &get_depth_view() const { return depth_attachment_.view; }
+        const VkFormat &get_format() const { return format_; }
 
         const VkExtent3D &get_extent() const { return extent_; }
 
-        const std::pair<int, int> get_size() const { return {tex_width_, tex_height_}; };
+        const std::pair<uint32_t, uint32_t> get_size() const { return {extent_.width, extent_.height}; }
 
-        void init_texture_image();
-
-        void init_texture_image_view();
-
-        void init_texture_sampler();
+        void init_sampler(VkBool32 anisotropic, uint32_t mip_levels);
 
         void destroy_image();
 
@@ -75,16 +83,7 @@ namespace vkcpp
          * Must same width and height
          * Maybe problem : read and write at the same time
          */
-        void sub_texture_image(const char *filename);
-        /**
-         * Must same width and height
-         * Maybe problem : read and write at the same time
-         */
-        void sub_texture_image(VkImage host_src_image, VkExtent3D src_extent, const VkFormat &swapchain_color_format);
-
-        void init_image();
-
-        void init_sampler();
+        void sub_image(VkImage host_src_image, VkExtent3D src_extent, const VkFormat &swapchain_color_format);
     };
 
 } // namespace vkcpp

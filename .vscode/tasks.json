@@ -33,6 +33,7 @@
                 "${workspaceRoot}/src/vkcpp/render/swapchain/*.cpp",
                 "${workspaceRoot}/src/vkcpp/render/*.cpp",
                 "${workspaceRoot}/src/vkcpp/object/*.cpp",
+                "${workspaceRoot}/src/vkcpp/object/camera/*.cpp",
                 "${workspaceRoot}/src/vkcpp/utility/*.cpp",
                 "${workspaceRoot}/src/class/*.cpp",
                 "${workspaceRoot}/src/*.cpp",

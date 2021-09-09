@@ -5,6 +5,7 @@
 #include "device/physical_device.h"
 #include "device/device.h"
 #include "render/image/image.h"
+#include "render/image/image_depth.h"
 #include "utility/create.h"
 #include <algorithm>
 
@@ -16,6 +17,7 @@ namespace vkcpp
         init_swapchain(device_, surface_);
         init_images();
         init_image_views();
+        init_depth();
     }
 
     Swapchain::~Swapchain()
@@ -124,14 +126,30 @@ namespace vkcpp
             throw std::runtime_error("failed to create swap chain!");
         }
     }
+    void Swapchain::init_depth()
+    {
+        auto size = image_views_.size();
+        for (int i = 0; i < size; i++)
+        {
+            VkExtent3D extent{properties_.extent.width, properties_.extent.height, 1};
+            depth_.push_back(std::make_unique<ImageDepth>(device_, nullptr, extent));
+        }
+    }
 
     void Swapchain::destroy_swapchain()
     {
-        for (auto image_view : image_views_)
+        int size = depth_.size();
+        for (int i = 0; i < size; i++)
+        {
+            depth_[i].reset();
+        }
+        depth_.resize(0);
+        for (auto &image_view : image_views_)
         {
             vkDestroyImageView(*device_, image_view, nullptr);
             image_view = VK_NULL_HANDLE;
         }
+        image_views_.resize(0);
         if (handle_ != VK_NULL_HANDLE)
         {
             vkDestroySwapchainKHR(*device_, handle_, nullptr);

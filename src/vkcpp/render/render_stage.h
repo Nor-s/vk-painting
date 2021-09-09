@@ -8,6 +8,8 @@
 
 namespace vkcpp
 {
+    class Offscreens;
+
     class Swapchain;
 
     class Image;
@@ -15,11 +17,11 @@ namespace vkcpp
     class RenderStage
     {
     private:
-        const Device *device_;
+        const Device *device_{nullptr};
 
-        const Swapchain *swapchain_;
+        const Swapchain *swapchain_{nullptr};
 
-        const std::vector<Image> *images_;
+        const Offscreens *offscreens_{nullptr};
 
         std::unique_ptr<RenderPass> render_pass_;
 
@@ -36,7 +38,7 @@ namespace vkcpp
     public:
         RenderStage(const Device *deivce, const Swapchain *swapchain);
 
-        RenderStage(const Device *device, const std::vector<Image> *image);
+        RenderStage(const Device *device, const Offscreens *offscreens);
 
         virtual ~RenderStage();
 

@@ -58,7 +58,7 @@ namespace vkcpp
             image_info.tiling = tiling;
             image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
             image_info.usage = usage;
-            image_info.samples = VK_SAMPLE_COUNT_1_BIT;
+            image_info.samples = samples;
             image_info.flags = 0; // Optional
             image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 

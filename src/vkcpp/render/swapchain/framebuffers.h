@@ -10,6 +10,7 @@ namespace vkcpp
     class Swapchain;
     class RenderPass;
     class Image;
+    class Offscreens;
 
     class Framebuffers
     {
@@ -23,7 +24,7 @@ namespace vkcpp
         uint32_t framebuffers_size_{0};
 
     public:
-        Framebuffers(const Device *device, const RenderPass *render_pass, const std::vector<Image> *images = nullptr);
+        Framebuffers(const Device *device, const RenderPass *render_pass);
 
         ~Framebuffers();
 
@@ -37,7 +38,7 @@ namespace vkcpp
 
         void init_framebuffers(const Swapchain *swapchain);
 
-        void init_framebuffers_for_offscreen(const std::vector<Image> *images);
+        void init_framebuffers_for_offscreen(const Offscreens *offscreens);
 
         void destroy_framebuffers();
     };

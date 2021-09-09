@@ -19,8 +19,12 @@
 #include "render/render_stage.h"
 #include "render/swapchain/swapchain.h"
 #include "render/command/command_pool.h"
-#include "object/object.h"
 #include "render/command/command_buffers.h"
+#include "render/image/image.h"
+#include "render/image/offscreen.h"
+#include "render/swapchain/offscreens.h"
+#include "brush.h"
+
 namespace painting
 {
     struct input
@@ -44,7 +48,6 @@ namespace painting
 
         PaintingApplication() = default;
         void run(uint32_t width = 512, uint32_t height = 512, std::string title = "painting");
-        std::vector<std::unique_ptr<vkcpp::Object>> object_;
 
     private:
         std::unique_ptr<vkcpp::Instance> instance_{nullptr};
@@ -55,6 +58,11 @@ namespace painting
         std::unique_ptr<vkcpp::CommandPool> command_pool_{nullptr};
         std::unique_ptr<vkcpp::CommandBuffers> command_buffers_{nullptr};
 
+        std::unique_ptr<vkcpp::Offscreens> offscreens_;
+        std::unique_ptr<vkcpp::RenderStage> offscreen_render_stage_{nullptr};
+        std::vector<std::unique_ptr<vkcpp::Object2D>> brush_;
+        std::vector<std::unique_ptr<vkcpp::Object2D>> object_;
+
         std::vector<VkSemaphore> image_available_semaphores_;
         std::vector<VkSemaphore> render_finished_semaphores_;
         std::vector<VkFence> in_flight_fences_;
@@ -63,6 +71,7 @@ namespace painting
         bool framebuffer_resized_ = false;
         std::vector<bool> is_command_buffer_updated_;
 
+        void init_offscreen(VkExtent3D extent);
         void init_window(uint32_t width, uint32_t height, std::string title);
         void init_device();
         void init_render();
