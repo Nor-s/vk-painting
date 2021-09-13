@@ -82,7 +82,8 @@ namespace vkcpp
         Object2D(const Device *device,
                  const RenderStage *render_stage,
                  const CommandPool *command_pool,
-                 const VkExtent3D &extent);
+                 const VkExtent3D &extent,
+                 VkFormat format = VK_FORMAT_R8G8B8A8_SRGB);
 
         /**
         *   if texture_file == nullptr, then init is not exe.
@@ -90,7 +91,8 @@ namespace vkcpp
         Object2D(const Device *device,
                  const RenderStage *render_stage,
                  const CommandPool *command_pool,
-                 const char *texture_file = nullptr);
+                 const char *texture_file = nullptr,
+                 VkFormat format = VK_FORMAT_R8G8B8A8_SRGB);
 
         Object2D(const Object2D *);
 
@@ -130,7 +132,7 @@ namespace vkcpp
 
         void update_with_sub_camera(uint32_t uniform_buffer_idx, const Camera *sub_camera);
 
-        void init_texture(const VkExtent3D &extent);
+        void init_texture(const VkExtent3D &extent, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB);
 
         void init_object2d();
 
@@ -163,8 +165,8 @@ namespace vkcpp
         /**
          * @return staging image, memory, data, rowpitch
          */
-        std::tuple<VkImage, VkDeviceMemory, const char *, VkDeviceSize> map_read_image_memory();
-        void unmap_image_memory(VkImage image, VkDeviceMemory memory);
+        std::tuple<VkBuffer, VkDeviceMemory, const char *, VkDeviceSize> map_read_image_memory();
+        void unmap_buffer_memory(VkBuffer buffer, VkDeviceMemory memory);
 
         void data_to_file(const char *filename, const char *data, const VkExtent3D &extent, VkFormat image_format, bool supports_blit, VkDeviceSize row_pitch)
         {

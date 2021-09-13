@@ -16,8 +16,8 @@ namespace painting
     {
 
         static const int MAX_FRAMES_IN_FLIGHT_ = 3;
-        static const int MAX_THREAD_ = 20;
-        std::thread frame_thread_[MAX_THREAD_];
+        static const int MAX_THREAD_ = 1;
+        //   std::thread frame_thread_[MAX_THREAD_];
         int thread_index_ = 0;
 
     public:
@@ -76,5 +76,6 @@ namespace painting
         void draw_frame(int population_idx, const char *data, bool is_top);
     };
 }
+double fitnessFunction(const char *a, const char *b, int posx, int posy, int width, int height, int channel, bool is_gray);
 
 #endif

@@ -46,7 +46,7 @@
                 "-I${workspaceRoot}/external",
                 "-L${workspaceRoot}/lib",
                 "-lmingw32",
-                //   "--static",
+                "-static",
                 "-lglfw3",
                 "-lpthread",
                 "-lvulkan-1",

@@ -36,7 +36,7 @@ namespace painting
         population_ = std::make_unique<Population>(glm::vec2(0.0f, 0.0f),
                                                    glm::vec2(static_cast<float>(extent.width), static_cast<float>(extent.height)),
                                                    glm::vec2(0.005f, 0.01f),
-                                                   BrushAttributes::Probablity(0.1f, 0.5f, 0.5f, 0.1f),
+                                                   BrushAttributes::Probablity(0.1f, 0.1f, 0.5f, 0.4f),
                                                    population_size,
                                                    brush_count);
         camera_ = std::make_unique<vkcpp::SubCamera>(
@@ -49,7 +49,7 @@ namespace painting
                                       {0.0f, height_},
                                       {-100.0f, 100.0f});
 
-        init_texture(extent);
+        init_texture(extent, VK_FORMAT_R8G8B8A8_SRGB);
         init_object2d();
 
         init_synobj();
@@ -57,7 +57,7 @@ namespace painting
 
         auto [img1, mem1, dt1, rowpitch1] = map_read_image_memory();
         data_to_file("first.ppm", dt1, extent_, get_format(), false, rowpitch1);
-        unmap_image_memory(img1, mem1);
+        unmap_buffer_memory(img1, mem1);
     }
     Picture::~Picture()
     {
@@ -77,9 +77,9 @@ namespace painting
     {
         for (int i = 0; i < MAX_THREAD_; i++)
         {
-            if (frame_thread_[i].joinable())
+            //        if (frame_thread_[i].joinable())
             {
-                frame_thread_[i].join();
+                //          frame_thread_[i].join();
             }
         }
     }
@@ -125,9 +125,9 @@ namespace painting
 
     void Picture::draw_frame(int population_idx, const char *data, bool is_top)
     {
-        if (frame_thread_[thread_index_].joinable())
+        // if (frame_thread_[image_index_].joinable())
         {
-            frame_thread_[thread_index_].join();
+            //       frame_thread_[image_index_].join();
         }
 
         init_transform({width_ / 2.0f, height_ / 2.0f, -90.0f});
@@ -154,13 +154,39 @@ namespace painting
             const char *data2 = offscreens_->get_mutable_offscreen(image_index_).map_image_memory();
             vkcpp::Offscreen *offscreen = &offscreens_->get_mutable_offscreen(image_index_);
 
-            frame_thread_[thread_index_] = std::thread(caculate_fun,
-                                                       device_,
-                                                       &offscreens_->get_mutable_offscreen(image_index_),
-                                                       data,
-                                                       data2,
-                                                       &population_->get_mutable_fitness(population_idx),
-                                                       &in_flight_fences_[current_frame_]);
+            const VkFormat &image_format = offscreen->get_format();
+            const VkExtent3D &extent = offscreen->get_extent();
+            int height = extent.height;
+            int line = extent.width * 4;
+            // TODO : that is not working correctly. fix!
+            population_->get_mutable_fitness(population_idx) = fitnessFunction(data, data2, 0, 0, extent.width, extent.height, 4, false); //(dot / (sqrt(denomA) * sqrt(denomB)));
+            //    data_to_file("ss.ppm", data2, extent, VK_FORMAT_B8G8R8A8_SRGB, false, line);
+            //    data_to_file("ss1.ppm", data, extent, VK_FORMAT_R8G8B8A8_SRGB, false, line);
+            /*
+            double dot = 0.0, denomA = 0.0, denomB = 0.0;
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < line; x++)
+                {
+                    int bk = y * line + x;
+                    int ak = y * line + x;
+                    dot += data[ak] * data2[bk];
+                    denomA += data[ak] * data[ak];
+                    denomB += data2[bk] * data2[bk];
+                    //           std::cout << (int)data[bk] << " " << (int)data2[bk] << "\n";
+                }
+            }
+            */
+
+            /*
+            frame_thread_[image_index_] = std::thread(caculate_fun,
+                                                      device_,
+                                                      &offscreens_->get_mutable_offscreen(image_index_),
+                                                      data,
+                                                      data2,
+                                                      &population_->get_mutable_fitness(population_idx),
+                                                      &in_flight_fences_[current_frame_]);
+                                                      */
         }
     }
 
@@ -171,6 +197,7 @@ namespace painting
                                double *fit,
                                VkFence *fence)
     {
+
         const VkFormat &image_format = offscreen->get_format();
         const VkExtent3D &extent = offscreen->get_extent();
         uint32_t height = extent.height;
@@ -179,13 +206,14 @@ namespace painting
         double dot = 0.0, denomA = 0.0, denomB = 0.0;
         for (uint32_t y = 0; y < height; y++)
         {
-            for (uint32_t x = 0; x < line; x++)
+            for (uint32_t x = 0; x < line; x += 4)
             {
                 int bk = y * line + x;
                 int ak = y * line + x;
-                dot += data[ak] * data2[bk];
-                denomA += data[ak] * data[ak];
-                denomB += data2[bk] * data2[bk];
+                dot += (data[ak] * data2[bk] + data[ak + 1] * data2[bk + 1] + data[ak + 2] * data2[bk + 2]);
+                denomA += (data[ak] * data[ak] + data[ak + 1] * data[ak + 1] + data[ak + 2] * data[ak + 2]);
+                denomB += (data2[bk] * data2[bk] + data2[bk + 1] * data2[bk + 1] + data2[bk + 2] * data2[bk + 2]);
+
                 //           std::cout << (int)data[bk] << " " << (int)data2[bk] << "\n";
             }
         }
@@ -216,32 +244,47 @@ namespace painting
             }
         }
     }
-    /*
+
+}
+
+inline char RGBAtoRGB(char &a, char &r)
+{
+    float ratio = a / 255.0f;
+    r = round((1.0f - a) * r) + (a * r);
+    return r;
+}
+/*
     using cosine similarity:  https://en.wikipedia.org/wiki/Cosine_similarity
     */
-    double fitnessFunction(const char *a, const char *b, int posx, int posy, int width, int height, int channel, bool is_gray)
-    {
-        double ret = 0.0;
-        double dot = 0.0, denomA = 0.0, denomB = 0.0;
-        int adder = (is_gray) ? channel : 1;
-        int y = posy;
-        int x = posx * channel;
-        int end_y = height + y;
-        int line = width * channel + (width * (4 - channel)) % 4;
-        int end_x = line + x;
+double fitnessFunction(const char *a, const char *b, int posx, int posy, int width, int height, int channel, bool is_gray)
+{
+    double ret = 0.0;
+    double dot = 0.0, denomA = 0.0, denomB = 0.0;
+    int adder = (is_gray) ? channel : 1;
+    int y = posy, x = posx * channel;
+    int end_y = height + y;
+    int line = width * channel + (width * (4 - channel)) % 4;
+    int end_x = line + x;
 
-        for (int i = y; i < end_y; i++)
+    //  auto new_time = std::chrono::high_resolution_clock::now();
+
+    for (int i = y; i < end_y; i++)
+    {
+        for (int j = x; j < end_x; j += 4)
         {
-            for (int j = x; j < end_x; j += adder)
-            {
-                int bk = (i - y) * line + (j - x);
-                int ak = i * line + j;
-                dot += a[ak] * b[bk];
-                denomA += a[ak] * a[ak];
-                denomB += b[bk] * b[bk];
-            }
+            int bi = (i - y) * line + (j - x);
+            int ai = i * line + j;
+            dot += a[ai] * b[bi] + a[ai + 1] * b[bi + 1] + a[ai + 2] * b[bi + 2] + a[ai + 3] * b[bi + 3];
+            denomA += a[ai] * a[ai] + a[ai + 1] * a[ai + 1] + a[ai + 2] * a[ai + 2] + a[ai + 3] * a[ai + 3];
+            denomB += b[bi] * b[bi] + b[bi + 1] * b[bi + 1] + b[bi + 2] * b[bi + 2] + b[bi + 3] * b[bi + 3];
         }
-        ret = (dot / (sqrt(denomA) * sqrt(denomB)));
-        return ret;
     }
+    /*
+    auto finish_time = std::chrono::high_resolution_clock::now();
+    float frame_time = std::chrono::duration<float, std::chrono::seconds::period>(finish_time - new_time).count();
+    std::cout << " calc: " << frame_time << "\n";
+
+*/
+    ret = (dot / (sqrt(denomA) * sqrt(denomB)));
+    return ret;
 }

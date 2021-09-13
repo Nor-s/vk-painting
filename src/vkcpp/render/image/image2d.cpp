@@ -12,6 +12,7 @@ namespace vkcpp
     Image2D::Image2D(const Device *device,
                      const CommandPool *command_pool,
                      const char *filename,
+                     VkFormat format,
                      VkFilter filter,
                      VkSamplerAddressMode address_mode,
                      bool anisotropic,
@@ -23,7 +24,7 @@ namespace vkcpp
                                         VK_SAMPLE_COUNT_1_BIT,
                                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                                        VK_FORMAT_R8G8B8A8_SRGB,
+                                        format,
                                         1, 1, {0, 0, 1}),
                                   filename_(filename)
     {
@@ -37,6 +38,7 @@ namespace vkcpp
     Image2D::Image2D(const Device *device,
                      const CommandPool *command_pool,
                      const VkExtent3D &extent,
+                     VkFormat format,
                      VkFilter filter,
                      VkSamplerAddressMode address_mode,
                      bool anisotropic,
@@ -48,7 +50,7 @@ namespace vkcpp
                                         VK_SAMPLE_COUNT_1_BIT,
                                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                                        VK_FORMAT_R8G8B8A8_SRGB,
+                                        format,
                                         1, 1, {0, 0, 1}),
                                   filename_(nullptr)
     {
@@ -70,7 +72,18 @@ namespace vkcpp
         VkDeviceSize image_size;
         if (filename_ != nullptr)
         {
-            pixels = stbi_load(filename_, &tex_width_, &tex_height_, &tex_channels_, STBI_rgb_alpha);
+            if (format_ == VK_FORMAT_R8G8B8A8_SRGB)
+            {
+                pixels = stbi_load(filename_, &tex_width_, &tex_height_, &tex_channels_, STBI_rgb_alpha);
+            }
+            else if (format_ == VK_FORMAT_R8G8B8_SRGB)
+            {
+                pixels = stbi_load(filename_, &tex_width_, &tex_height_, &tex_channels_, STBI_rgb);
+            }
+            else
+            {
+                throw std::runtime_error("failed to texture load this format");
+            }
             extent_ = {static_cast<uint32_t>(tex_width_), static_cast<uint32_t>(tex_height_), 1U};
         }
         else
@@ -79,8 +92,14 @@ namespace vkcpp
             tex_height_ = extent_.height;
             tex_channels_ = 1U;
         }
-
-        image_size = extent_.width * extent_.height * 4;
+        if (format_ == VK_FORMAT_R8G8B8_SRGB)
+        {
+            image_size = (extent_.width + extent_.width % 4) * extent_.height * 3;
+        }
+        else
+        {
+            image_size = extent_.width * extent_.height * 4;
+        }
 
 #ifdef _DEBUG__
         std::cout << tex_width_ << " " << tex_height_ << "\n";
@@ -183,7 +202,16 @@ namespace vkcpp
     {
         int tex_width, tex_height, tex_channels;
         stbi_uc *pixels = stbi_load(filename, &tex_width, &tex_height, &tex_channels, STBI_rgb_alpha);
+        //TODO: Add For RGB channel
         VkDeviceSize image_size = tex_width * tex_height * 4;
+        if (format_ == VK_FORMAT_R8G8B8_SRGB)
+        {
+            image_size = (extent_.width + extent_.width % 4) * extent_.height * 3;
+        }
+        else
+        {
+            image_size = extent_.width * extent_.height * 4;
+        }
         VkDeviceSize extent_size = tex_width_ * tex_height_ * 4;
 
         if (image_size != extent_size)

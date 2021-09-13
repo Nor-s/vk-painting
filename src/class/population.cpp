@@ -76,7 +76,7 @@ namespace painting
             population_.push_back(population_[parent1]->cross_over(*population_[parent2]));
             for (int j = 0; j < component_.attributes_size; j++)
             {
-                if (rand() % 4 == 0)
+                if (rand() % 2 == 0)
                 {
                     population_.back()->mutate(j);
                 }

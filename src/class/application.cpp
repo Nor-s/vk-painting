@@ -222,7 +222,9 @@ namespace painting
         {
             vkcpp::MainWindow::getInstance()->process_events();
         }
-        auto [image, memory, data, rowpitch] = object_[0]->map_read_image_memory();
+        auto [buffer, memory, data, rowpitch] = object_[0]->map_read_image_memory();
+        object_[0]->data_to_file("input.ppm", data, object_[0]->get_extent_3d(), VK_FORMAT_R8G8B8A8_SRGB, false, rowpitch);
+
         auto current_time = std::chrono::high_resolution_clock::now();
         while (!vkcpp::MainWindow::getInstance()->should_close())
         {
@@ -237,7 +239,7 @@ namespace painting
 
             draw_frame();
         }
-        object_[0]->unmap_image_memory(image, memory);
+        object_[0]->unmap_buffer_memory(buffer, memory);
     }
 
     void PaintingApplication::cleanup()
@@ -333,7 +335,11 @@ namespace painting
             if (app->object_.size() == 0)
             {
                 // picture
-                app->object_.emplace_back(std::make_unique<vkcpp::Object2D>(app->device_.get(), app->render_stage_.get(), app->command_pool_.get(), paths[0]));
+                app->object_.emplace_back(std::make_unique<vkcpp::Object2D>(app->device_.get(),
+                                                                            app->render_stage_.get(),
+                                                                            app->command_pool_.get(),
+                                                                            paths[0],
+                                                                            VK_FORMAT_R8G8B8A8_SRGB));
                 auto extent = app->object_[0]->get_extent_3d();
                 float width = static_cast<float>(extent.width);
                 float height = static_cast<float>(extent.height);

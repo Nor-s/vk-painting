@@ -97,29 +97,28 @@ namespace painting
     }
     void BrushAttributes::mutate(int idx)
     {
-        set_rand_translation(idx, true);
-        if (rand() % 4 == 0) //vkcpp::getProbablity() < probablity_.scale)
+        if (rand() % 5 == 0)
         {
-            set_rand_scale(idx);
-        }
-        if (rand() % 10 == 0) //vkcpp::getProbablity() < probablity_.trans)
-        {
-            set_rand_translation(idx);
-        }
-        if (rand() % 2 == 0) //vkcpp::getProbablity() < probablity_.rotate)
-        {
-            set_rand_rotation(idx);
-        }
-        if (rand() % 4 == 0) //vkcpp::getProbablity() < probablity_.color)
-        {
-            if (vkcpp::getProbablity() < 0.8f)
+            if (vkcpp::getProbablity() < probablity_.scale)
             {
-                set_rand_color(idx, true);
+                set_rand_scale(idx);
             }
-            else
+            if (vkcpp::getProbablity() < probablity_.trans)
+            {
+                set_rand_translation(idx);
+            }
+            if (vkcpp::getProbablity() < probablity_.rotate)
+            {
+                set_rand_rotation(idx);
+            }
+            if (vkcpp::getProbablity() < probablity_.color)
             {
                 set_rand_color(idx);
             }
+        }
+        else
+        {
+            set_rand_translation(idx, true);
         }
     }
     void BrushAttributes::set_rand_obj_idx(int idx)

@@ -56,10 +56,11 @@ namespace vkcpp
     Object2D::Object2D(const Device *device,
                        const RenderStage *render_stage,
                        const CommandPool *command_pool,
-                       const VkExtent3D &extent)
+                       const VkExtent3D &extent,
+                       VkFormat format)
         : device_(device), render_stage_(render_stage), command_pool_(command_pool), texture_file_(nullptr), current_texture_(0)
     {
-        init_texture(extent);
+        init_texture(extent, format);
         init_object2d();
     }
     Object2D::Object2D(const Object2D *a)
@@ -86,12 +87,13 @@ namespace vkcpp
     Object2D::Object2D(const Device *device,
                        const RenderStage *render_stage,
                        const CommandPool *command_pool,
-                       const char *texture_file)
+                       const char *texture_file,
+                       VkFormat format)
         : device_(device), render_stage_(render_stage), command_pool_(command_pool), texture_file_(texture_file), current_texture_(0)
     {
         if (texture_file != nullptr)
         {
-            init_texture({});
+            init_texture({}, format);
             init_object2d();
         }
 #ifdef _DEBUG__
@@ -174,14 +176,15 @@ namespace vkcpp
         //ubo.proj[1][1] *= -1;
         get_mutable_uniform_buffers().update_uniform_buffer(uniform_buffer_idx, ubo);
     }
-    void Object2D::init_texture(const VkExtent3D &extent)
+    void Object2D::init_texture(const VkExtent3D &extent, VkFormat format)
     {
         if (texture_file_ != nullptr)
         {
             texture_.push_back(std::make_unique<Image2D>(
                 device_,
                 command_pool_,
-                texture_file_));
+                texture_file_,
+                format));
             current_texture_ = texture_.size() - 1;
         }
         else
@@ -189,7 +192,8 @@ namespace vkcpp
             texture_.push_back(std::make_unique<Image2D>(
                 device_,
                 command_pool_,
-                extent));
+                extent,
+                format));
             current_texture_ = texture_.size() - 1;
         }
     }
@@ -395,112 +399,106 @@ namespace vkcpp
     }
 
     //TODO : fix hard coding "supportsBlit = false"
-    std::tuple<VkImage, VkDeviceMemory, const char *, VkDeviceSize> Object2D::map_read_image_memory()
+    std::tuple<VkBuffer, VkDeviceMemory, const char *, VkDeviceSize> Object2D::map_read_image_memory()
     {
         const vkcpp::Device *device = device_;
         const vkcpp::CommandPool *command_pool = command_pool_;
         VkFormat format = get_format();
-        bool supportsBlit = false; //= device_->check_support_blit(object->get_);
+        bool supportsBlit = true; //= device_->check_support_blit(object->get_);
         VkImage src_image = get_image();
         VkExtent3D extent = get_extent_3d();
-
+        VkDeviceSize size = extent.width * 4 * extent.height;
+        if (get_format() == VK_FORMAT_R8G8B8_SRGB)
+        {
+            size = (extent.width + extent.width % 4) * extent.height * 3;
+        }
+        else
+        {
+            size = extent.width * extent.height * 4;
+        }
         // Source for the copy is the last rendered swapchain image
         // VkImage srcImage = swapChain.images[currentBuffer];
 
         // Create the linear tiled destination image to copy to and to read the memory from
         // Note that vkCmdBlitImage (if supported) will also do format conversions if the swapchain color format would differ
-        VkImage dst_image;
+        VkBuffer dst_buffer;
         // Create memory to back up the image
-        VkDeviceMemory dst_image_memory{nullptr};
-        vkcpp::create::image(device,
-                             VK_IMAGE_TYPE_2D,
-                             VK_FORMAT_R8G8B8A8_UNORM,
-                             extent,
-                             VK_IMAGE_TILING_LINEAR,
-                             VK_SAMPLE_COUNT_1_BIT,
-                             VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, // Memory must be host visible to copy from
-                             dst_image,
-                             dst_image_memory);
+        VkDeviceMemory dst_memory{nullptr};
+        vkcpp::create::buffer(
+            device_,
+            size,
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT,
+            dst_buffer,
+            dst_memory);
 
         // Do the actual blit from the swapchain image to our host visible destination image
         vkcpp::CommandBuffers copy_cmd = std::move(vkcpp::CommandBuffers::beginSingleTimeCmd(device, command_pool));
 
         // Transition destination image to transfer destination layout
-        vkcpp::CommandBuffers::cmdImageMemoryBarrier(
+        vkcpp::CommandBuffers::cmdBufferMemoryBarrier(
             copy_cmd[0],
-            dst_image,
+            dst_buffer,
+            0,
+            size,
             0,
             VK_ACCESS_TRANSFER_WRITE_BIT,
-            VK_IMAGE_LAYOUT_UNDEFINED,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
             VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+            VK_PIPELINE_STAGE_TRANSFER_BIT);
 
         // Transition swapchain image from present to transfer source layout
         vkcpp::CommandBuffers::cmdImageMemoryBarrier(
             copy_cmd[0],
             src_image,
-            0,
+            VK_ACCESS_MEMORY_READ_BIT,
             VK_ACCESS_TRANSFER_READ_BIT,
-            VK_IMAGE_LAYOUT_UNDEFINED,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
             VK_PIPELINE_STAGE_TRANSFER_BIT,
             VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 
-        vkcpp::CommandBuffers::cmdCopyImage(
+        vkcpp::CommandBuffers::cmdCopyImageToBuffer(
             copy_cmd[0],
-            supportsBlit,
-            extent,
-            {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1},
-            {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1},
-            src_image, dst_image);
+            dst_buffer,
+            src_image,
+            {0, 0, 0},
+            extent);
 
-        // Transition destination image to general layout, which is the required layout for mapping the image memory later on
-        vkcpp::CommandBuffers::cmdImageMemoryBarrier(
+        vkcpp::CommandBuffers::cmdBufferMemoryBarrier(
             copy_cmd[0],
-            dst_image,
+            dst_buffer,
+            0,
+            size,
             VK_ACCESS_TRANSFER_WRITE_BIT,
             VK_ACCESS_MEMORY_READ_BIT,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+            VK_PIPELINE_STAGE_TRANSFER_BIT);
 
         // Transition back the swap chain image after the blit is done
         vkcpp::CommandBuffers::cmdImageMemoryBarrier(
             copy_cmd[0],
             src_image,
-            VK_ACCESS_TRANSFER_READ_BIT, //VK_ACCESS_TRANSFER_READ_BIT,
-            VK_ACCESS_SHADER_READ_BIT,
-            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,     //VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, //VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            VK_ACCESS_TRANSFER_READ_BIT,
+            VK_ACCESS_MEMORY_READ_BIT,
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, //VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
             {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 
         copy_cmd.flush_command_buffer(0);
 
-        // Get layout of the image (including row pitch)
-        VkImageSubresource subResource{VK_IMAGE_ASPECT_COLOR_BIT, 0, 0};
-        VkSubresourceLayout subResourceLayout;
-        vkGetImageSubresourceLayout(*device, dst_image, &subResource, &subResourceLayout);
-
         // Map image memory so we can start copying from it
         const char *data;
-        vkMapMemory(*device, dst_image_memory, 0, VK_WHOLE_SIZE, 0, (void **)&data);
+        vkMapMemory(*device, dst_memory, 0, VK_WHOLE_SIZE, 0, (void **)&data);
 
-        data += subResourceLayout.offset;
-
-        return {dst_image, dst_image_memory, data, subResourceLayout.rowPitch};
+        return {dst_buffer, dst_memory, data, extent.width * 4};
     }
-    void Object2D::unmap_image_memory(VkImage image, VkDeviceMemory memory)
+    void Object2D::unmap_buffer_memory(VkBuffer buffer, VkDeviceMemory memory)
     {
         vkUnmapMemory(*device_, memory);
         vkFreeMemory(*device_, memory, nullptr);
-        vkDestroyImage(*device_, image, nullptr);
+        vkDestroyBuffer(*device_, buffer, nullptr);
     }
 }
