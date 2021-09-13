@@ -11,6 +11,8 @@ namespace vkcpp
     public:
         MainCamera();
 
+        void update();
+
     private:
     public:
     };

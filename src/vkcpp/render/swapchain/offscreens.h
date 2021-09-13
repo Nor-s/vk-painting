@@ -14,10 +14,14 @@ namespace vkcpp
 
     class ImageDepth;
 
+    class CommandPool;
+
     class Offscreens
     {
     private:
         const Device *device_{nullptr};
+
+        const CommandPool *command_pool_{nullptr};
 
         std::vector<std::unique_ptr<Offscreen>> offscreens_;
 
@@ -28,9 +32,11 @@ namespace vkcpp
         VkExtent3D extent_{};
 
     public:
-        Offscreens(const Device *device, const VkExtent3D &extent, uint32_t size);
+        Offscreens(const Device *device, const CommandPool *command_pool, const VkExtent3D &extent, uint32_t size);
 
         ~Offscreens();
+
+        Offscreen &get_mutable_offscreen(int idx) { return *(offscreens_[idx]); }
 
         const VkImage &get_image(int idx) const { return offscreens_[idx]->get_image(); }
 

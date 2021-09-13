@@ -23,7 +23,7 @@ namespace vkcpp
                          const CommandPool *command_pool,
                          const char *filename,
                          VkFilter filter = VK_FILTER_LINEAR,
-                         VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                         VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
                          bool anisotropic = true,
                          bool mipmap = true,
                          bool load = true);
@@ -31,7 +31,7 @@ namespace vkcpp
                          const CommandPool *command_pool,
                          const VkExtent3D &extent,
                          VkFilter filter = VK_FILTER_LINEAR,
-                         VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                         VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
                          bool anisotropic = true,
                          bool mipmap = true,
                          bool load = true);

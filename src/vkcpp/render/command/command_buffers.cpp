@@ -32,7 +32,8 @@ namespace vkcpp
         submit_info.commandBufferCount = 1;
         submit_info.pCommandBuffers = &(cmd_buffer.get_command_buffers(0));
 
-        vkQueueSubmit(graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
+        cmd_buffer.get_device().graphics_queue_submit(&submit_info, 1, VK_NULL_HANDLE, "failed to submit in end single time!");
+
         vkQueueWaitIdle(graphics_queue);
 
         cmd_buffer.free_command_buffers();
@@ -64,7 +65,34 @@ namespace vkcpp
 
         endSingleTimeCmd(cmd_buffer);
     }
+    void CommandBuffers::cmdBufferMemoryBarrier(VkCommandBuffer cmd_buffer,
+                                                VkBuffer buffer,
+                                                VkDeviceSize offset,
+                                                VkDeviceSize size,
+                                                VkAccessFlags src_access_mask,
+                                                VkAccessFlags dst_access_mask,
+                                                VkPipelineStageFlags src_stage_mask,
+                                                VkPipelineStageFlags dst_stage_mask)
+    {
+        VkBufferMemoryBarrier buffer_memory_barrier{};
+        buffer_memory_barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+        buffer_memory_barrier.srcAccessMask = src_access_mask;
+        buffer_memory_barrier.dstAccessMask = dst_access_mask;
+        buffer_memory_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        buffer_memory_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        buffer_memory_barrier.buffer = buffer;
+        buffer_memory_barrier.offset = offset;
+        buffer_memory_barrier.size = size;
 
+        vkCmdPipelineBarrier(
+            cmd_buffer,
+            src_stage_mask,
+            dst_stage_mask,
+            0,
+            0, nullptr,
+            1, &buffer_memory_barrier,
+            0, nullptr);
+    }
     void CommandBuffers::cmdImageMemoryBarrier(VkCommandBuffer cmd_buffer,
                                                VkImage image,
                                                VkAccessFlags src_access_mask,
@@ -95,7 +123,33 @@ namespace vkcpp
             0, nullptr,
             1, &image_memory_barrier);
     }
+    void CommandBuffers::cmdCopyImageToBuffer(VkCommandBuffer cmd_buffer,
+                                              VkBuffer buffer,
+                                              VkImage image,
+                                              VkOffset3D offset,
+                                              VkExtent3D extent)
+    {
 
+        VkBufferImageCopy region{};
+        region.bufferOffset = 0;
+        region.bufferRowLength = 0;
+        region.bufferImageHeight = 0;
+
+        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.imageSubresource.mipLevel = 0;
+        region.imageSubresource.baseArrayLayer = 0;
+        region.imageSubresource.layerCount = 1;
+        region.imageOffset = offset;
+        region.imageExtent = extent;
+
+        vkCmdCopyImageToBuffer(
+            cmd_buffer,
+            image,
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            buffer,
+            1,
+            &region);
+    }
     void CommandBuffers::cmdCopyBufferToImage(VkCommandBuffer cmd_buffer,
                                               VkBuffer buffer,
                                               VkImage image,
@@ -135,6 +189,9 @@ namespace vkcpp
                                       VkImage src_image,
                                       VkImage dst_image)
     {
+#ifdef _DEBUG__
+        std::cout << " cmd copy image : " << extent.width << " " << extent.height << " " << extent.depth << "\n";
+#endif
         // If source and destination support blit we'll blit as this also does automatic format conversion (e.g. from BGR to RGB)
         if (supports_blit)
         {
@@ -146,9 +203,11 @@ namespace vkcpp
 
             VkImageBlit blig_region{};
             blig_region.srcSubresource = src_subresource;
+            blig_region.srcOffsets[0] = {0, 0, 0};
             blig_region.srcOffsets[1] = blit_size;
 
             blig_region.dstSubresource = dst_subresource;
+            blig_region.dstOffsets[0] = {0, 0, 0};
             blig_region.dstOffsets[1] = blit_size;
 
             // Issue the blit command
@@ -292,11 +351,7 @@ namespace vkcpp
         {
             throw std::runtime_error("failed to create fence for a flush command buffer!");
         }
-        // Submit to the queue
-        if (vkQueueSubmit(command_pool_->get_queue(), 1, &submit_info, fence) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to submit for a flush command buffer!");
-        }
+        device_->graphics_queue_submit(&submit_info, 1, fence, "failed to submit in flush_command_buffer!");
         // Wait for the fence to signal that command buffer has finished executing
         if (vkWaitForFences(*device_, 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT) != VK_SUCCESS)
         {

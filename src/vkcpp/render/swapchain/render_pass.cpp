@@ -21,7 +21,8 @@ namespace vkcpp
     RenderPass::RenderPass(const Device *device, const Offscreens *offscreens)
         : device_(device), swapchain_(nullptr), offscreens_(offscreens)
     {
-        init_render_pass_for_offscreen();
+        init_render_pass();
+        //init_render_pass_for_offscreen();
     }
 
     RenderPass::~RenderPass()

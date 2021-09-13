@@ -2,7 +2,7 @@
 
 #include "model.h"
 #include "device/device.h"
-#include "camera/main_camera.h"
+#include "object/camera/main_camera.h"
 #include "render/image/image.h"
 #include "render/image/image2d.h"
 #include "render/render_stage.h"
@@ -10,6 +10,7 @@
 #include "render/command/command_pool.h"
 #include "render/command/command_buffers.h"
 #include "render/pipeline/graphics_pipeline.h"
+#include "object/camera/camera.h"
 
 #include <memory>
 
@@ -23,43 +24,70 @@ namespace vkcpp
         const float s2 = glm::sin(rotation.x);
         const float c1 = glm::cos(rotation.y);
         const float s1 = glm::sin(rotation.y);
-        return {
+        glm::mat4 ret(1.0f);
+        ret = glm::translate(ret, translation);
+        ret = glm::rotate(ret, rotation.z, {0.0f, 0.0f, 1.0f});
+        ret = glm::scale(ret, scale);
+        return
+
             {
-                scale.x * (c1 * c3 + s1 * s2 * s3),
-                scale.x * (c2 * s3),
-                scale.x * (c1 * s2 * s3 - c3 * s1),
-                0.0f,
-            },
-            {
-                scale.y * (c3 * s1 * s2 - c1 * s3),
-                scale.y * (c2 * c3),
-                scale.y * (c1 * c3 * s2 + s1 * s3),
-                0.0f,
-            },
-            {
-                scale.z * (c2 * s1),
-                scale.z * (-s2),
-                scale.z * (c1 * c2),
-                0.0f,
-            },
-            {translation.x, translation.y, translation.z, 1.0f}};
+
+                {
+                    scale.x * (c1 * c3 + s1 * s2 * s3),
+                    scale.x * (c2 * s3),
+                    scale.x * (c1 * s2 * s3 - c3 * s1),
+                    0.0f,
+                },
+                {
+                    scale.y * (c3 * s1 * s2 - c1 * s3),
+                    scale.y * (c2 * c3),
+                    scale.y * (c1 * c3 * s2 + s1 * s3),
+                    0.0f,
+                },
+                {
+                    scale.z * (c2 * s1),
+                    scale.z * (-s2),
+                    scale.z * (c1 * c2),
+                    0.0f,
+                },
+                {translation.x, translation.y, translation.z, 1.0f}};
     }
 
     Object2D::Object2D(const Device *device,
                        const RenderStage *render_stage,
                        const CommandPool *command_pool,
                        const VkExtent3D &extent)
-        : device_(device), render_stage_(render_stage), command_pool_(command_pool), texture_file_(nullptr)
+        : device_(device), render_stage_(render_stage), command_pool_(command_pool), texture_file_(nullptr), current_texture_(0)
     {
         init_texture(extent);
         init_object2d();
     }
-
+    Object2D::Object2D(const Object2D *a)
+        : device_(a->device_),
+          render_stage_(a->render_stage_),
+          command_pool_(a->command_pool_),
+          texture_file_(a->texture_file_),
+          framebuffers_size_(a->framebuffers_size_),
+          transform_(a->transform_),
+          current_texture_(a->current_texture_)
+    {
+        model_ = a->model_;
+        graphics_pipeline_ = a->graphics_pipeline_;
+        int size = a->texture_.size();
+        for (int i = 0; i < size; i++)
+        {
+            texture_.push_back(a->texture_[i]);
+        }
+        uniform_buffers_ = std::make_unique<UniformBuffers<shader::attribute::TransformUBO>>(
+            device_,
+            texture_[current_texture_].get(),
+            framebuffers_size_);
+    }
     Object2D::Object2D(const Device *device,
                        const RenderStage *render_stage,
                        const CommandPool *command_pool,
                        const char *texture_file)
-        : device_(device), render_stage_(render_stage), command_pool_(command_pool), texture_file_(texture_file)
+        : device_(device), render_stage_(render_stage), command_pool_(command_pool), texture_file_(texture_file), current_texture_(0)
     {
         if (texture_file != nullptr)
         {
@@ -78,7 +106,7 @@ namespace vkcpp
     }
     const VkExtent3D &Object2D::get_extent_3d() const
     {
-        return texture_->get_extent();
+        return texture_[current_texture_]->get_extent();
     }
     const GraphicsPipeline *Object2D::get_graphics_pipeline() const
     {
@@ -88,9 +116,25 @@ namespace vkcpp
     {
         return framebuffers_size_;
     }
+    const VkImage &Object2D::get_image() const
+    {
+        return texture_[current_texture_]->get_image();
+    }
+    const VkFormat &Object2D::get_format() const
+    {
+        return texture_[current_texture_]->get_format();
+    }
     UniformBuffers<shader::attribute::TransformUBO> &Object2D::get_mutable_uniform_buffers()
     {
         return *uniform_buffers_;
+    }
+    const int Object2D::get_texture_count() const
+    {
+        return texture_.size();
+    }
+    const int Object2D::get_current_texture_idx() const
+    {
+        return current_texture_;
     }
 
     void Object2D::init_color(const glm::vec4 &color)
@@ -102,47 +146,51 @@ namespace vkcpp
         transform_.color *= color;
     }
 
-    void Object2D::init_transform(glm::vec3 translation, glm::vec3 scale, glm::vec3 rotation)
+    void Object2D::init_transform(const glm::vec3 &translation, const glm::vec3 &scale, const glm::vec3 &rotation)
     {
         transform_.translation = translation;
         transform_.scale = scale;
         transform_.rotation = rotation;
     }
     //TODO handle overflow
-    void Object2D::add_transform(glm::vec3 translation, glm::vec3 scale, glm::vec3 rotation)
+    void Object2D::add_transform(const glm::vec3 &translation, const glm::vec3 &scale, const glm::vec3 &rotation)
     {
         transform_.translation += translation;
         transform_.scale += scale;
         transform_.rotation += rotation;
     }
 
-    void Object2D::update(uint32_t uniform_buffer_idx)
+    void Object2D::update_with_main_camera(uint32_t uniform_buffer_idx)
+    {
+        update_with_sub_camera(uniform_buffer_idx, MainCamera::getInstance());
+    }
+    void Object2D::update_with_sub_camera(uint32_t uniform_buffer_idx, const Camera *sub_camera)
     {
         vkcpp::shader::attribute::TransformUBO ubo{};
-        //TODO this is hard coding.
         ubo.model = transform_.get_mat4();
         ubo.color = transform_.color;
-        ubo.view = MainCamera::getInstance()->get_view();
-        ubo.proj = MainCamera::getInstance()->get_proj();
+        ubo.view = sub_camera->get_view();
+        ubo.proj = sub_camera->get_proj();
         //ubo.proj[1][1] *= -1;
         get_mutable_uniform_buffers().update_uniform_buffer(uniform_buffer_idx, ubo);
     }
-
     void Object2D::init_texture(const VkExtent3D &extent)
     {
         if (texture_file_ != nullptr)
         {
-            texture_ = std::make_unique<Image2D>(
+            texture_.push_back(std::make_unique<Image2D>(
                 device_,
                 command_pool_,
-                texture_file_);
+                texture_file_));
+            current_texture_ = texture_.size() - 1;
         }
         else
         {
-            texture_ = std::make_unique<Image2D>(
+            texture_.push_back(std::make_unique<Image2D>(
                 device_,
                 command_pool_,
-                extent);
+                extent));
+            current_texture_ = texture_.size() - 1;
         }
     }
 
@@ -158,7 +206,7 @@ namespace vkcpp
 
         //     float screen_height = static_cast<float>(render_stage_->get_render_area().extent.height);
 
-        auto [width, height] = texture_->get_size();
+        auto [width, height] = texture_[current_texture_]->get_size();
 
 #ifdef _DEBUG__
         //  std::cout << "       Object load_ model : " << screen_width << " ," << screen_height << "\n";
@@ -228,7 +276,7 @@ namespace vkcpp
 
         uniform_buffers_ = std::make_unique<UniformBuffers<shader::attribute::TransformUBO>>(
             device_,
-            texture_.get(),
+            texture_[current_texture_].get(),
             framebuffers_size_);
 
         if (graphics_pipeline_ != nullptr)
@@ -247,20 +295,26 @@ namespace vkcpp
 
     void Object2D::destroy_dependency_renderpass()
     {
-        graphics_pipeline_.reset();
+        graphics_pipeline_ = nullptr;
         uniform_buffers_.reset();
     }
 
     void Object2D::destroy_object2d()
     {
-        model_.reset();
-        texture_.reset();
+        model_ = nullptr;
+        int size = texture_.size();
+        for (int i = 0; i < size; i++)
+        {
+            texture_[i].reset();
+        }
     }
 
-    void Object2D::draw(VkCommandBuffer command_buffer, int idx)
+    void Object2D::bind_graphics_pipeline(VkCommandBuffer command_buffer)
     {
         graphics_pipeline_->bind_pipeline(command_buffer);
-
+    }
+    void Object2D::draw(VkCommandBuffer command_buffer, int ubo_idx)
+    {
         model_->bind(command_buffer);
 
         vkCmdBindDescriptorSets(
@@ -269,7 +323,7 @@ namespace vkcpp
             graphics_pipeline_->get_pipeline_layout(),
             0,
             1,
-            &uniform_buffers_->get_sets()[idx],
+            &uniform_buffers_->get_sets()[ubo_idx],
             0,
             nullptr);
 
@@ -294,14 +348,159 @@ namespace vkcpp
 
         model_->draw(command_buffer);
     }
-
-    void Object2D::sub_texture(const char *path)
+    void Object2D::draw_with_bind_pipeline(VkCommandBuffer command_buffer, int idx)
     {
-        texture_->sub_texture_image(path);
+        draw(command_buffer, graphics_pipeline_.get(), idx);
+    }
+    void Object2D::push_texture(const char *texture_file)
+    {
+        texture_.push_back(std::make_unique<Image2D>(
+            device_,
+            command_pool_,
+            texture_file));
     }
 
+    void Object2D::change_texture(int idx)
+    {
+        if (texture_.size() <= idx)
+        {
+#ifdef _DEBUG__
+            std::cout << "failed to change_texture! out of bounds!\n";
+#endif
+            return;
+        }
+        current_texture_ = idx;
+        uniform_buffers_->set_image(texture_[idx].get());
+    }
+    void Object2D::change_texture(int idx, int ubo_idx)
+    {
+        if (texture_.size() <= idx)
+        {
+#ifdef _DEBUG__
+            std::cout << "failed to change_texture! out of bounds!\n";
+#endif
+            return;
+        }
+        current_texture_ = idx;
+        uniform_buffers_->set_image(texture_[idx].get(), ubo_idx);
+    }
+    void Object2D::sub_texture(const char *path)
+    {
+        texture_[current_texture_]->sub_texture_image(path);
+    }
+    //TODO: fix hard coding "format = RGBA SRGB"
     void Object2D::sub_texture(VkImage image, VkExtent3D extent)
     {
-        texture_->sub_image(image, extent, render_stage_->get_color_format());
+        texture_[current_texture_]->sub_image(image, extent, VK_FORMAT_R8G8B8A8_SRGB);
+    }
+
+    //TODO : fix hard coding "supportsBlit = false"
+    std::tuple<VkImage, VkDeviceMemory, const char *, VkDeviceSize> Object2D::map_read_image_memory()
+    {
+        const vkcpp::Device *device = device_;
+        const vkcpp::CommandPool *command_pool = command_pool_;
+        VkFormat format = get_format();
+        bool supportsBlit = false; //= device_->check_support_blit(object->get_);
+        VkImage src_image = get_image();
+        VkExtent3D extent = get_extent_3d();
+
+        // Source for the copy is the last rendered swapchain image
+        // VkImage srcImage = swapChain.images[currentBuffer];
+
+        // Create the linear tiled destination image to copy to and to read the memory from
+        // Note that vkCmdBlitImage (if supported) will also do format conversions if the swapchain color format would differ
+        VkImage dst_image;
+        // Create memory to back up the image
+        VkDeviceMemory dst_image_memory{nullptr};
+        vkcpp::create::image(device,
+                             VK_IMAGE_TYPE_2D,
+                             VK_FORMAT_R8G8B8A8_UNORM,
+                             extent,
+                             VK_IMAGE_TILING_LINEAR,
+                             VK_SAMPLE_COUNT_1_BIT,
+                             VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, // Memory must be host visible to copy from
+                             dst_image,
+                             dst_image_memory);
+
+        // Do the actual blit from the swapchain image to our host visible destination image
+        vkcpp::CommandBuffers copy_cmd = std::move(vkcpp::CommandBuffers::beginSingleTimeCmd(device, command_pool));
+
+        // Transition destination image to transfer destination layout
+        vkcpp::CommandBuffers::cmdImageMemoryBarrier(
+            copy_cmd[0],
+            dst_image,
+            0,
+            VK_ACCESS_TRANSFER_WRITE_BIT,
+            VK_IMAGE_LAYOUT_UNDEFINED,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+
+        // Transition swapchain image from present to transfer source layout
+        vkcpp::CommandBuffers::cmdImageMemoryBarrier(
+            copy_cmd[0],
+            src_image,
+            0,
+            VK_ACCESS_TRANSFER_READ_BIT,
+            VK_IMAGE_LAYOUT_UNDEFINED,
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+
+        vkcpp::CommandBuffers::cmdCopyImage(
+            copy_cmd[0],
+            supportsBlit,
+            extent,
+            {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1},
+            {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1},
+            src_image, dst_image);
+
+        // Transition destination image to general layout, which is the required layout for mapping the image memory later on
+        vkcpp::CommandBuffers::cmdImageMemoryBarrier(
+            copy_cmd[0],
+            dst_image,
+            VK_ACCESS_TRANSFER_WRITE_BIT,
+            VK_ACCESS_MEMORY_READ_BIT,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+
+        // Transition back the swap chain image after the blit is done
+        vkcpp::CommandBuffers::cmdImageMemoryBarrier(
+            copy_cmd[0],
+            src_image,
+            VK_ACCESS_TRANSFER_READ_BIT, //VK_ACCESS_TRANSFER_READ_BIT,
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,     //VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, //VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, //VK_PIPELINE_STAGE_TRANSFER_BIT,
+            {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+
+        copy_cmd.flush_command_buffer(0);
+
+        // Get layout of the image (including row pitch)
+        VkImageSubresource subResource{VK_IMAGE_ASPECT_COLOR_BIT, 0, 0};
+        VkSubresourceLayout subResourceLayout;
+        vkGetImageSubresourceLayout(*device, dst_image, &subResource, &subResourceLayout);
+
+        // Map image memory so we can start copying from it
+        const char *data;
+        vkMapMemory(*device, dst_image_memory, 0, VK_WHOLE_SIZE, 0, (void **)&data);
+
+        data += subResourceLayout.offset;
+
+        return {dst_image, dst_image_memory, data, subResourceLayout.rowPitch};
+    }
+    void Object2D::unmap_image_memory(VkImage image, VkDeviceMemory memory)
+    {
+        vkUnmapMemory(*device_, memory);
+        vkFreeMemory(*device_, memory, nullptr);
+        vkDestroyImage(*device_, image, nullptr);
     }
 }

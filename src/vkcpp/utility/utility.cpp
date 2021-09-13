@@ -1,10 +1,9 @@
-#ifndef VKCPP_UTILITY_UTILITY_HPP
-#define VKCPP_UTILITY_UTILITY_HPP
+#include "utility.h"
 
-#include "vulkan_header.h"
 #include <fstream>
 #include <vector>
 #include <string>
+#include <cstdlib>
 
 namespace vkcpp
 {
@@ -14,6 +13,14 @@ namespace vkcpp
         {
             return;
         }
+    }
+    float getRandFloat(float lo, float hi)
+    {
+        return lo + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (hi - lo)));
+    }
+    float getProbablity()
+    {
+        return getRandFloat(0.0f, 1.0f);
     }
     std::vector<char> readFile(const std::string &filename)
     {
@@ -35,5 +42,3 @@ namespace vkcpp
         return buffer;
     }
 } // namespace vkcpp
-
-#endif // #ifndef VKCPP_UTILITY_UTILITY_HPP

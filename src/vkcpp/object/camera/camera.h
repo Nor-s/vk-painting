@@ -69,8 +69,8 @@ namespace vkcpp
         proj::Perspective perspective_info_{};
 
     public:
-        virtual glm::mat4 &get_view();
-        virtual glm::mat4 &get_proj();
+        virtual const glm::mat4 &get_view() const;
+        virtual const glm::mat4 &get_proj() const;
         virtual void update_view_to_pilot(glm::vec3 pos, float roll, float pitch, float yaw);
         virtual void update_view_to_look_at(glm::vec3 camera_pos, glm::vec3 camera_front, glm::vec3 camera_up);
         virtual void update_proj_to_ortho(glm::vec2 x_range, glm::vec2 y_range, glm::vec2 z_range);

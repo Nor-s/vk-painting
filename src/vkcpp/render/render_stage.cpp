@@ -33,7 +33,7 @@ namespace vkcpp
 
         VkExtent2D extent;
         VkClearValue clear_color{};
-        clear_color.color = {{0.0f, 0.0f, 2.0f, 1.0f}};
+        clear_color.color = {{1.0f, 1.0f, 1.0f, 1.0f}};
         clear_values_.emplace_back(clear_color);
         VkClearValue clear_depth{};
         clear_depth.depthStencil = {1.0f, 0};

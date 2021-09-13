@@ -131,6 +131,7 @@ namespace vkcpp
         throw std::runtime_error("failed to find depth format!");
     }
 
+    // TODO: move to image2D, only work image2D <-> image2D
     void Image::sub_image(VkImage host_src_image, VkExtent3D src_extent, const VkFormat &color_format)
     {
         if (!(extent_.width == src_extent.width && extent_.height == src_extent.height))
@@ -149,7 +150,7 @@ namespace vkcpp
             VK_ACCESS_TRANSFER_WRITE_BIT,
             VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
             VK_PIPELINE_STAGE_TRANSFER_BIT,
             VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 
@@ -157,11 +158,11 @@ namespace vkcpp
         vkcpp::CommandBuffers::cmdImageMemoryBarrier(
             copy_cmd[0],
             host_src_image,
-            VK_ACCESS_MEMORY_READ_BIT,
+            0, //VK_ACCESS_MEMORY_READ_BIT,
             VK_ACCESS_TRANSFER_READ_BIT,
-            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, // VK_PIPELINE_STAGE_TRANSFER_BIT,
             VK_PIPELINE_STAGE_TRANSFER_BIT,
             VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 
@@ -169,7 +170,8 @@ namespace vkcpp
             copy_cmd[0],
             supportsBlit,
             extent_,
-            {VK_IMAGE_ASPECT_COLOR_BIT, 1}, {VK_IMAGE_ASPECT_COLOR_BIT, 1},
+            {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1},
+            {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1},
             host_src_image, image_);
 
         // Transition destination image to general layout, which is the required layout for mapping the image memory later on
@@ -188,13 +190,13 @@ namespace vkcpp
         vkcpp::CommandBuffers::cmdImageMemoryBarrier(
             copy_cmd[0],
             host_src_image,
-            VK_ACCESS_TRANSFER_READ_BIT,
-            VK_ACCESS_MEMORY_READ_BIT,
-            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            VK_ACCESS_TRANSFER_READ_BIT, //VK_ACCESS_TRANSFER_READ_BIT,
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,     //VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, //VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
             VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, //VK_PIPELINE_STAGE_TRANSFER_BIT,
+            {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 
         copy_cmd.flush_command_buffer(0);
     }

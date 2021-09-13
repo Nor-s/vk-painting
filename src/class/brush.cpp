@@ -1,83 +1,190 @@
 #include "class/brush.h"
 
 #include <iostream>
+#include <algorithm> // for clamp
+#include "utility/utility.h"
+
 namespace painting
 {
-    Brush::Brush(const vkcpp::Device *device,
-                 const vkcpp::RenderStage *render_stage,
-                 const vkcpp::CommandPool *command_pool,
-                 int idx)
-        : vkcpp::Object2D(device, render_stage, command_pool)
+    Brushes::Brushes(const vkcpp::Device *device,
+                     const vkcpp::RenderStage *render_stage,
+                     const vkcpp::CommandPool *command_pool,
+                     int brush_count)
     {
-        texture_file_ = tex_[idx];
-        init_texture({});
-        init_object2d();
-        init_transform({0.0, 0.0, 1.0}, {0.1, 0.1, 1.0});
-        init_color({0.0, 0.0, 0.0, .4});
+        brushes_.push_back(std::make_unique<vkcpp::Object2D>(
+            device,
+            render_stage,
+            command_pool,
+            tex_[rand() % TEX_SIZE_]));
+        for (int i = 1; i < brush_count; i++)
+        {
+            brushes_.push_back(std::make_unique<vkcpp::Object2D>(
+                brushes_[0].get()));
+        }
+    }
+
+    void Brushes::draw_all(VkCommandBuffer command_buffer, int ubo_idx)
+    {
+        int size = brushes_.size();
+        brushes_[0]->bind_graphics_pipeline(command_buffer);
+        for (int i = 0; i < size; i++)
+        {
+            brushes_[i]->draw(command_buffer, ubo_idx);
+        }
+    }
+
+    void Brushes::update(const BrushAttributeComponent &attribute, const vkcpp::Camera *camera, int idx, int ubo_idx)
+    {
+        brushes_[idx]
+            ->init_transform(
+                attribute.translation,
+                attribute.scale,
+                glm::vec3(0.0f, 0.0f, attribute.rotation_z));
+        brushes_[idx]->init_color(attribute.color);
+        //  brushes_[idx]->change_texture(attribute.object_idx, ubo_idx);
+        brushes_[idx]->update_with_sub_camera(ubo_idx, camera);
     }
 }
 
 namespace painting
 {
-    std::vector<Brush *> Palette::brushes_;
-    int Palette::brushes_size_ = 0;
-    Palette::Palette() {}
-    void Palette::init_brushes()
+    BrushAttributes::BrushAttributes(const glm::vec2 &offset,
+                                     const glm::vec2 &extent,
+                                     const glm::vec2 &scale_range,
+                                     int size,
+                                     const Probablity &probablity)
+        : offset_(offset),
+          extent_(extent),
+          probablity_(probablity)
     {
-        if (Palette::brushes_size_ == 0)
+        for (int i = 0; i < size; i++)
         {
-            for (int i = 0; i < 4; i++)
+            attributes_.push_back(BrushAttributeComponent(scale_range));
+            set_rand_rotation(i);
+            set_rand_scale(i);
+            set_rand_translation(i);
+            set_rand_color(i);
+            set_rand_obj_idx(i);
+        }
+    }
+    BrushAttributes::BrushAttributes(const BrushAttributes &a, const BrushAttributes &b)
+    {
+        int size = a.attributes_.size();
+        for (int i = 0; i < size; i++)
+        {
+            if (rand() % 2 == 0)
             {
-                //              Palette::brushes_.push_back(new Brush(i));
-                //              Palette::brushes_size_++;
+                attributes_.push_back(a.attributes_[i]);
+            }
+            else
+            {
+                attributes_.push_back(b.attributes_[i]);
+            }
+        }
+        offset_ = a.offset_;
+        extent_ = a.extent_;
+        probablity_ = a.probablity_;
+        fitness_ = a.fitness_;
+    }
+
+    BrushAttributes::~BrushAttributes()
+    {
+    }
+
+    std::unique_ptr<BrushAttributes> BrushAttributes::cross_over(const BrushAttributes &b)
+    {
+        return std::make_unique<BrushAttributes>(*this, b);
+    }
+    void BrushAttributes::mutate(int idx)
+    {
+        set_rand_translation(idx, true);
+        if (rand() % 4 == 0) //vkcpp::getProbablity() < probablity_.scale)
+        {
+            set_rand_scale(idx);
+        }
+        if (rand() % 10 == 0) //vkcpp::getProbablity() < probablity_.trans)
+        {
+            set_rand_translation(idx);
+        }
+        if (rand() % 2 == 0) //vkcpp::getProbablity() < probablity_.rotate)
+        {
+            set_rand_rotation(idx);
+        }
+        if (rand() % 4 == 0) //vkcpp::getProbablity() < probablity_.color)
+        {
+            if (vkcpp::getProbablity() < 0.8f)
+            {
+                set_rand_color(idx, true);
+            }
+            else
+            {
+                set_rand_color(idx);
             }
         }
     }
-    int Palette::get_brushes_size()
+    void BrushAttributes::set_rand_obj_idx(int idx)
     {
-        return brushes_size_;
+        BrushAttributeComponent &attribute = attributes_[idx];
+        attribute.object_idx = rand() % Brushes::TEX_SIZE_;
     }
-    void Palette::set_translate(float translate[3])
+    void BrushAttributes::set_rand_scale(int idx, bool is_relative)
     {
-        for (int i = 0; i < 3; i++)
+        BrushAttributeComponent &attribute = attributes_[idx];
+        if (is_relative)
         {
-            translate_[i] = translate[i];
+            attribute.scale.x = std::clamp(vkcpp::getRandFloat(attribute.scale.x - 0.005f, attribute.scale.x + 0.003f), attribute.scale_range_.x, attribute.scale_range_.y);
+            attribute.scale.y = attribute.scale.x;
+        }
+        else
+        {
+            attribute.scale.x = vkcpp::getRandFloat(attribute.scale_range_.x, attribute.scale_range_.y);
+            attribute.scale.y = attribute.scale.x;
         }
     }
-    void Palette::set_scale(float scale[3])
+    void BrushAttributes::set_rand_translation(int idx, bool is_relative)
     {
-        for (int i = 0; i < 3; i++)
+        BrushAttributeComponent &attribute = attributes_[idx];
+        if (is_relative)
         {
-            scale_[i] = scale[i];
+            attribute.translation.x = std::clamp(vkcpp::getRandFloat(attribute.translation.x - 5.0f, attribute.translation.x + 5.0f), offset_.x, offset_.x + extent_.x);
+            attribute.translation.y = std::clamp(vkcpp::getRandFloat(attribute.translation.y - 5.0f, attribute.translation.y + 5.0f), offset_.y, offset_.y + extent_.y);
+            attribute.translation.z = -std::clamp(vkcpp::getRandFloat(attribute.translation.z - 5.0f, attribute.translation.z + 5.0f), 1.0f, 50.0f);
+        }
+        else
+        {
+            attribute.translation.x = vkcpp::getRandFloat(offset_.x, offset_.x + extent_.x);
+            attribute.translation.y = vkcpp::getRandFloat(offset_.y, offset_.y + extent_.y);
+            attribute.translation.z = -vkcpp::getRandFloat(1.0f, 50.0f);
         }
     }
-    void Palette::set_rotate(float rotate)
+    void BrushAttributes::set_rand_rotation(int idx, bool is_relative)
     {
-        rotate_ = rotate;
-    }
-    void Palette::set_color(float color[4])
-    {
-        for (int i = 0; i < 4; i++)
+        BrushAttributeComponent &attribute = attributes_[idx];
+        if (is_relative)
         {
-            color_[i] = color[i];
+            attribute.rotation_z = std::clamp(vkcpp::getRandFloat(attribute.rotation_z - 0.5f, attribute.rotation_z + 0.5f), 0.0f, 6.3f);
+        }
+        else
+        {
+            attribute.rotation_z = vkcpp::getRandFloat(0.0f, 6.3f);
         }
     }
-    void Palette::set_brushidx(int idx)
+    void BrushAttributes::set_rand_color(int idx, bool is_relative)
     {
-        idx_ = idx;
-    }
-    void Palette::draw()
-    {
-        /*
-        auto p = &brushes_[idx_];
-        p->init_model();
-        p->translate(translate_);
-        p->rotate(rotate_);
-        p->scale(scale_);
-        p->scale(0.4);
-        p->set_color_to_uniform(color_);
-        p->set_model_to_uniform();
-        p->draw();
-        */
+        BrushAttributeComponent &attribute = attributes_[idx];
+        if (is_relative)
+        {
+            attribute.color.r = std::clamp(vkcpp::getRandFloat(attribute.color.r - 0.1f, attribute.color.r + 0.1f), 0.0f, 1.0f);
+            attribute.color.g = std::clamp(vkcpp::getRandFloat(attribute.color.g - 0.1f, attribute.color.g + 0.1f), 0.0f, 1.0f);
+            attribute.color.b = std::clamp(vkcpp::getRandFloat(attribute.color.b - 0.1f, attribute.color.b + 0.1f), 0.0f, 1.0f);
+            attribute.color.a = std::clamp(vkcpp::getRandFloat(attribute.color.a - 0.1f, attribute.color.a + 0.1f), 0.0f, 1.0f);
+        }
+        else
+        {
+            attribute.color.r = vkcpp::getRandFloat(0.0f, 1.0f);
+            attribute.color.g = vkcpp::getRandFloat(0.0f, 1.0f);
+            attribute.color.b = vkcpp::getRandFloat(0.0f, 1.0f);
+            attribute.color.a = vkcpp::getRandFloat(0.0f, 1.0f);
+        }
     }
 }

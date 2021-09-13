@@ -37,11 +37,11 @@ namespace vkcpp
     {
         return glm::ortho(x_range.x, x_range.y, y_range.x, y_range.y, z_range.x, z_range.y);
     }
-    glm::mat4 &Camera::get_view()
+    const glm::mat4 &Camera::get_view() const
     {
         return view_;
     }
-    glm::mat4 &Camera::get_proj()
+    const glm::mat4 &Camera::get_proj() const
     {
         return proj_;
     }

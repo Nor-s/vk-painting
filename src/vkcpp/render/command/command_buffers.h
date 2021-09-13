@@ -4,6 +4,7 @@
 #include "vulkan_header.h"
 #include <vector>
 #include <iostream>
+#include <mutex>
 
 namespace vkcpp
 {
@@ -15,6 +16,8 @@ namespace vkcpp
     class CommandBuffers
     {
     public:
+        // Only one queue is being used..
+
         static CommandBuffers beginSingleTimeCmd(const Device *device, const CommandPool *command_pool);
 
         static void endSingleTimeCmd(CommandBuffers &cmd_buffer);
@@ -30,12 +33,26 @@ namespace vkcpp
                                         VkBuffer dstBuffer,
                                         VkDeviceSize size);
 
+        static void cmdCopyImageToBuffer(VkCommandBuffer cmd_buffer,
+                                         VkBuffer buffer,
+                                         VkImage image,
+                                         VkOffset3D offset,
+                                         VkExtent3D extent);
+
         static void cmdCopyBufferToImage(VkCommandBuffer cmd_buffer,
                                          VkBuffer buffer,
                                          VkImage image,
                                          uint32_t width,
                                          uint32_t height);
 
+        static void cmdBufferMemoryBarrier(VkCommandBuffer cmd_buffer,
+                                           VkBuffer buffer,
+                                           VkDeviceSize offset,
+                                           VkDeviceSize size,
+                                           VkAccessFlags src_access_mask,
+                                           VkAccessFlags dst_access_mask,
+                                           VkPipelineStageFlags src_stage_mask,
+                                           VkPipelineStageFlags dst_stage_mask);
         static void cmdImageMemoryBarrier(VkCommandBuffer cmdbuffer,
                                           VkImage image,
                                           VkAccessFlags srcAccessMask,

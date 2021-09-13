@@ -6,9 +6,9 @@
 #include "object/shader_attribute.hpp"
 #include "utility/create.h"
 #include "device/queue.h"
-#include <fstream>
 #include <chrono>
 #include <algorithm>
+#include "object/camera/main_camera.h"
 
 namespace painting
 {
@@ -23,16 +23,6 @@ namespace painting
         main_loop();
         cleanup();
     }
-
-    void PaintingApplication::init_offscreen(VkExtent3D extent)
-    {
-        int size = swapchain_->get_image_views().size();
-        offscreens_ = std::make_unique<vkcpp::Offscreens>(device_.get(), extent, size);
-        offscreen_render_stage_ = std::make_unique<vkcpp::RenderStage>(device_.get(), offscreens_.get());
-        brush_.emplace_back(std::make_unique<Picture>(device_.get(), offscreen_render_stage_.get(), command_pool_.get(), extent));
-        brush_.emplace_back(std::make_unique<Brush>(device_.get(), offscreen_render_stage_.get(), command_pool_.get(), 0));
-    }
-
     void PaintingApplication::init_window(uint32_t width, uint32_t height, std::string title)
     {
         vkcpp::MainWindow::getInstance()->set_window(width, height, title);
@@ -110,13 +100,18 @@ namespace painting
 
         for (int j = 0; j < object_.size(); j++)
         {
+            //    if (j >= 2)
+            //      break;
+            object_[j]->bind_graphics_pipeline((*command_buffers_)[idx]);
             object_[j]->draw((*command_buffers_)[idx], idx);
         }
-        for (int j = 0; j < brush_.size(); j++)
+        if (picture_ != nullptr)
         {
-            brush_[j]->draw((*command_buffers_)[idx], idx); //object_[0]->get_graphics_pipeline(), idx);
-        }
+            //picture_->bind_graphics_pipeline((*command_buffers_)[idx]);
+            picture_->draw((*command_buffers_)[idx], object_[0]->get_graphics_pipeline(), idx);
 
+            // picture_->get_mutable_brushes().draw_all((*command_buffers_)[idx], idx);
+        }
         command_buffers_->end_render_pass(idx, render_stage_.get());
 
         command_buffers_->end_command_buffer(idx);
@@ -139,14 +134,28 @@ namespace painting
         {
             throw std::runtime_error("failed to acquire swap chain image!");
         }
-
         for (int i = 0; i < object_.size(); i++)
         {
-            object_[i]->update(image_index);
+            object_[i]->update_with_main_camera(image_index);
         }
-        for (int i = 0; i < brush_.size(); i++)
+        if (picture_ != nullptr)
         {
-            brush_[i]->update(image_index);
+
+            float width = static_cast<float>(picture_->get_extent_3d().width) / 2.0f;
+            float height = static_cast<float>(picture_->get_extent_3d().height) / 2.0f;
+            picture_->init_transform({width, height, -90.0f});
+            picture_->update_with_main_camera(image_index);
+            /*
+            int brush_size = picture_->get_mutable_brushes().get_brushes_size();
+            for (int i = 0; i < brush_size; i++)
+            {
+                picture_->get_mutable_brushes().update(
+                    picture_->get_mutable_population().get(0)->get_attribute(i),
+                    vkcpp::MainCamera::getInstance(),
+                    i,
+                    image_index);
+            }
+            */
         }
 
         if (images_in_flight_[image_index] != VK_NULL_HANDLE)
@@ -166,8 +175,9 @@ namespace painting
 
         if (!is_command_buffer_updated_[image_index])
         {
+            record_command_buffer(image_index);
         }
-        record_command_buffer(image_index);
+
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &(*command_buffers_)[image_index];
 
@@ -176,11 +186,7 @@ namespace painting
         submitInfo.pSignalSemaphores = signalSemaphores;
 
         vkResetFences(*device_, 1, &in_flight_fences_[current_frame_]);
-
-        if (vkQueueSubmit(*(device_->get_graphics_queue()), 1, &submitInfo, in_flight_fences_[current_frame_]) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to submit draw command buffer!");
-        }
+        device_->graphics_queue_submit(&submitInfo, 1, in_flight_fences_[current_frame_], "failed submit draw cmd buffer in application class!");
 
         VkPresentInfoKHR presentInfo{};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -212,6 +218,11 @@ namespace painting
 
     void PaintingApplication::main_loop()
     {
+        while (!vkcpp::MainWindow::getInstance()->should_close() && object_.size() == 0)
+        {
+            vkcpp::MainWindow::getInstance()->process_events();
+        }
+        auto [image, memory, data, rowpitch] = object_[0]->map_read_image_memory();
         auto current_time = std::chrono::high_resolution_clock::now();
         while (!vkcpp::MainWindow::getInstance()->should_close())
         {
@@ -219,10 +230,14 @@ namespace painting
 
             auto new_time = std::chrono::high_resolution_clock::now();
             float frame_time = std::chrono::duration<float, std::chrono::seconds::period>(new_time - current_time).count();
+            std::cout << frame_time << "\n";
             current_time = new_time;
+
+            picture_->run(data);
 
             draw_frame();
         }
+        object_[0]->unmap_image_memory(image, memory);
     }
 
     void PaintingApplication::cleanup()
@@ -235,14 +250,7 @@ namespace painting
             vkDestroySemaphore(*device_, image_available_semaphores_[i], nullptr);
             vkDestroyFence(*device_, in_flight_fences_[i], nullptr);
         }
-        for (auto &obj_ptr : brush_)
-        {
-            obj_ptr.reset();
-        }
-
-        brush_.resize(0);
-        offscreen_render_stage_.reset();
-        offscreens_.reset();
+        picture_.reset();
 
         cleanup_swapchain();
 
@@ -282,7 +290,6 @@ namespace painting
         vkDeviceWaitIdle(*device_);
 
         cleanup_swapchain();
-
         init_render();
         // TODO check renderpass compatibility
         // If the number of new swapchain images is the same as the old image,
@@ -294,164 +301,14 @@ namespace painting
         record_command_buffers();
 
         images_in_flight_.resize(swapchain_->get_image_views().size(), VK_NULL_HANDLE);
-    }
-    void PaintingApplication::push_object(const char *texture_file)
-    {
-        object_.emplace_back(std::make_unique<vkcpp::Object2D>(device_.get(), render_stage_.get(), command_pool_.get(), texture_file));
-        //object_.emplace_back(std::make_unique<Brush>(device_.get(), render_stage_.get(), command_pool_.get(), 0));
-        init_offscreen(object_[0]->get_extent_3d());
+        float width = size.first, height = size.second;
+        vkcpp::MainCamera::getInstance()->update();
     }
     void PaintingApplication::reset_command_buffers_update_flag()
     {
         is_command_buffer_updated_ = std::move(std::vector<bool>(is_command_buffer_updated_.size(), false));
     }
 
-    // Take a screenshot from the current swapchain image
-    // This is done using a blit from the swapchain image to a linear image whose memory content is then saved as a ppm image
-    // Getting the image date directly from a swapchain image wouldn't work as they're usually stored in an implementation dependent optimal tiling format
-    // Note: This requires the swapchain images to be created with the VK_IMAGE_USAGE_TRANSFER_SRC_BIT flag (see VulkanSwapChain::create)
-    void PaintingApplication::save_screen_shot(const char *filename, VkFormat swapchain_color_format, VkImage src_image, VkExtent3D extent)
-    {
-        const vkcpp::Device *device = device_.get();
-        const vkcpp::CommandPool *command_pool = command_pool_.get();
-        bool supportsBlit = device_->check_support_blit(swapchain_color_format);
-
-        // Source for the copy is the last rendered swapchain image
-        // VkImage srcImage = swapChain.images[currentBuffer];
-
-        // Create the linear tiled destination image to copy to and to read the memory from
-        // Note that vkCmdBlitImage (if supported) will also do format conversions if the swapchain color format would differ
-        VkImage dst_image;
-        // Create memory to back up the image
-        VkDeviceMemory dst_image_memory{nullptr};
-        vkcpp::create::image(device,
-                             VK_IMAGE_TYPE_2D,
-                             VK_FORMAT_R8G8B8A8_UNORM,
-                             extent,
-                             VK_IMAGE_TILING_LINEAR,
-                             VK_SAMPLE_COUNT_1_BIT,
-                             VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-                             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, // Memory must be host visible to copy from
-                             dst_image,
-                             dst_image_memory);
-
-        // Do the actual blit from the swapchain image to our host visible destination image
-        vkcpp::CommandBuffers copy_cmd = std::move(vkcpp::CommandBuffers::beginSingleTimeCmd(device, command_pool));
-        // begin
-        // Transition destination image to transfer destination layout
-        vkcpp::CommandBuffers::cmdImageMemoryBarrier(
-            copy_cmd[0],
-            dst_image,
-            0,
-            VK_ACCESS_TRANSFER_WRITE_BIT,
-            VK_IMAGE_LAYOUT_UNDEFINED,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
-
-        // Transition swapchain image from present to transfer source layout
-        vkcpp::CommandBuffers::cmdImageMemoryBarrier(
-            copy_cmd[0],
-            src_image,
-            VK_ACCESS_MEMORY_READ_BIT,
-            VK_ACCESS_TRANSFER_READ_BIT,
-            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
-
-        vkcpp::CommandBuffers::cmdCopyImage(
-            copy_cmd[0],
-            supportsBlit,
-            extent,
-            {VK_IMAGE_ASPECT_COLOR_BIT, 1}, {VK_IMAGE_ASPECT_COLOR_BIT, 1},
-            src_image, dst_image);
-
-        // Transition destination image to general layout, which is the required layout for mapping the image memory later on
-        vkcpp::CommandBuffers::cmdImageMemoryBarrier(
-            copy_cmd[0],
-            dst_image,
-            VK_ACCESS_TRANSFER_WRITE_BIT,
-            VK_ACCESS_MEMORY_READ_BIT,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VK_IMAGE_LAYOUT_GENERAL,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
-
-        // Transition back the swap chain image after the blit is done
-        vkcpp::CommandBuffers::cmdImageMemoryBarrier(
-            copy_cmd[0],
-            src_image,
-            VK_ACCESS_TRANSFER_READ_BIT,
-            VK_ACCESS_MEMORY_READ_BIT,
-            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
-
-        copy_cmd.flush_command_buffer(0);
-
-        // Get layout of the image (including row pitch)
-        VkImageSubresource subResource{VK_IMAGE_ASPECT_COLOR_BIT, 0, 0};
-        VkSubresourceLayout subResourceLayout;
-        vkGetImageSubresourceLayout(*device, dst_image, &subResource, &subResourceLayout);
-
-        // Map image memory so we can start copying from it
-        const char *data;
-        vkMapMemory(*device, dst_image_memory, 0, VK_WHOLE_SIZE, 0, (void **)&data);
-        data += subResourceLayout.offset;
-
-        std::ofstream file(filename, std::ios::out | std::ios::binary);
-
-        // ppm header
-        file << "P6\n"
-             << extent.width << "\n"
-             << extent.height << "\n"
-             << 255 << "\n";
-
-        // If source is BGR (destination is always RGB) and we can't use blit (which does automatic conversion), we'll have to manually swizzle color components
-        bool colorSwizzle = false;
-        // Check if source is BGR
-        // Note: Not complete, only contains most common and basic BGR surface formats for demonstration purposes
-        if (!supportsBlit)
-        {
-            std::vector<VkFormat> formatsBGR = {VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_SNORM};
-            colorSwizzle = (std::find(formatsBGR.begin(), formatsBGR.end(), swapchain_color_format) != formatsBGR.end());
-        }
-
-        // ppm binary pixel data
-        for (uint32_t y = 0; y < extent.height; y++)
-        {
-            unsigned int *row = (unsigned int *)data;
-            for (uint32_t x = 0; x < extent.width; x++)
-            {
-                if (colorSwizzle)
-                {
-                    file.write((char *)row + 2, 1);
-                    file.write((char *)row + 1, 1);
-                    file.write((char *)row, 1);
-                }
-                else
-                {
-                    file.write((char *)row, 3);
-                }
-                row++;
-            }
-            data += subResourceLayout.rowPitch;
-        }
-        file.close();
-
-        std::cout << "Screenshot saved to disk" << std::endl;
-
-        // Clean up resources
-        vkUnmapMemory(*device, dst_image_memory);
-        vkFreeMemory(*device, dst_image_memory, nullptr);
-        vkDestroyImage(*device, dst_image, nullptr);
-    }
 } // namespace painting
 /**
  * call back
@@ -475,7 +332,31 @@ namespace painting
         {
             if (app->object_.size() == 0)
             {
-                app->push_object(paths[i]);
+                // picture
+                app->object_.emplace_back(std::make_unique<vkcpp::Object2D>(app->device_.get(), app->render_stage_.get(), app->command_pool_.get(), paths[0]));
+                auto extent = app->object_[0]->get_extent_3d();
+                float width = static_cast<float>(extent.width);
+                float height = static_cast<float>(extent.height);
+                vkcpp::MainWindow::getInstance()->set_window(width * 2, height, "painting");
+                vkcpp::MainCamera::getInstance()->update_view_to_look_at(
+                    {width, height / 2.0f, width},
+                    {0.0f, 0.0f, width + 200.0f},
+                    {0.0f, 1.0f, 0.0f});
+                app->object_.back()->init_transform({width / 2.0f + width, height / 2.0f, -90.0f});
+                // canvas
+                //  app->object_.emplace_back(std::make_unique<vkcpp::Object2D>(app->device_.get(), app->render_stage_.get(), app->command_pool_.get(), extent));
+                //  app->object_.back()->init_transform({width / 2.0f, 0.0f, 60.0f});
+                int size = app->swapchain_->get_image_views().size();
+
+                app->picture_ = std::make_unique<Picture>(app->device_.get(), app->command_pool_.get(), app->render_stage_.get(), extent, size, 10u, 4u);
+                //  app->picture_->init_transform({width / 2.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f});
+                //app->init_offscreen(extent);
+                // app->object_[1]->sub_texture(app->object_[0]->get_image(), extent);
+                // app->object_[0]->sub_texture(app->picture_->get_image(), extent);
+                //   app->object_.emplace_back(std::make_unique<vkcpp::Object2D>(app->device_.get(), app->render_stage_.get(), app->command_pool_.get(), "../textures/brushes/1.png"));
+                // app->object_.back()->init_transform({width / 2.0f + width, height / 2.0f, -50.0f}, {0.05f, 0.05f, 1.0f});
+                //  app->object_.back()->init_color({0.2f, 0.05f, 0.2f, 0.2f});
+                app->recreate_swapchain();
             }
             else
             {
@@ -484,4 +365,9 @@ namespace painting
         }
     }
 
-}
+} // namespace vkcpp
+
+namespace vkcpp
+{
+
+} // namespace vkcpp

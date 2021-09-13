@@ -14,6 +14,19 @@
 */
 namespace vkcpp
 {
+    std::mutex Device::graphics_queue_submit_mutex_;
+
+    const void Device::graphics_queue_submit(const VkSubmitInfo *submit_info, int info_count, VkFence fence, const std::string &error_message) const
+    {
+        graphics_queue_submit_mutex_.lock();
+        // Submit to the queue
+        if (vkQueueSubmit(*graphics_queue_, info_count, submit_info, fence) != VK_SUCCESS)
+        {
+            throw std::runtime_error(error_message);
+        }
+
+        graphics_queue_submit_mutex_.unlock();
+    }
     const uint32_t Device::find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags properties) const
     {
         const VkPhysicalDeviceMemoryProperties &mem_properties = gpu_->get_memory_properties();
@@ -148,7 +161,8 @@ namespace vkcpp
             std::cerr << "Device does not support blitting from optimal tiled images, using copy instead of blit!" << std::endl;
             supports_blit = false;
         }
-
+        //    supports_blit = false;
+        /*
         // Check if the device supports blitting to linear images
         vkGetPhysicalDeviceFormatProperties(*gpu_, VK_FORMAT_R8G8B8A8_UNORM, &format_props);
         if (!(format_props.linearTilingFeatures & VK_FORMAT_FEATURE_BLIT_DST_BIT))
@@ -156,6 +170,7 @@ namespace vkcpp
             std::cerr << "Device does not support blitting to linear tiled images, using copy instead of blit!" << std::endl;
             supports_blit = false;
         }
+        */
         return supports_blit;
     }
 

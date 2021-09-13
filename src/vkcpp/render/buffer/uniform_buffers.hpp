@@ -26,12 +26,45 @@ namespace vkcpp
 
         virtual ~UniformBuffers();
 
+        const VkImage &get_image() const
+        {
+            return image_->get_image();
+        }
+        const VkImageView &get_image_view() const
+        {
+            return image_->get_image_view();
+        }
+
+        const VkSampler &get_sampler() const
+        {
+            return image_->get_sampler();
+        }
+        const int get_size() const
+        {
+            return handle_.size();
+        }
+
+        void set_image(const Image *image)
+        {
+            image_ = image;
+            update_descriptor();
+        }
+        void set_image(const Image *image, int i)
+        {
+            if (i >= handle_.size())
+            {
+                return;
+            }
+            image_ = image;
+            update_descriptor(i);
+        }
+
         void init_uniform_buffers();
 
         void destroy_uniform_buffers();
 
         void update_uniform_buffer(uint32_t idx, const T &src_data);
-
+        void update_descriptor(int i);
         void update_descriptor();
     };
 

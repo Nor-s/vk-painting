@@ -153,13 +153,13 @@ namespace vkcpp
         color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
         color_blend_attachment.blendEnable = VK_TRUE;
         //Straight alpha : finalColor.rgb = src.a * src.rgb + (1 - src.a) * dst.rgb;
-        color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;           // Optional
-        color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA; // Optional
-        color_blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;                            // Optional
-        // finalColor.a = src.a * src.a + (1-src.a)*dst.a
-        color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional
-        color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
-        color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;             // Optional
+        color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        color_blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
+        // finalColor.a = src.a
+        color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; //VK_BLEND_FACTOR_SRC_ALPHA;
+        color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;  // VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
         VkPipelineColorBlendStateCreateInfo &color_blending = info_.color_blend_state;
 
@@ -175,7 +175,7 @@ namespace vkcpp
         // depth stencil
         VkPipelineDepthStencilStateCreateInfo depth_stencil{};
         depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-        depth_stencil.depthTestEnable = VK_TRUE;
+        depth_stencil.depthTestEnable = VK_FALSE;
         depth_stencil.depthWriteEnable = VK_TRUE;
         depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS;
         depth_stencil.depthBoundsTestEnable = VK_FALSE;

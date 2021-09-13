@@ -1,7 +1,7 @@
 #include "create.h"
 #include <iostream>
 #include "device/device.h"
-#include "utility.hpp"
+#include "utility.h"
 namespace vkcpp
 {
     namespace create

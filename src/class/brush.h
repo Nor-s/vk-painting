@@ -1,46 +1,119 @@
 #ifndef CLASS_BRUSH_H
 #define CLASS_BRUSH_H
 
-#include <vector>
 #include "object/object2d.h"
+#include "object/camera/sub_camera.h"
 
+#include <vector>
+#include <memory>
 namespace painting
 {
-    class Brush : public vkcpp::Object2D
+    struct BrushAttributeComponent
     {
+        glm::vec2 scale_range_{0.01f, 0.1f};
+        // for transform
+        glm::vec3 scale{0.1f, 0.1f, 1.0f};
+        glm::vec3 translation{0.0f, 0.0f, 0.0f};
+        float rotation_z{0.0f};
+        glm::vec4 color{1.0f, 1.0f, 1.0f, 1.0f};
+        int object_idx{0};
+        BrushAttributeComponent(const glm::vec2 &scale_range)
+            : scale_range_(scale_range)
+        {
+        }
+    }; // struct BrushAttributeComponent
+
+    class Brushes
+    {
+    public:
+        static const int TEX_SIZE_ = 4;
+
     private:
         const char *tex_[4] = {
             "../textures/brushes/1.png",
             "../textures/brushes/4.png",
             "../textures/brushes/6.png",
             "../textures/brushes/9.png"};
+        //   brushes_[0].push_back(std::make_unique<Brush>(device_, render_stage_, command_pool_, 0));
+        std::vector<std::unique_ptr<vkcpp::Object2D>> brushes_;
 
     public:
-        Brush(const vkcpp::Device *device,
-              const vkcpp::RenderStage *render_stage,
-              const vkcpp::CommandPool *command_pool,
-              int idx);
-    };
-    struct Palette
+        Brushes(const vkcpp::Device *device,
+                const vkcpp::RenderStage *render_stage,
+                const vkcpp::CommandPool *command_pool,
+                int brush_count);
+        const int get_brushes_size() const
+        {
+            return brushes_.size();
+        }
+        void draw_all(VkCommandBuffer command_buffer, int ubo_idx);
+        void update(const BrushAttributeComponent &attribute, const vkcpp::Camera *camera, int idx, int ubo_idx);
+    }; // class Brushes
+
+    class BrushAttributes
     {
-        static std::vector<Brush *> brushes_;
-        static int brushes_size_;
-        static void init_brushes();
-        static int get_brushes_size();
+    public:
+        struct Probablity
+        {
+            float scale{0.1f};
+            float trans{0.1f};
+            float rotate{0.1f};
+            float color{0.1f};
+            Probablity() = default;
+            Probablity(float s, float t, float r, float c)
+                : scale(s), trans(t), rotate(r), color(c)
+            {
+            }
+        };
+        const float max_scale_ = 0.1f;
+        const float min_scale_ = 0.02f;
 
-        float translate_[3];
-        float rotate_;
-        float scale_[3];
-        float color_[4];
-        int idx_;
+    private:
+        std::vector<BrushAttributeComponent> attributes_;
 
-        Palette();
-        void set_translate(float translate[3]);
-        void set_scale(float scale[3]);
-        void set_rotate(float rotate);
-        void set_color(float color[4]);
-        void set_brushidx(int idx);
-        void draw();
-    };
+        // for generate range (translation)
+        glm::vec2 offset_{};
+        glm::vec2 extent_{};
+        double fitness_{0.0};
+        Probablity probablity_;
+
+    public:
+        BrushAttributes(const glm::vec2 &offset,
+                        const glm::vec2 &extent,
+                        const glm::vec2 &scale_range,
+                        int size,
+                        const Probablity &p);
+
+        BrushAttributes(const BrushAttributes &a, const BrushAttributes &b);
+
+        ~BrushAttributes();
+
+        const BrushAttributeComponent &get_attribute(int idx) const
+        {
+            return attributes_[idx];
+        }
+
+        bool operator<(BrushAttributes &a)
+        {
+            return fitness_ < a.fitness_;
+        }
+        double &get_mutable_fitness()
+        {
+            return fitness_;
+        }
+        const double &get_fitness() const
+        {
+            return fitness_;
+        }
+        std::unique_ptr<BrushAttributes> cross_over(const BrushAttributes &a);
+
+        void mutate(int idx);
+
+        void set_rand_obj_idx(int idx);
+        void set_rand_scale(int idx, bool is_relative = false);
+        void set_rand_translation(int idx, bool is_relative = false);
+        void set_rand_rotation(int idx, bool is_relative = false);
+        void set_rand_color(int idx, bool is_relative = false);
+    }; // class BrushAttributes
 }
 #endif

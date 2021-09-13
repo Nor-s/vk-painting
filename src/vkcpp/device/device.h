@@ -3,6 +3,7 @@
 
 #include "vulkan_header.h"
 #include <memory>
+#include <mutex>
 #include <iostream>
 
 namespace vkcpp
@@ -19,6 +20,9 @@ namespace vkcpp
     class Device
     {
     public:
+        static std::mutex graphics_queue_submit_mutex_;
+        const void graphics_queue_submit(const VkSubmitInfo *submit_info, int info_count, VkFence fence, const std::string &error_message = "failed to submit graphics queue") const;
+
         const uint32_t find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags properties) const;
 
     private:

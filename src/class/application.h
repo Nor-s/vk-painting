@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <memory>
 #include <vector>
+#include <tuple>
 
 #include "device/window/main_window.h"
 #include "device/instance.h"
@@ -59,11 +60,8 @@ namespace painting
         std::unique_ptr<vkcpp::CommandPool> command_pool_{nullptr};
         std::unique_ptr<vkcpp::CommandBuffers> command_buffers_{nullptr};
 
-        std::unique_ptr<vkcpp::Offscreens> offscreens_;
-        std::unique_ptr<vkcpp::RenderStage> offscreen_render_stage_{nullptr};
-        std::vector<std::unique_ptr<vkcpp::Object2D>> brush_;
         std::vector<std::unique_ptr<vkcpp::Object2D>> object_;
-        //   std::unique_ptr<Picture> picture_;
+        std::unique_ptr<Picture> picture_{nullptr};
 
         std::vector<VkSemaphore> image_available_semaphores_;
         std::vector<VkSemaphore> render_finished_semaphores_;
@@ -76,7 +74,6 @@ namespace painting
 
         std::vector<bool> is_command_buffer_updated_;
 
-        void init_offscreen(VkExtent3D extent);
         void init_window(uint32_t width, uint32_t height, std::string title);
         void init_device();
         void init_render();
@@ -90,8 +87,6 @@ namespace painting
         void reset_command_buffers_update_flag();
         void cleanup_swapchain();
         void recreate_swapchain();
-        void push_object(const char *texture_file);
-        void save_screen_shot(const char *filename, VkFormat swapchain_color_format, VkImage src_image, VkExtent3D extent);
     };
 } // namespace painting
 #endif // #ifndef PAINTING_APPLICATION_H
