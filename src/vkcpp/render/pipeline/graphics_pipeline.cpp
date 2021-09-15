@@ -158,7 +158,7 @@ namespace vkcpp
         color_blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
         // finalColor.a = src.a
         color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; //VK_BLEND_FACTOR_SRC_ALPHA;
-        color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;  // VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;  //VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
         color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
         VkPipelineColorBlendStateCreateInfo &color_blending = info_.color_blend_state;

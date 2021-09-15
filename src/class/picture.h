@@ -16,15 +16,14 @@ namespace painting
     {
 
         static const int MAX_FRAMES_IN_FLIGHT_ = 3;
-        static const int MAX_THREAD_ = 1;
-        //   std::thread frame_thread_[MAX_THREAD_];
+        static const int MAX_THREAD_ = MAX_FRAMES_IN_FLIGHT_;
+        std::thread frame_thread_[MAX_THREAD_];
         int thread_index_ = 0;
 
     public:
         static void caculate_fun(const vkcpp::Device *device,
                                  vkcpp::Offscreen *offscreen,
                                  const char *data,
-                                 const char *data2,
                                  double *fit,
                                  VkFence *fence);
         void wait_thread();

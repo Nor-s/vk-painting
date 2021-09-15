@@ -22,9 +22,9 @@ namespace vkcpp
 
         float height = static_cast<float>(extent.height);
 
-        update_proj_to_ortho({-width / 2.0f, width / 2.0f},
-                             {-height / 2.0f, height / 2.0f},
-                             {-1, 100});
+        update_proj_to_ortho({0.0f, width},
+                             {0.0f, height},
+                             {-100, 100});
     }
 
 } // namespace vkcpp

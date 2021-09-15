@@ -130,7 +130,15 @@ namespace vkcpp
         }
         else
         {
-            memset(data, 255, static_cast<size_t>(image_size));
+            memset(data, 0, static_cast<size_t>(image_size));
+            /*
+            for (int i = 0; i < image_size; i++)
+            {
+                std::cout << "data" << (int)((char *)data)[i] << "\n";
+            }
+            getchar();
+            getchar();
+*/
         }
 
         vkUnmapMemory(*device_, staging_memory);

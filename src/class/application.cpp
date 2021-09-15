@@ -100,17 +100,13 @@ namespace painting
 
         for (int j = 0; j < object_.size(); j++)
         {
-            //    if (j >= 2)
-            //      break;
+
             object_[j]->bind_graphics_pipeline((*command_buffers_)[idx]);
             object_[j]->draw((*command_buffers_)[idx], idx);
         }
         if (picture_ != nullptr)
         {
-            //picture_->bind_graphics_pipeline((*command_buffers_)[idx]);
             picture_->draw((*command_buffers_)[idx], object_[0]->get_graphics_pipeline(), idx);
-
-            // picture_->get_mutable_brushes().draw_all((*command_buffers_)[idx], idx);
         }
         command_buffers_->end_render_pass(idx, render_stage_.get());
 
@@ -134,6 +130,10 @@ namespace painting
         {
             throw std::runtime_error("failed to acquire swap chain image!");
         }
+        if (!is_command_buffer_updated_[image_index])
+        {
+            record_command_buffer(image_index);
+        }
         for (int i = 0; i < object_.size(); i++)
         {
             object_[i]->update_with_main_camera(image_index);
@@ -145,17 +145,6 @@ namespace painting
             float height = static_cast<float>(picture_->get_extent_3d().height) / 2.0f;
             picture_->init_transform({width, height, -90.0f});
             picture_->update_with_main_camera(image_index);
-            /*
-            int brush_size = picture_->get_mutable_brushes().get_brushes_size();
-            for (int i = 0; i < brush_size; i++)
-            {
-                picture_->get_mutable_brushes().update(
-                    picture_->get_mutable_population().get(0)->get_attribute(i),
-                    vkcpp::MainCamera::getInstance(),
-                    i,
-                    image_index);
-            }
-            */
         }
 
         if (images_in_flight_[image_index] != VK_NULL_HANDLE)
@@ -172,11 +161,6 @@ namespace painting
         submitInfo.waitSemaphoreCount = 1;
         submitInfo.pWaitSemaphores = waitSemaphores;
         submitInfo.pWaitDstStageMask = waitStages;
-
-        if (!is_command_buffer_updated_[image_index])
-        {
-            record_command_buffer(image_index);
-        }
 
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &(*command_buffers_)[image_index];
@@ -229,12 +213,12 @@ namespace painting
         while (!vkcpp::MainWindow::getInstance()->should_close())
         {
             vkcpp::MainWindow::getInstance()->process_events();
-
+#ifndef NDEBUG
             auto new_time = std::chrono::high_resolution_clock::now();
             float frame_time = std::chrono::duration<float, std::chrono::seconds::period>(new_time - current_time).count();
             std::cout << frame_time << "\n";
             current_time = new_time;
-
+#endif
             picture_->run(data);
 
             draw_frame();
@@ -354,7 +338,7 @@ namespace painting
                 //  app->object_.back()->init_transform({width / 2.0f, 0.0f, 60.0f});
                 int size = app->swapchain_->get_image_views().size();
 
-                app->picture_ = std::make_unique<Picture>(app->device_.get(), app->command_pool_.get(), app->render_stage_.get(), extent, size, 10u, 4u);
+                app->picture_ = std::make_unique<Picture>(app->device_.get(), app->command_pool_.get(), app->render_stage_.get(), extent, size, 20u, 6u);
                 //  app->picture_->init_transform({width / 2.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f});
                 //app->init_offscreen(extent);
                 // app->object_[1]->sub_texture(app->object_[0]->get_image(), extent);

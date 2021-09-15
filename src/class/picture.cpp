@@ -35,8 +35,8 @@ namespace painting
 
         population_ = std::make_unique<Population>(glm::vec2(0.0f, 0.0f),
                                                    glm::vec2(static_cast<float>(extent.width), static_cast<float>(extent.height)),
-                                                   glm::vec2(0.005f, 0.01f),
-                                                   BrushAttributes::Probablity(0.1f, 0.1f, 0.5f, 0.4f),
+                                                   glm::vec2(0.003f, 0.03f),
+                                                   BrushAttributes::Probablity(0.5f, 0.05f, 0.8f, 0.5f),
                                                    population_size,
                                                    brush_count);
         camera_ = std::make_unique<vkcpp::SubCamera>(
@@ -55,9 +55,9 @@ namespace painting
         init_synobj();
         record_command_buffers();
 
-        auto [img1, mem1, dt1, rowpitch1] = map_read_image_memory();
-        data_to_file("first.ppm", dt1, extent_, get_format(), false, rowpitch1);
-        unmap_buffer_memory(img1, mem1);
+        //    auto [img1, mem1, dt1, rowpitch1] = map_read_image_memory();
+        //    data_to_file("first.ppm", dt1, extent_, get_format(), false, rowpitch1);
+        //    unmap_buffer_memory(img1, mem1);
     }
     Picture::~Picture()
     {
@@ -77,9 +77,9 @@ namespace painting
     {
         for (int i = 0; i < MAX_THREAD_; i++)
         {
-            //        if (frame_thread_[i].joinable())
+            if (frame_thread_[i].joinable())
             {
-                //          frame_thread_[i].join();
+                frame_thread_[i].join();
             }
         }
     }
@@ -118,16 +118,22 @@ namespace painting
         }
         wait_thread();
         population_->sort();
-        draw_frame(0, data, true);
 
-        offscreens_->get_mutable_offscreen(image_index_).screen_to_image(command_pool_, get_image(), extent_, VK_FORMAT_B8G8R8A8_SRGB);
+        if (population_->get_mutable_fitness(0) >= population_->get_best() - 0.001)
+        {
+            draw_frame(0, data, true);
+            population_->set_best(population_->get_mutable_fitness(0));
+
+            offscreens_->get_mutable_offscreen(image_index_).screen_to_image(command_pool_, get_image(), extent_, VK_FORMAT_B8G8R8A8_SRGB);
+        }
+        vkQueueWaitIdle(*device_->get_graphics_queue());
     }
 
     void Picture::draw_frame(int population_idx, const char *data, bool is_top)
     {
-        // if (frame_thread_[image_index_].joinable())
+        if (frame_thread_[image_index_].joinable())
         {
-            //       frame_thread_[image_index_].join();
+            frame_thread_[image_index_].join();
         }
 
         init_transform({width_ / 2.0f, height_ / 2.0f, -90.0f});
@@ -147,77 +153,31 @@ namespace painting
         vkResetFences(*device_, 1, &in_flight_fences_[current_frame_]);
         device_->graphics_queue_submit(&submitInfo, 1, in_flight_fences_[current_frame_], "failed to picture queue submit");
 
-        vkWaitForFences(*device_, 1, &in_flight_fences_[current_frame_], VK_TRUE, UINT64_MAX);
         // start thread : wait render_finished_semaphores, and caculate fittness
         if (!is_top)
         {
-            const char *data2 = offscreens_->get_mutable_offscreen(image_index_).map_image_memory();
-            vkcpp::Offscreen *offscreen = &offscreens_->get_mutable_offscreen(image_index_);
-
-            const VkFormat &image_format = offscreen->get_format();
-            const VkExtent3D &extent = offscreen->get_extent();
-            int height = extent.height;
-            int line = extent.width * 4;
-            // TODO : that is not working correctly. fix!
-            population_->get_mutable_fitness(population_idx) = fitnessFunction(data, data2, 0, 0, extent.width, extent.height, 4, false); //(dot / (sqrt(denomA) * sqrt(denomB)));
-            //    data_to_file("ss.ppm", data2, extent, VK_FORMAT_B8G8R8A8_SRGB, false, line);
-            //    data_to_file("ss1.ppm", data, extent, VK_FORMAT_R8G8B8A8_SRGB, false, line);
-            /*
-            double dot = 0.0, denomA = 0.0, denomB = 0.0;
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < line; x++)
-                {
-                    int bk = y * line + x;
-                    int ak = y * line + x;
-                    dot += data[ak] * data2[bk];
-                    denomA += data[ak] * data[ak];
-                    denomB += data2[bk] * data2[bk];
-                    //           std::cout << (int)data[bk] << " " << (int)data2[bk] << "\n";
-                }
-            }
-            */
-
-            /*
             frame_thread_[image_index_] = std::thread(caculate_fun,
                                                       device_,
                                                       &offscreens_->get_mutable_offscreen(image_index_),
                                                       data,
-                                                      data2,
                                                       &population_->get_mutable_fitness(population_idx),
                                                       &in_flight_fences_[current_frame_]);
-                                                      */
         }
     }
 
     void Picture::caculate_fun(const vkcpp::Device *device,
                                vkcpp::Offscreen *offscreen,
                                const char *data,
-                               const char *data2,
                                double *fit,
                                VkFence *fence)
     {
-
         const VkFormat &image_format = offscreen->get_format();
         const VkExtent3D &extent = offscreen->get_extent();
-        uint32_t height = extent.height;
-        uint32_t line = extent.width * 4;
 
-        double dot = 0.0, denomA = 0.0, denomB = 0.0;
-        for (uint32_t y = 0; y < height; y++)
-        {
-            for (uint32_t x = 0; x < line; x += 4)
-            {
-                int bk = y * line + x;
-                int ak = y * line + x;
-                dot += (data[ak] * data2[bk] + data[ak + 1] * data2[bk + 1] + data[ak + 2] * data2[bk + 2]);
-                denomA += (data[ak] * data[ak] + data[ak + 1] * data[ak + 1] + data[ak + 2] * data[ak + 2]);
-                denomB += (data2[bk] * data2[bk] + data2[bk + 1] * data2[bk + 1] + data2[bk + 2] * data2[bk + 2]);
+        vkWaitForFences(*device, 1, fence, VK_TRUE, UINT64_MAX);
+        const char *data2 = offscreen->map_image_memory();
 
-                //           std::cout << (int)data[bk] << " " << (int)data2[bk] << "\n";
-            }
-        }
-        *fit = (dot / (sqrt(denomA) * sqrt(denomB)));
+        *fit = fitnessFunction(data, data2, 0, 0, extent.width, extent.height, 4, false);
     }
 
     void Picture::init_synobj()
@@ -265,7 +225,8 @@ double fitnessFunction(const char *a, const char *b, int posx, int posy, int wid
     int end_y = height + y;
     int line = width * channel + (width * (4 - channel)) % 4;
     int end_x = line + x;
-
+    const unsigned char *ua = (unsigned char *)a;
+    const unsigned char *ub = (unsigned char *)b;
     //  auto new_time = std::chrono::high_resolution_clock::now();
 
     for (int i = y; i < end_y; i++)
@@ -274,9 +235,14 @@ double fitnessFunction(const char *a, const char *b, int posx, int posy, int wid
         {
             int bi = (i - y) * line + (j - x);
             int ai = i * line + j;
-            dot += a[ai] * b[bi] + a[ai + 1] * b[bi + 1] + a[ai + 2] * b[bi + 2] + a[ai + 3] * b[bi + 3];
-            denomA += a[ai] * a[ai] + a[ai + 1] * a[ai + 1] + a[ai + 2] * a[ai + 2] + a[ai + 3] * a[ai + 3];
-            denomB += b[bi] * b[bi] + b[bi + 1] * b[bi + 1] + b[bi + 2] * b[bi + 2] + b[bi + 3] * b[bi + 3];
+            dot += ua[ai] * ub[bi] + ua[ai + 1] * ub[bi + 1] + ua[ai + 2] * ub[bi + 2] + ua[ai + 3] * ub[bi + 3];
+            denomA += ua[ai] * ua[ai] + ua[ai + 1] * ua[ai + 1] + ua[ai + 2] * ua[ai + 2] + ua[ai + 3] * ua[ai + 3];
+            denomB += ub[bi] * ub[bi] + ub[bi + 1] * ub[bi + 1] + ub[bi + 2] * ub[bi + 2] + ub[bi + 3] * ub[bi + 3];
+
+            //      std::cout << "picture r: " << (int)a[ai + 0] << "  offscreen r :" << (int)b[bi + 0] << "\n";
+            //      std::cout << "picture g: " << (int)a[ai + 1] << "  offscreen g :" << (int)b[bi + 1] << "\n";
+            //      std::cout << "picture b: " << (int)a[ai + 2] << "  offscreen b :" << (int)b[bi + 2] << "\n";
+            //      std::cout << "picture a: " << (int)a[ai + 3] << "  offscreen a :" << (int)b[bi + 3] << "\n";
         }
     }
     /*

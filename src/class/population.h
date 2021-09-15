@@ -26,6 +26,7 @@ namespace painting
         PopulationComponent component_{};
         BrushAttributes::Probablity probablity_;
         glm::vec2 scale_range_;
+        double best_fit_{0.0};
 
     public:
         Population(const glm::vec2 &offset,
@@ -56,6 +57,14 @@ namespace painting
         int get_size()
         {
             return population_.size();
+        }
+        void set_best(double fit)
+        {
+            best_fit_ = fit;
+        }
+        double get_best()
+        {
+            return best_fit_;
         }
 
         void sort();

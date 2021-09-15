@@ -9,6 +9,6 @@ layout(location=2)in vec4 uboColor;
 layout(location=0)out vec4 outColor;
 
 void main(){
-    outColor=texture(texSampler,fragTexCoord);
-    outColor=outColor*uboColor;
+    vec4 sampleColor=texture(texSampler,fragTexCoord);
+    outColor=sampleColor*uboColor;
 }

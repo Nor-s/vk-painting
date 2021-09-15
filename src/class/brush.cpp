@@ -97,7 +97,7 @@ namespace painting
     }
     void BrushAttributes::mutate(int idx)
     {
-        if (rand() % 5 == 0)
+        if (rand() % 4 == 0)
         {
             if (vkcpp::getProbablity() < probablity_.scale)
             {
@@ -145,9 +145,9 @@ namespace painting
         BrushAttributeComponent &attribute = attributes_[idx];
         if (is_relative)
         {
-            attribute.translation.x = std::clamp(vkcpp::getRandFloat(attribute.translation.x - 5.0f, attribute.translation.x + 5.0f), offset_.x, offset_.x + extent_.x);
-            attribute.translation.y = std::clamp(vkcpp::getRandFloat(attribute.translation.y - 5.0f, attribute.translation.y + 5.0f), offset_.y, offset_.y + extent_.y);
-            attribute.translation.z = -std::clamp(vkcpp::getRandFloat(attribute.translation.z - 5.0f, attribute.translation.z + 5.0f), 1.0f, 50.0f);
+            attribute.translation.x = std::clamp(vkcpp::getRandFloat(attribute.translation.x - 15.0f, attribute.translation.x + 15.0f), offset_.x, offset_.x + extent_.x);
+            attribute.translation.y = std::clamp(vkcpp::getRandFloat(attribute.translation.y - 15.0f, attribute.translation.y + 15.0f), offset_.y, offset_.y + extent_.y);
+            attribute.translation.z = -std::clamp(vkcpp::getRandFloat(attribute.translation.z - 15.0f, attribute.translation.z + 15.0f), 1.0f, 50.0f);
         }
         else
         {
