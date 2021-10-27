@@ -1,7 +1,5 @@
 # vk-painting
 
-vulkan : https://www.vulkan.org/
-
 ### 220 x 220 1min ~ 3min
 
 <img src = "/note/lena.gif" width="30%" height="30%" title="n=8" alt="n=8"></img>
@@ -16,15 +14,23 @@ vulkan : https://www.vulkan.org/
 
 # ToDo
 
-Fix flickering
-
-code refactoring
-
 offscreen - command pool
 
-separation : object - pipeline 
+separation: object - pipeline (for renderpass compatibility)
 
-Add library VMA : https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+key input 
+
+camera movement
+
+command buffers arrangement
+
+Fix multithread
+
+Fix hardcoding -> supportsBlit = false
+
+Add library VMA: https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+
+Add imgui: https://github.com/ocornut/imgui
 
 
 # Algorithm
@@ -41,27 +47,29 @@ random algorithm (basic genetic algorithm)
 
 
 
-# Libraries 
+# Dependency
 
-glm : https://github.com/g-truc/glm
+vulkan: https://www.vulkan.org/
 
-glfw : https://github.com/glfw/glfw
+glm: https://github.com/g-truc/glm
 
-stb : https://github.com/nothings/stb
+glfw: https://github.com/glfw/glfw
+
+stb: https://github.com/nothings/stb
 
 
 # Reference
 
-Vulkan tutorial : https://vulkan-tutorial.com/
+Vulkan tutorial: https://vulkan-tutorial.com/
 
-Khronos group vulkan example : https://github.com/KhronosGroup/Vulkan-Samples
+Khronos group vulkan example: https://github.com/KhronosGroup/Vulkan-Samples
 
-SaschWillems vulkan example : https://github.com/SaschaWillems/Vulkan
+SaschWillems vulkan example: https://github.com/SaschaWillems/Vulkan
 
-Little vulkan enginge : https://github.com/blurrypiano/littleVulkanEngine
+Little vulkan enginge: https://github.com/blurrypiano/littleVulkanEngine
 
-Scarp engine : https://github.com/ScrappyCocco/ScrapEngine
+Scarp engine: https://github.com/ScrappyCocco/ScrapEngine
 
-Acid : https://github.com/EQMG/Acid
+Acid: https://github.com/EQMG/Acid
 
-My repo : https://github.com/Nor-s/genetic-painting
+My repo: https://github.com/Nor-s/genetic-painting
