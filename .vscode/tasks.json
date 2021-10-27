@@ -4,7 +4,7 @@
         //C++ 컴파일
         {
             "label": "compile shader",
-            "command": "cmd",
+            "command": "powershell",
             "args": [
                 "/c",
                 "${workspaceRoot}/shaders/compile.bat"
@@ -13,53 +13,30 @@
                 "kind": "build",
                 "isDefault": true
             },
-            "dependsOn": [
-                "compile c++"
-            ]
         },
         {
-            "type": "shell",
-            "label": "compile c++",
-            "command": "C:\\msys64\\mingw64\\bin\\g++.exe",
+            "label": "cmake and make build",
+            // command 에서 cmake와 make 사용
+            "command": "powershell",
             "args": [
-                "-std=c++17",
-                "-g",
-                "${workspaceRoot}/src/vkcpp/device/window/*.cpp",
-                "${workspaceRoot}/src/vkcpp/device/*.cpp",
-                "${workspaceRoot}/src/vkcpp/render/image/*.cpp",
-                "${workspaceRoot}/src/vkcpp/render/pipeline/*.cpp",
-                "${workspaceRoot}/src/vkcpp/render/command/*.cpp",
-                "${workspaceRoot}/src/vkcpp/render/buffer/*.cpp",
-                "${workspaceRoot}/src/vkcpp/render/swapchain/*.cpp",
-                "${workspaceRoot}/src/vkcpp/render/*.cpp",
-                "${workspaceRoot}/src/vkcpp/object/*.cpp",
-                "${workspaceRoot}/src/vkcpp/object/camera/*.cpp",
-                "${workspaceRoot}/src/vkcpp/utility/*.cpp",
-                "${workspaceRoot}/src/class/*.cpp",
-                "${workspaceRoot}/src/*.cpp",
-                "-o",
-                "${workspaceRoot}/builds/main.exe",
-                "-I${workspaceRoot}/src",
-                "-I${workspaceRoot}/src/vkcpp",
-                "-IC:/VulkanSDK/1.2.182.0/Include",
-                "-LC:/VulkanSDK/1.2.182.0/Lib",
-                "-I${workspaceRoot}/external",
-                "-L${workspaceRoot}/lib",
-                "-lmingw32",
-                "-static",
-                "-lglfw3",
-                "-lpthread",
-                "-lvulkan-1",
-                "-lgdi32",
-                "-O2"
+                "/c",
+                "cd ${workspaceRoot}/build",
+                "\n",
+                "cmake -G 'MinGW Makefiles' ..",
+                "\n",
+                "mingw32-make -j 14"
             ],
-            "problemMatcher": [
-                "$gcc"
-            ],
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": "absolute"
+            },
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "dependsOn": [
+                "compile shader"
+            ]
         }
     ]
 }

@@ -1,14 +1,17 @@
 {
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
             "name": "g++.exe - 활성 파일 빌드 및 디버그",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/builds/main",
+            "program": "${workspaceFolder}\\build\\vk-painting.exe",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceRoot}/builds",
+            "cwd": "${workspaceFolder}/build",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
@@ -20,7 +23,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "compile shader"
+            "preLaunchTask": "cmake and make build"
         }
     ]
 }
