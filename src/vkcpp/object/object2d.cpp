@@ -12,8 +12,6 @@
 #include "render/pipeline/graphics_pipeline.h"
 #include "object/camera/camera.h"
 
-#include <memory>
-
 namespace vkcpp
 {
     glm::mat4 TransformComponent::get_mat4()
@@ -74,7 +72,7 @@ namespace vkcpp
     {
         model_ = a->model_;
         graphics_pipeline_ = a->graphics_pipeline_;
-        int size = a->texture_.size();
+        int size = static_cast<int>(a->texture_.size());
         for (int i = 0; i < size; i++)
         {
             texture_.push_back(a->texture_[i]);
@@ -130,6 +128,10 @@ namespace vkcpp
     {
         return *uniform_buffers_;
     }
+    const TransformComponent &Object2D::get_transform_component() const
+    {
+        return transform_;
+    }
     const int Object2D::get_texture_count() const
     {
         return texture_.size();
@@ -154,7 +156,7 @@ namespace vkcpp
         transform_.scale = scale;
         transform_.rotation = rotation;
     }
-    //TODO handle overflow
+    // TODO handle overflow
     void Object2D::add_transform(const glm::vec3 &translation, const glm::vec3 &scale, const glm::vec3 &rotation)
     {
         transform_.translation += translation;
@@ -173,9 +175,23 @@ namespace vkcpp
         ubo.color = transform_.color;
         ubo.view = sub_camera->get_view();
         ubo.proj = sub_camera->get_proj();
-        //ubo.proj[1][1] *= -1;
+
+        // ubo.proj[1][1] *= -1;
         get_mutable_uniform_buffers().update_uniform_buffer(uniform_buffer_idx, ubo);
     }
+
+    void Object2D::update_with_sub_camera(UniformBuffers<shader::attribute::TransformUBO> *external_ubo, uint32_t uniform_buffer_idx, const Camera *sub_camera)
+    {
+        vkcpp::shader::attribute::TransformUBO ubo{};
+        ubo.model = transform_.get_mat4();
+        ubo.color = transform_.color;
+        ubo.view = sub_camera->get_view();
+        ubo.proj = sub_camera->get_proj();
+
+        // ubo.proj[1][1] *= -1;
+        external_ubo->update_uniform_buffer(uniform_buffer_idx, ubo);
+    }
+
     void Object2D::init_texture(const VkExtent3D &extent, VkFormat format)
     {
         if (texture_file_ != nullptr)
@@ -206,10 +222,6 @@ namespace vkcpp
 
     void Object2D::load_model()
     {
-        //       float screen_width = static_cast<float>(render_stage_->get_render_area().extent.width);
-
-        //     float screen_height = static_cast<float>(render_stage_->get_render_area().extent.height);
-
         auto [width, height] = texture_[current_texture_]->get_size();
 
 #ifdef _DEBUG__
@@ -218,47 +230,7 @@ namespace vkcpp
 
         float w = static_cast<float>(width) / 2.0f, h = static_cast<float>(height) / 2.0f;
 
-        /*
-        float screen_ratio = screen_width / screen_height, image_ratio = w / h;
-
-        w = screen_ratio;
-        h = w / image_ratio;
-
-        if (h > 1.0f)
-        {
-            w /= h;
-            h = 1.0f;
-        }
-
-        if (image_ratio < screen_ratio)
-        {
-            if (w > h)
-            {
-                h = 1.0f / (w / h);
-                w = 1.0f;
-            }
-            else
-            {
-                w = 1.0f / (h / w);
-                h = 1.0f;
-            }
-        }
-        else
-        {
-            if (h > w)
-            {
-                h = 1.0f / (h / w);
-                w = 1.0f;
-            }
-            else
-            {
-                h = 1.0f / (w / h);
-                w = 1.0f;
-            }
-        }
-        */
-
-        //interleaving vertex attributes
+        // interleaving vertex attributes
         std::vector<shader::attribute::Vertex> vertices = {
             {{-w, -h, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
             {{w, -h, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
@@ -317,7 +289,8 @@ namespace vkcpp
     {
         graphics_pipeline_->bind_pipeline(command_buffer);
     }
-    void Object2D::draw(VkCommandBuffer command_buffer, int ubo_idx)
+
+    void Object2D::draw_without_bind_graphics(VkCommandBuffer command_buffer, int ubo_idx)
     {
         model_->bind(command_buffer);
 
@@ -352,10 +325,31 @@ namespace vkcpp
 
         model_->draw(command_buffer);
     }
-    void Object2D::draw_with_bind_pipeline(VkCommandBuffer command_buffer, int idx)
+
+    void Object2D::draw(VkCommandBuffer command_buffer, const UniformBuffers<shader::attribute::TransformUBO> *uniform_buffers, int idx)
+    {
+        graphics_pipeline_->bind_pipeline(command_buffer);
+
+        model_->bind(command_buffer);
+
+        vkCmdBindDescriptorSets(
+            command_buffer,
+            graphics_pipeline_->get_pipeline_bind_point(),
+            graphics_pipeline_->get_pipeline_layout(),
+            0,
+            1,
+            &uniform_buffers->get_sets()[idx],
+            0,
+            nullptr);
+
+        model_->draw(command_buffer);
+    }
+
+    void Object2D::draw(VkCommandBuffer command_buffer, int idx)
     {
         draw(command_buffer, graphics_pipeline_.get(), idx);
     }
+
     void Object2D::push_texture(const char *texture_file)
     {
         texture_.push_back(std::make_unique<Image2D>(
@@ -366,7 +360,7 @@ namespace vkcpp
 
     void Object2D::change_texture(int idx)
     {
-        if (texture_.size() <= idx)
+        if (texture_.size() <= static_cast<size_t>(idx))
         {
 #ifdef _DEBUG__
             std::cout << "failed to change_texture! out of bounds!\n";
@@ -378,7 +372,7 @@ namespace vkcpp
     }
     void Object2D::change_texture(int idx, int ubo_idx)
     {
-        if (texture_.size() <= idx)
+        if (texture_.size() <= static_cast<size_t>(idx))
         {
 #ifdef _DEBUG__
             std::cout << "failed to change_texture! out of bounds!\n";
@@ -392,19 +386,19 @@ namespace vkcpp
     {
         texture_[current_texture_]->sub_texture_image(path);
     }
-    //TODO: fix hard coding "format = RGBA SRGB"
+    // TODO: fix hard coding "format = RGBA SRGB"
     void Object2D::sub_texture(VkImage image, VkExtent3D extent)
     {
         texture_[current_texture_]->sub_image(image, extent, VK_FORMAT_R8G8B8A8_SRGB);
     }
 
-    //TODO : fix hard coding "supportsBlit = false"
+    // TODO : fix hard coding "supportsBlit = false"
     std::tuple<VkBuffer, VkDeviceMemory, const char *, VkDeviceSize> Object2D::map_read_image_memory()
     {
         const vkcpp::Device *device = device_;
         const vkcpp::CommandPool *command_pool = command_pool_;
-        VkFormat format = get_format();
-        bool supportsBlit = true; //= device_->check_support_blit(object->get_);
+        //VkFormat format = get_format();
+        // bool supportsBlit = true; //= device_->check_support_blit(object->get_);
         VkImage src_image = get_image();
         VkExtent3D extent = get_extent_3d();
         VkDeviceSize size = extent.width * 4 * extent.height;

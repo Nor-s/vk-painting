@@ -4,12 +4,6 @@
 #include "vulkan_header.h"
 #include "shader_attribute.hpp"
 #include "render/buffer/uniform_buffers.hpp"
-#include <vector>
-#include <string>
-#include <memory>
-#include <tuple>
-#include <fstream>
-#include <algorithm>
 
 namespace vkcpp
 {
@@ -41,9 +35,9 @@ namespace vkcpp
         glm::mat4 get_mat4();
     };
     /**
-    *  TODO: remove renderpass dependency 
-    *  UBOs count == Swapchain image count
-    */
+     *  TODO: remove renderpass dependency
+     *  UBOs count == Swapchain image count
+     */
     class Object2D
     {
     protected:
@@ -62,14 +56,14 @@ namespace vkcpp
         std::unique_ptr<UniformBuffers<shader::attribute::TransformUBO>> uniform_buffers_{nullptr};
 
         std::vector<std::shared_ptr<Image2D>> texture_;
-        //TODO : renderpass compatiblility and check
+        // TODO : renderpass compatiblility and check
         std::shared_ptr<GraphicsPipeline> graphics_pipeline_{nullptr};
 
         std::shared_ptr<Model> model_{nullptr};
 
-        TransformComponent transform_{};
-
         uint32_t framebuffers_size_{0};
+
+        TransformComponent transform_{};
 
         int current_texture_{0};
 
@@ -86,8 +80,8 @@ namespace vkcpp
                  VkFormat format = VK_FORMAT_R8G8B8A8_SRGB);
 
         /**
-        *   if texture_file == nullptr, then init is not exe.
-        */
+         *   if texture_file == nullptr, then init is not exe.
+         */
         Object2D(const Device *device,
                  const RenderStage *render_stage,
                  const CommandPool *command_pool,
@@ -114,6 +108,8 @@ namespace vkcpp
 
         const VkFormat &get_format() const;
 
+        const TransformComponent &get_transform_component() const;
+
         const int get_texture_count() const;
 
         const int get_current_texture_idx() const;
@@ -132,6 +128,8 @@ namespace vkcpp
 
         void update_with_sub_camera(uint32_t uniform_buffer_idx, const Camera *sub_camera);
 
+        void update_with_sub_camera(UniformBuffers<shader::attribute::TransformUBO> *external_ubo, uint32_t uniform_buffer_idx, const Camera *sub_camera);
+
         void init_texture(const VkExtent3D &extent, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB);
 
         void init_object2d();
@@ -146,11 +144,17 @@ namespace vkcpp
 
         void bind_graphics_pipeline(VkCommandBuffer command_buffer);
 
-        virtual void draw(VkCommandBuffer command_buffer, int idx);
+        // Draw with internal pipeline and UBO (without bind graphics pipeline)
+        virtual void draw_without_bind_graphics(VkCommandBuffer command_buffer, int idx);
 
+        // Draw with external UBO and bind internal graphics pipeline (bind internal graphics pipeline)
+        virtual void draw(VkCommandBuffer command_buffer, const UniformBuffers<shader::attribute::TransformUBO> *uniform_buffers, int idx);
+
+        // Draw with internal UBO and bind external pipeline (bind external graphics pipeline)
         virtual void draw(VkCommandBuffer command_buffer, const GraphicsPipeline *graphics_pipeline, int idx);
 
-        void draw_with_bind_pipeline(VkCommandBuffer command_buffer, int idx);
+        // Draw with internal UBO and internal pipeline (bind internal graphics pipeline)
+        virtual void draw(VkCommandBuffer command_buffer, int idx);
 
         void push_texture(const char *texture_file);
 

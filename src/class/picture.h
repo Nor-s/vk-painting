@@ -1,8 +1,6 @@
 #ifndef CLASS_PICTURE_H
 #define CLASS_PICTURE_H
 
-#include <cstring>
-#include <thread>
 #include "object/object2d.h"
 #include "render/swapchain/offscreens.h"
 #include "render/render_stage.h"
@@ -10,15 +8,17 @@
 #include "population.h"
 #include "object/camera/sub_camera.h"
 
+#include "stdafx.h"
+
 namespace painting
 {
     class Picture : public vkcpp::Object2D
     {
 
-        static const int MAX_FRAMES_IN_FLIGHT_ = 3;
-        static const int MAX_THREAD_ = MAX_FRAMES_IN_FLIGHT_;
-        std::thread frame_thread_[MAX_THREAD_];
-        int thread_index_ = 0;
+        static const uint32_t MAX_FRAMES_IN_FLIGHT_ = 3;
+        static const uint32_t MAX_THREAD_ = MAX_FRAMES_IN_FLIGHT_;
+        //    std::thread frame_thread_[MAX_THREAD_];
+        uint32_t thread_index_ = 0;
 
     public:
         static void caculate_fun(const vkcpp::Device *device,
@@ -35,6 +35,7 @@ namespace painting
         std::unique_ptr<Population> population_;
         std::unique_ptr<Brushes> brushes_;
         std::unique_ptr<vkcpp::SubCamera> camera_;
+        std::unique_ptr<vkcpp::UniformBuffers<vkcpp::shader::attribute::TransformUBO>> ubo_offscreens_{nullptr};
 
         std::vector<bool> is_command_buffer_updated_;
 

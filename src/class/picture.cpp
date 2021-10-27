@@ -35,7 +35,7 @@ namespace painting
 
         population_ = std::make_unique<Population>(glm::vec2(0.0f, 0.0f),
                                                    glm::vec2(static_cast<float>(extent.width), static_cast<float>(extent.height)),
-                                                   glm::vec2(0.003f, 0.03f),
+                                                   glm::vec2(0.01f, 0.03f),
                                                    BrushAttributes::Probablity(0.5f, 0.05f, 0.8f, 0.5f),
                                                    population_size,
                                                    brush_count);
@@ -52,41 +52,47 @@ namespace painting
         init_texture(extent, VK_FORMAT_R8G8B8A8_SRGB);
         init_object2d();
 
+        ubo_offscreens_ = std::make_unique<vkcpp::UniformBuffers<vkcpp::shader::attribute::TransformUBO>>(
+            device_,
+            texture_[current_texture_].get(),
+            framebuffers_size_);
+
         init_synobj();
         record_command_buffers();
-
-        //    auto [img1, mem1, dt1, rowpitch1] = map_read_image_memory();
-        //    data_to_file("first.ppm", dt1, extent_, get_format(), false, rowpitch1);
-        //    unmap_buffer_memory(img1, mem1);
     }
     Picture::~Picture()
     {
         wait_thread();
 
-        for (int i = 0; i < MAX_FRAMES_IN_FLIGHT_; i++)
+        for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT_; i++)
         {
             vkDestroySemaphore(*device_, image_available_semaphores_[i], nullptr);
             vkDestroySemaphore(*device_, render_finished_semaphores_[i], nullptr);
         }
-        for (int i = 0; i < offscreens_image_size_; i++)
+        for (uint32_t i = 0; i < offscreens_image_size_; i++)
         {
             vkDestroyFence(*device_, in_flight_fences_[i], nullptr);
         }
+        camera_.reset();
+        brushes_.reset();
+        population_.reset();
+        offscreen_render_stage_.reset();
+        offscreens_.reset();
+        command_buffers_.reset();
     }
     void Picture::wait_thread()
     {
-        for (int i = 0; i < MAX_THREAD_; i++)
+        for (uint32_t i = 0; i < MAX_THREAD_; i++)
         {
-            if (frame_thread_[i].joinable())
+            //      if (frame_thread_[i].joinable())
             {
-                frame_thread_[i].join();
+                //        frame_thread_[i].join();
             }
         }
     }
     void Picture::record_command_buffers()
     {
-        uint32_t size = command_buffers_->size();
-        for (int i = 0; i < size; i++)
+        for (uint32_t i = 0; i < command_buffers_->size(); i++)
         {
             record_command_buffer(i);
         }
@@ -96,8 +102,9 @@ namespace painting
         command_buffers_->begin_command_buffer(idx, 0);
 
         command_buffers_->begin_render_pass(idx, render_stage_);
-        bind_graphics_pipeline((*command_buffers_)[idx]);
-        draw((*command_buffers_)[idx], idx);
+
+        draw((*command_buffers_)[idx], ubo_offscreens_.get(), idx);
+
         brushes_->draw_all((*command_buffers_)[idx], idx);
 
         command_buffers_->end_render_pass(idx, render_stage_);
@@ -105,16 +112,20 @@ namespace painting
         command_buffers_->end_command_buffer(idx);
         is_command_buffer_updated_[idx] = true;
     }
+
     void Picture::run(const char *data)
     {
+        current_frame_ = image_index_ = 0;
         int size = population_->get_size();
         population_->next_stage();
+
+        init_transform({width_ / 2.0f, height_ / 2.0f, -90.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f});
+
         for (int i = 0; i < size; i++)
         {
             draw_frame(i, data, false);
-            current_frame_ = (current_frame_ + 1) % MAX_FRAMES_IN_FLIGHT_;
-            image_index_ = (image_index_ + 1) % offscreens_image_size_;
-            thread_index_ = (thread_index_ + 1) % MAX_THREAD_;
+            // current_frame_ = (current_frame_ + 1) % MAX_FRAMES_IN_FLIGHT_;
+            //  image_index_ = (image_index_ + 1) % offscreens_image_size_;
         }
         wait_thread();
         population_->sort();
@@ -122,22 +133,22 @@ namespace painting
         if (population_->get_mutable_fitness(0) >= population_->get_best() - 0.001)
         {
             draw_frame(0, data, true);
+            vkQueueWaitIdle(*device_->get_graphics_queue());
             population_->set_best(population_->get_mutable_fitness(0));
-
             offscreens_->get_mutable_offscreen(image_index_).screen_to_image(command_pool_, get_image(), extent_, VK_FORMAT_B8G8R8A8_SRGB);
         }
-        vkQueueWaitIdle(*device_->get_graphics_queue());
     }
 
     void Picture::draw_frame(int population_idx, const char *data, bool is_top)
     {
+        /*
         if (frame_thread_[image_index_].joinable())
         {
             frame_thread_[image_index_].join();
         }
+       */
+        update_with_sub_camera(ubo_offscreens_.get(), image_index_, camera_.get());
 
-        init_transform({width_ / 2.0f, height_ / 2.0f, -90.0f});
-        update_with_sub_camera(image_index_, camera_.get());
         int brushes_size = brushes_->get_brushes_size();
         for (int i = 0; i < brushes_size; i++)
         {
@@ -153,15 +164,25 @@ namespace painting
         vkResetFences(*device_, 1, &in_flight_fences_[current_frame_]);
         device_->graphics_queue_submit(&submitInfo, 1, in_flight_fences_[current_frame_], "failed to picture queue submit");
 
-        // start thread : wait render_finished_semaphores, and caculate fittness
+        // TODO thread 가 적절히 사용되었는지?
         if (!is_top)
         {
+            /*
             frame_thread_[image_index_] = std::thread(caculate_fun,
                                                       device_,
                                                       &offscreens_->get_mutable_offscreen(image_index_),
                                                       data,
                                                       &population_->get_mutable_fitness(population_idx),
                                                       &in_flight_fences_[current_frame_]);
+                                                      */
+            vkcpp::Offscreen *offscreen = &offscreens_->get_mutable_offscreen(image_index_);
+            const VkExtent3D &extent = offscreen->get_extent();
+
+            vkWaitForFences(*device_, 1, &in_flight_fences_[current_frame_], VK_TRUE, UINT64_MAX);
+            const char *data2 = offscreen->map_image_memory();
+
+            population_->get_mutable_fitness(population_idx) = fitnessFunction(data, data2, 0, 0, extent.width, extent.height, 4, false);
+            offscreen->unmap_memory();
         }
     }
 
@@ -171,7 +192,6 @@ namespace painting
                                double *fit,
                                VkFence *fence)
     {
-        const VkFormat &image_format = offscreen->get_format();
         const VkExtent3D &extent = offscreen->get_extent();
 
         vkWaitForFences(*device, 1, fence, VK_TRUE, UINT64_MAX);
@@ -207,20 +227,13 @@ namespace painting
 
 }
 
-inline char RGBAtoRGB(char &a, char &r)
-{
-    float ratio = a / 255.0f;
-    r = round((1.0f - a) * r) + (a * r);
-    return r;
-}
 /*
     using cosine similarity:  https://en.wikipedia.org/wiki/Cosine_similarity
-    */
+*/
 double fitnessFunction(const char *a, const char *b, int posx, int posy, int width, int height, int channel, bool is_gray)
 {
     double ret = 0.0;
     double dot = 0.0, denomA = 0.0, denomB = 0.0;
-    int adder = (is_gray) ? channel : 1;
     int y = posy, x = posx * channel;
     int end_y = height + y;
     int line = width * channel + (width * (4 - channel)) % 4;
@@ -238,19 +251,9 @@ double fitnessFunction(const char *a, const char *b, int posx, int posy, int wid
             dot += ua[ai] * ub[bi] + ua[ai + 1] * ub[bi + 1] + ua[ai + 2] * ub[bi + 2] + ua[ai + 3] * ub[bi + 3];
             denomA += ua[ai] * ua[ai] + ua[ai + 1] * ua[ai + 1] + ua[ai + 2] * ua[ai + 2] + ua[ai + 3] * ua[ai + 3];
             denomB += ub[bi] * ub[bi] + ub[bi + 1] * ub[bi + 1] + ub[bi + 2] * ub[bi + 2] + ub[bi + 3] * ub[bi + 3];
-
-            //      std::cout << "picture r: " << (int)a[ai + 0] << "  offscreen r :" << (int)b[bi + 0] << "\n";
-            //      std::cout << "picture g: " << (int)a[ai + 1] << "  offscreen g :" << (int)b[bi + 1] << "\n";
-            //      std::cout << "picture b: " << (int)a[ai + 2] << "  offscreen b :" << (int)b[bi + 2] << "\n";
-            //      std::cout << "picture a: " << (int)a[ai + 3] << "  offscreen a :" << (int)b[bi + 3] << "\n";
         }
     }
-    /*
-    auto finish_time = std::chrono::high_resolution_clock::now();
-    float frame_time = std::chrono::duration<float, std::chrono::seconds::period>(finish_time - new_time).count();
-    std::cout << " calc: " << frame_time << "\n";
 
-*/
     ret = (dot / (sqrt(denomA) * sqrt(denomB)));
     return ret;
 }
