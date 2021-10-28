@@ -1,7 +1,5 @@
 #include "class/brush.h"
 
-#include <iostream>
-#include <algorithm> // for clamp
 #include "utility/utility.h"
 
 namespace painting
@@ -29,7 +27,7 @@ namespace painting
         brushes_[0]->bind_graphics_pipeline(command_buffer);
         for (int i = 0; i < size; i++)
         {
-            brushes_[i]->draw(command_buffer, ubo_idx);
+            brushes_[i]->draw_without_bind_graphics(command_buffer, ubo_idx);
         }
     }
 
@@ -118,6 +116,9 @@ namespace painting
         }
         else
         {
+            //     set_rand_color(idx, true);
+            set_rand_rotation(idx, true);
+            set_rand_scale(idx, true);
             set_rand_translation(idx, true);
         }
     }
@@ -131,13 +132,13 @@ namespace painting
         BrushAttributeComponent &attribute = attributes_[idx];
         if (is_relative)
         {
-            attribute.scale.x = std::clamp(vkcpp::getRandFloat(attribute.scale.x - 0.005f, attribute.scale.x + 0.003f), attribute.scale_range_.x, attribute.scale_range_.y);
-            attribute.scale.y = attribute.scale.x;
+            attribute.scale.x = std::clamp(vkcpp::getRandFloat(attribute.scale.x - 0.001f, attribute.scale.x + 0.001f), attribute.scale_range_.x, attribute.scale_range_.y);
+            attribute.scale.y = std::clamp(vkcpp::getRandFloat(attribute.scale.y - 0.001f, attribute.scale.y + 0.001f), attribute.scale_range_.x, attribute.scale_range_.y);
         }
         else
         {
             attribute.scale.x = vkcpp::getRandFloat(attribute.scale_range_.x, attribute.scale_range_.y);
-            attribute.scale.y = attribute.scale.x;
+            attribute.scale.y = vkcpp::getRandFloat(attribute.scale_range_.x, attribute.scale_range_.y);
         }
     }
     void BrushAttributes::set_rand_translation(int idx, bool is_relative)
@@ -147,13 +148,13 @@ namespace painting
         {
             attribute.translation.x = std::clamp(vkcpp::getRandFloat(attribute.translation.x - 15.0f, attribute.translation.x + 15.0f), offset_.x, offset_.x + extent_.x);
             attribute.translation.y = std::clamp(vkcpp::getRandFloat(attribute.translation.y - 15.0f, attribute.translation.y + 15.0f), offset_.y, offset_.y + extent_.y);
-            attribute.translation.z = -std::clamp(vkcpp::getRandFloat(attribute.translation.z - 15.0f, attribute.translation.z + 15.0f), 1.0f, 50.0f);
+            attribute.translation.z = -std::clamp(vkcpp::getRandFloat(attribute.translation.z - 5.0f, attribute.translation.z + 5.0f), 1.0f, 50.0f);
         }
         else
         {
             attribute.translation.x = vkcpp::getRandFloat(offset_.x, offset_.x + extent_.x);
             attribute.translation.y = vkcpp::getRandFloat(offset_.y, offset_.y + extent_.y);
-            attribute.translation.z = -vkcpp::getRandFloat(1.0f, 50.0f);
+            attribute.translation.z = vkcpp::getRandFloat(1.0f, 50.0f);
         }
     }
     void BrushAttributes::set_rand_rotation(int idx, bool is_relative)
@@ -161,7 +162,7 @@ namespace painting
         BrushAttributeComponent &attribute = attributes_[idx];
         if (is_relative)
         {
-            attribute.rotation_z = std::clamp(vkcpp::getRandFloat(attribute.rotation_z - 0.5f, attribute.rotation_z + 0.5f), 0.0f, 6.3f);
+            attribute.rotation_z = std::clamp(vkcpp::getRandFloat(attribute.rotation_z - 0.3f, attribute.rotation_z + 0.3f), 0.0f, 6.3f);
         }
         else
         {
@@ -173,10 +174,10 @@ namespace painting
         BrushAttributeComponent &attribute = attributes_[idx];
         if (is_relative)
         {
-            attribute.color.r = std::clamp(vkcpp::getRandFloat(attribute.color.r - 0.1f, attribute.color.r + 0.1f), 0.0f, 1.0f);
-            attribute.color.g = std::clamp(vkcpp::getRandFloat(attribute.color.g - 0.1f, attribute.color.g + 0.1f), 0.0f, 1.0f);
-            attribute.color.b = std::clamp(vkcpp::getRandFloat(attribute.color.b - 0.1f, attribute.color.b + 0.1f), 0.0f, 1.0f);
-            attribute.color.a = std::clamp(vkcpp::getRandFloat(attribute.color.a - 0.1f, attribute.color.a + 0.1f), 0.0f, 1.0f);
+            //  attribute.color.r = std::clamp(vkcpp::getRandFloat(attribute.color.r - 0.02f, attribute.color.r + 0.02f), 0.0f, 1.0f);
+            //   attribute.color.g = std::clamp(vkcpp::getRandFloat(attribute.color.g - 0.02f, attribute.color.g + 0.02f), 0.0f, 1.0f);
+            //    attribute.color.b = std::clamp(vkcpp::getRandFloat(attribute.color.b - 0.02f, attribute.color.b + 0.02f), 0.0f, 1.0f);
+            attribute.color.a = std::clamp(vkcpp::getRandFloat(attribute.color.a - 0.05f, attribute.color.a + 0.05f), 0.0f, 1.0f);
         }
         else
         {

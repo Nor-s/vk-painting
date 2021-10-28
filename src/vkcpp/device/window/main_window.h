@@ -3,6 +3,7 @@
 
 #include "window.hpp"
 #include "pattern/singleton.hpp"
+#include "stdafx.h"
 
 struct GLFWwindow;
 namespace vkcpp

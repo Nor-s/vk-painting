@@ -8,8 +8,6 @@
 #include "render/image/image.h"
 #include "render/render_stage.h"
 
-#include <memory>
-
 namespace vkcpp
 {
     Model::Model(const Device *device,

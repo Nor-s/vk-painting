@@ -2,8 +2,6 @@
 #define VKCPP_RENDER_SWAPCHAIN_SWAPCHAIN_H
 
 #include "vulkan_header.h"
-#include <vector>
-#include <memory>
 #include "render/image/image.h"
 #include "render/image/image_depth.h"
 
@@ -14,27 +12,27 @@ namespace vkcpp
 
     struct SwapchainProperties
     {
-        VkSwapchainKHR old_swapchain;
+        VkSwapchainKHR old_swapchain{};
 
-        uint32_t image_count;
+        uint32_t image_count{0};
 
-        VkExtent2D extent;
+        VkExtent2D extent{};
 
-        VkSurfaceFormatKHR surface_format;
+        VkSurfaceFormatKHR surface_format{};
 
-        uint32_t array_layers;
+        uint32_t array_layers{};
 
-        VkImageUsageFlags image_usage;
+        VkImageUsageFlags image_usage{};
 
-        VkSurfaceTransformFlagBitsKHR pre_transform;
+        VkSurfaceTransformFlagBitsKHR pre_transform{};
 
-        VkCompositeAlphaFlagBitsKHR composite_alpha;
+        VkCompositeAlphaFlagBitsKHR composite_alpha{};
 
-        VkPresentModeKHR present_mode;
+        VkPresentModeKHR present_mode{};
 
-        VkSharingMode sharing_mode;
+        VkSharingMode sharing_mode{};
 
-        VkBool32 clipped;
+        VkBool32 clipped{};
     };
 
     class Swapchain
@@ -52,7 +50,7 @@ namespace vkcpp
 
         std::vector<std::unique_ptr<ImageDepth>> depth_;
 
-        SwapchainProperties properties_;
+        SwapchainProperties properties_{};
 
     public:
         Swapchain(const Device *device, const Surface *surface);

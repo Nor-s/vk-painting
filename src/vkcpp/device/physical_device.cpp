@@ -3,10 +3,6 @@
 #include "instance.h"
 #include "surface.h"
 
-#include <iostream>
-#include <vector>
-#include <set>
-
 namespace vkcpp
 {
     PhysicalDevice::PhysicalDevice(const Instance *instance, const Surface *surface, VkPhysicalDevice physical_device)

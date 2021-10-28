@@ -2,9 +2,6 @@
 #define VKCPP_RENDER_COMMAND_COMMAND_BUFFERS_H
 
 #include "vulkan_header.h"
-#include <vector>
-#include <iostream>
-#include <mutex>
 
 namespace vkcpp
 {
@@ -76,9 +73,9 @@ namespace vkcpp
 
         const CommandPool *command_pool_{nullptr};
 
-        std::vector<VkCommandBuffer> handle_;
-
         VkCommandBufferLevel level_{};
+
+        std::vector<VkCommandBuffer> handle_;
 
     public:
         CommandBuffers(const Device *device, const CommandPool *command_pool, uint32_t size, VkCommandBufferLevel level);
@@ -93,7 +90,7 @@ namespace vkcpp
 
         const VkCommandBuffer &operator[](int idx) const
         {
-            if (idx < 0 || idx >= handle_.size())
+            if (idx < 0 || idx >= static_cast<int>(handle_.size()))
             {
                 throw std::runtime_error("Command Buffer index out of bound exception.");
             }

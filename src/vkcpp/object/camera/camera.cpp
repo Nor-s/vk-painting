@@ -48,22 +48,31 @@ namespace vkcpp
 
     void Camera::update_view_to_pilot(glm::vec3 pos, float roll, float pitch, float yaw)
     {
-        pilot_info_ = {pos, roll, pitch, yaw};
+        pilot_info_.pos = pos;
+        pilot_info_.roll = roll;
+        pilot_info_.pitch = pitch;
+        pilot_info_.yaw = yaw;
         view_ = pilot_info_.get_mat4();
     }
     void Camera::update_view_to_look_at(glm::vec3 camera_pos, glm::vec3 camera_front, glm::vec3 camera_up)
     {
-        lookat_info_ = {camera_pos, camera_front, camera_up};
+        lookat_info_.camera_pos = camera_pos;
+        lookat_info_.camera_front = camera_front;
+        lookat_info_.camera_up = camera_up;
         view_ = lookat_info_.get_mat4();
     }
     void Camera::update_proj_to_ortho(glm::vec2 x_range, glm::vec2 y_range, glm::vec2 z_range)
     {
-        ortho_info_ = {x_range, y_range, z_range};
+        ortho_info_.x_range = x_range;
+        ortho_info_.y_range = y_range;
+        ortho_info_.z_range = z_range;
         proj_ = ortho_info_.get_mat4();
     }
     void Camera::update_proj_to_perspective(float fovy, float aspect, glm::vec2 z_range)
     {
-        perspective_info_ = {fovy, aspect, z_range};
+        perspective_info_.fovy = fovy;
+        perspective_info_.aspect = aspect;
+        perspective_info_.z_range = z_range;
         proj_ = perspective_info_.get_mat4();
     }
     // Todo modulo 360

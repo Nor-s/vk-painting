@@ -5,12 +5,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <iostream>
-#include <stdexcept>
-#include <cstdlib>
-#include <memory>
-#include <vector>
-#include <tuple>
+#include "stdafx.h"
 
 #include "device/window/main_window.h"
 #include "device/instance.h"
@@ -34,7 +29,7 @@ namespace painting
     };
     class PaintingApplication
     {
-        const int MAX_FRAMES_IN_FLIGHT = 3;
+        const uint32_t MAX_FRAMES_IN_FLIGHT = 3;
 
     public:
         static void framebufferResizeCallback(GLFWwindow *window, int width, int height);

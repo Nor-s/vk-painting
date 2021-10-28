@@ -2,7 +2,6 @@
 #define VKCPP_RENDER_IMAGE_IMAGE_DEPTH_H
 
 #include "image.h"
-#include <utility>
 
 namespace vkcpp
 {

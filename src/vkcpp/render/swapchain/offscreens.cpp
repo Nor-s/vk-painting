@@ -20,21 +20,21 @@ namespace vkcpp
 
     void Offscreens::init_offscreens()
     {
-        for (int i = 0; i < size_; i++)
+        for (uint32_t i = 0; i < size_; i++)
         {
             offscreens_.push_back(std::make_unique<Offscreen>(device_, command_pool_, extent_));
         }
     }
     void Offscreens::init_depth()
     {
-        for (int i = 0; i < size_; i++)
+        for (uint32_t i = 0; i < size_; i++)
         {
             depth_.push_back(std::make_unique<ImageDepth>(device_, nullptr, extent_));
         }
     }
     void Offscreens::destroy_offscreens()
     {
-        for (int i = 0; i < size_; i++)
+        for (uint32_t i = 0; i < size_; i++)
         {
             depth_[i].reset();
         }

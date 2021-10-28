@@ -2,8 +2,6 @@
 
 #include "instance.h"
 
-#include <iostream>
-
 namespace vkcpp
 {
     Surface::Surface(const Instance *instance, VkSurfaceKHR surface)

@@ -4,8 +4,6 @@
 #include "device/physical_device.h"
 #include "render/command/command_buffers.h"
 
-#include <iostream>
-
 #include "utility/create.h"
 namespace vkcpp
 {
@@ -35,6 +33,7 @@ namespace vkcpp
             init_sampler(VK_TRUE, 0);
         }
     }
+    // null texture
     Image2D::Image2D(const Device *device,
                      const CommandPool *command_pool,
                      const VkExtent3D &extent,
@@ -68,7 +67,7 @@ namespace vkcpp
 
     void Image2D::init_image_2d()
     {
-        stbi_uc *pixels;
+        stbi_uc *pixels = nullptr;
         VkDeviceSize image_size;
         if (filename_ != nullptr)
         {
@@ -105,7 +104,7 @@ namespace vkcpp
         std::cout << tex_width_ << " " << tex_height_ << "\n";
 #endif
 
-        if (!pixels)
+        if (pixels == nullptr && filename_ != nullptr)
         {
             throw std::runtime_error("failed to load texture image!");
         }
@@ -131,14 +130,6 @@ namespace vkcpp
         else
         {
             memset(data, 0, static_cast<size_t>(image_size));
-            /*
-            for (int i = 0; i < image_size; i++)
-            {
-                std::cout << "data" << (int)((char *)data)[i] << "\n";
-            }
-            getchar();
-            getchar();
-*/
         }
 
         vkUnmapMemory(*device_, staging_memory);
@@ -206,11 +197,12 @@ namespace vkcpp
                                   {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
     }
 
+    // image file -> texture
     void Image2D::sub_texture_image(const char *filename)
     {
         int tex_width, tex_height, tex_channels;
         stbi_uc *pixels = stbi_load(filename, &tex_width, &tex_height, &tex_channels, STBI_rgb_alpha);
-        //TODO: Add For RGB channel
+        //TODO: Add Format For RGB channel
         VkDeviceSize image_size = tex_width * tex_height * 4;
         if (format_ == VK_FORMAT_R8G8B8_SRGB)
         {

@@ -23,7 +23,7 @@ namespace vkcpp
         {
             destroy_uniform_buffers();
         }
-        for (int i = 0; i < size_; i++)
+        for (uint32_t i = 0; i < size_; i++)
         {
             handle_.emplace_back(
                 Buffer<T>(
@@ -56,6 +56,20 @@ namespace vkcpp
         void *dst_data;
         vkMapMemory(*device_, handle_[idx].get_mutable_memory(), 0, sizeof(T), 0, &dst_data);
         memcpy(dst_data, &src_data, sizeof(src_data));
+        // TODO : Buffer 클래스 local,  host&coherent 와 host&cached 선택 가능하게., 만일 flush 할경우 메모리 크기가 VkPhysicalDeviceLimits::nonCoherentAtomSize 의 배수여야함.
+        //  If host coherency hasn't been requested, do a manual flush to make writes visible
+
+        /*
+     if ((handle_[idx].get_memory_property() & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
+    {
+    VkMappedMemoryRange mapped_range{};
+    mapped_range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+    mapped_range.memory = handle_[idx].get_mutable_memory();
+    mapped_range.offset = 0;
+    mapped_range.size = VK_WHOLE_SIZE;
+    vkFlushMappedMemoryRanges(*device_, 1, &mapped_range);
+    }
+    */
         vkUnmapMemory(*device_, handle_[idx].get_mutable_memory());
     }
     template <typename T>

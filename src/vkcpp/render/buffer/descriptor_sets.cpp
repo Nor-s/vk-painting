@@ -2,8 +2,6 @@
 
 #include "device/device.h"
 
-#include <iostream>
-
 namespace vkcpp
 {
     DescriptorSets::DescriptorSets(const Device *device, uint32_t size)

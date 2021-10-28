@@ -7,8 +7,6 @@
 #include "descriptor_sets.h"
 #include "render/image/image.h"
 
-#include <memory>
-
 namespace vkcpp
 {
     template <typename T>
@@ -51,7 +49,7 @@ namespace vkcpp
         }
         void set_image(const Image *image, int i)
         {
-            if (i >= handle_.size())
+            if (i >= static_cast<int>(handle_.size()))
             {
                 return;
             }

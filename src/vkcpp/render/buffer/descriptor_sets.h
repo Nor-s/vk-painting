@@ -2,7 +2,6 @@
 #define VKCPP_RENDER_BUFFER_DESCRIPTOR_SET_H
 
 #include "vulkan_header.h"
-#include <vector>
 
 namespace vkcpp
 {
@@ -23,7 +22,7 @@ namespace vkcpp
 
         VkDescriptorPool pool_{VK_NULL_HANDLE};
 
-        uint32_t size_{};
+        uint32_t size_{0};
 
     public:
         DescriptorSets(const Device *device, uint32_t size);

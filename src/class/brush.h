@@ -4,8 +4,8 @@
 #include "object/object2d.h"
 #include "object/camera/sub_camera.h"
 
-#include <vector>
-#include <memory>
+#include "stdafx.h"
+
 namespace painting
 {
     struct BrushAttributeComponent

@@ -1,9 +1,6 @@
 #ifndef VKCPP_WINDOW_WINDOW_H
 #define VKCPP_WINDOW_WINDOW_H
 
-#include <cstdint>
-#include <string>
-
 #include "vulkan_header.h"
 
 namespace vkcpp

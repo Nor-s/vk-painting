@@ -9,7 +9,6 @@
 #include "render/swapchain/swapchain.h"
 #include "device/queue.h"
 
-#include <iostream>
 // Default fence timeout in nanoseconds
 #define DEFAULT_FENCE_TIMEOUT 100000000000
 namespace vkcpp

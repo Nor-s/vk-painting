@@ -7,7 +7,6 @@
 #include "render/image/image.h"
 #include "render/image/image_depth.h"
 #include "utility/create.h"
-#include <algorithm>
 
 namespace vkcpp
 {
@@ -128,7 +127,7 @@ namespace vkcpp
     }
     void Swapchain::init_depth()
     {
-        auto size = image_views_.size();
+        int size = static_cast<int>(image_views_.size());
         for (int i = 0; i < size; i++)
         {
             VkExtent3D extent{properties_.extent.width, properties_.extent.height, 1};

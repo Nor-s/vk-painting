@@ -35,8 +35,8 @@ namespace painting
 
         population_ = std::make_unique<Population>(glm::vec2(0.0f, 0.0f),
                                                    glm::vec2(static_cast<float>(extent.width), static_cast<float>(extent.height)),
-                                                   glm::vec2(0.01f, 0.03f),
-                                                   BrushAttributes::Probablity(0.5f, 0.05f, 0.8f, 0.5f),
+                                                   glm::vec2(0.003f, 0.05f),
+                                                   BrushAttributes::Probablity(0.1f, 0.05f, 0.8f, 0.5f),
                                                    population_size,
                                                    brush_count);
         camera_ = std::make_unique<vkcpp::SubCamera>(

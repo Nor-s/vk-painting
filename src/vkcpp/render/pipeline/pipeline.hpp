@@ -3,8 +3,6 @@
 
 #include "vulkan_header.h"
 
-#include <vector>
-
 namespace vkcpp
 {
     class CommandBuffer;

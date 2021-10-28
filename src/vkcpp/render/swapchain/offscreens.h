@@ -5,8 +5,6 @@
 #include "render/image/offscreen.h"
 #include "render/image/image.h"
 #include "render/image/image_depth.h"
-#include <vector>
-#include <memory>
 
 namespace vkcpp
 {
@@ -23,13 +21,13 @@ namespace vkcpp
 
         const CommandPool *command_pool_{nullptr};
 
-        std::vector<std::unique_ptr<Offscreen>> offscreens_;
-
-        std::vector<std::unique_ptr<ImageDepth>> depth_;
+        VkExtent3D extent_{};
 
         uint32_t size_{0};
 
-        VkExtent3D extent_{};
+        std::vector<std::unique_ptr<Offscreen>> offscreens_;
+
+        std::vector<std::unique_ptr<ImageDepth>> depth_;
 
     public:
         Offscreens(const Device *device, const CommandPool *command_pool, const VkExtent3D &extent, uint32_t size);

@@ -2,7 +2,6 @@
 #define VKCPP_RENDER_SWAPCHAIN_FRAMEBUFFERS_H
 
 #include "vulkan_header.h"
-#include <vector>
 
 namespace vkcpp
 {

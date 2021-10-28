@@ -2,7 +2,6 @@
 #define VKCPP_UTILITY_CREATE_H
 
 #include "vulkan_header.h"
-#include <string>
 
 namespace vkcpp
 {

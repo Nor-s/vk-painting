@@ -1,9 +1,5 @@
 #include "instance.h"
 
-#include <iostream>
-#include <cstring>
-#include <assert.h>
-
 #include "device/physical_device.h"
 #include "device/surface.h"
 #include "device/window/main_window.h"

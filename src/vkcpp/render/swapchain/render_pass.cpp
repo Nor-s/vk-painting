@@ -8,8 +8,6 @@
 #include "render/swapchain/offscreens.h"
 #include "render/image/offscreen.h"
 
-#include <iostream>
-
 namespace vkcpp
 {
     RenderPass::RenderPass(const Device *device, const Swapchain *swapchain)

@@ -6,8 +6,6 @@
 #include "object/shader_attribute.hpp"
 #include "utility/create.h"
 #include "device/queue.h"
-#include <chrono>
-#include <algorithm>
 #include "object/camera/main_camera.h"
 
 namespace painting
@@ -56,7 +54,7 @@ namespace painting
         fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
             if (vkCreateSemaphore(*device_, &semaphore_info, nullptr, &image_available_semaphores_[i]) != VK_SUCCESS ||
                 vkCreateSemaphore(*device_, &semaphore_info, nullptr, &render_finished_semaphores_[i]) != VK_SUCCESS ||
@@ -71,22 +69,13 @@ namespace painting
     {
         instance_->query_gpus(surface_.get());
         vkcpp::PhysicalDevice *gpu = instance_->get_suitable_gpu(device_extensions_);
-
-        /*
-         Request to enable ASTC
-        if (gpu.get_features().textureCompressionASTC_LDR)
-        {
-            gpu.get_mutable_requested_features().textureCompressionASTC_LDR = VK_TRUE;
-        }
-        */
-
         device_ = std::make_unique<vkcpp::Device>(gpu);
     }
 
     void PaintingApplication::record_command_buffers()
     {
         uint32_t size = command_buffers_->size();
-        for (int i = 0; i < size; i++)
+        for (uint32_t i = 0; i < size; i++)
         {
             record_command_buffer(i);
         }
@@ -98,12 +87,13 @@ namespace painting
 
         command_buffers_->begin_render_pass(idx, render_stage_.get());
 
-        for (int j = 0; j < object_.size(); j++)
+        if (object_.size() >= 1)
         {
-
-            object_[j]->bind_graphics_pipeline((*command_buffers_)[idx]);
-            object_[j]->draw((*command_buffers_)[idx], idx);
+            // draw image
+            object_[0]->bind_graphics_pipeline((*command_buffers_)[idx]);
+            object_[0]->draw_without_bind_graphics((*command_buffers_)[idx], idx);
         }
+        // draw picture
         if (picture_ != nullptr)
         {
             picture_->draw((*command_buffers_)[idx], object_[0]->get_graphics_pipeline(), idx);
@@ -130,20 +120,22 @@ namespace painting
         {
             throw std::runtime_error("failed to acquire swap chain image!");
         }
+        // if object update -> re record command buffer
         if (!is_command_buffer_updated_[image_index])
         {
             record_command_buffer(image_index);
         }
-        for (int i = 0; i < object_.size(); i++)
+        // Update target's UBO
+        if (object_.size() > 0)
         {
-            object_[i]->update_with_main_camera(image_index);
+            object_[0]->update_with_main_camera(image_index);
         }
+        // Update picture's UBO
         if (picture_ != nullptr)
         {
-
             float width = static_cast<float>(picture_->get_extent_3d().width) / 2.0f;
             float height = static_cast<float>(picture_->get_extent_3d().height) / 2.0f;
-            picture_->init_transform({width, height, -90.0f});
+            picture_->init_transform({width - 10.0f, height, -90.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f});
             picture_->update_with_main_camera(image_index);
         }
 
@@ -153,6 +145,7 @@ namespace painting
         }
         images_in_flight_[image_index] = in_flight_fences_[current_frame_];
 
+        // Prepare submit command buffer to graphics queue
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -169,9 +162,11 @@ namespace painting
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
+        // Submit to the graphics queue
         vkResetFences(*device_, 1, &in_flight_fences_[current_frame_]);
         device_->graphics_queue_submit(&submitInfo, 1, in_flight_fences_[current_frame_], "failed submit draw cmd buffer in application class!");
 
+        // Prepare present
         VkPresentInfoKHR presentInfo{};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
@@ -187,6 +182,7 @@ namespace painting
 
         result = vkQueuePresentKHR(*(device_->get_present_queue()), &presentInfo);
 
+        // Detect : resize window
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebuffer_resized_)
         {
             framebuffer_resized_ = false;
@@ -206,55 +202,61 @@ namespace painting
         {
             vkcpp::MainWindow::getInstance()->process_events();
         }
-        auto [buffer, memory, data, rowpitch] = object_[0]->map_read_image_memory();
-        object_[0]->data_to_file("input.ppm", data, object_[0]->get_extent_3d(), VK_FORMAT_R8G8B8A8_SRGB, false, rowpitch);
-
-        auto current_time = std::chrono::high_resolution_clock::now();
-        while (!vkcpp::MainWindow::getInstance()->should_close())
+        if (object_.size() > 0)
         {
-            vkcpp::MainWindow::getInstance()->process_events();
-#ifndef NDEBUG
-            auto new_time = std::chrono::high_resolution_clock::now();
-            float frame_time = std::chrono::duration<float, std::chrono::seconds::period>(new_time - current_time).count();
-            std::cout << frame_time << "\n";
-            current_time = new_time;
-#endif
-            picture_->run(data);
+            auto [buffer, memory, data, rowpitch] = object_[0]->map_read_image_memory();
 
-            draw_frame();
+            auto current_time = std::chrono::high_resolution_clock::now();
+            while (!vkcpp::MainWindow::getInstance()->should_close())
+            {
+                vkcpp::MainWindow::getInstance()->process_events();
+                auto new_time = std::chrono::high_resolution_clock::now();
+                float frame_time = std::chrono::duration<float, std::chrono::seconds::period>(new_time - current_time).count();
+#ifndef NDEBUG
+                std::cout << "time: " << frame_time << "\n";
+#endif
+                current_time = new_time;
+
+                picture_->run(data);
+
+                draw_frame();
+            }
+
+            picture_.reset();
+            object_[0]->unmap_buffer_memory(buffer, memory);
         }
-        object_[0]->unmap_buffer_memory(buffer, memory);
     }
 
     void PaintingApplication::cleanup()
     {
         vkDeviceWaitIdle(*device_);
 
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
             vkDestroySemaphore(*device_, render_finished_semaphores_[i], nullptr);
             vkDestroySemaphore(*device_, image_available_semaphores_[i], nullptr);
             vkDestroyFence(*device_, in_flight_fences_[i], nullptr);
         }
-        picture_.reset();
 
         cleanup_swapchain();
 
-        for (int i = 0; i < object_.size(); i++)
+        for (int i = 0; i < static_cast<int>(object_.size()); i++)
         {
             object_[i].reset();
         }
+
         object_.resize(0);
         command_pool_.reset();
         device_.reset();
         surface_.reset();
         instance_.reset();
+
         vkcpp::MainWindow::getInstance()->destroy_window();
     }
 
     void PaintingApplication::cleanup_swapchain()
     {
-        for (int i = 0; i < object_.size(); i++)
+        for (int i = 0; i < static_cast<int>(object_.size()); i++)
         {
             object_[i]->destroy_dependency_renderpass();
         }
@@ -280,22 +282,23 @@ namespace painting
         // TODO check renderpass compatibility
         // If the number of new swapchain images is the same as the old image,
         // there is no need to change the number of buffers.(commandbuffer and etc.)
-        for (int i = 0; i < object_.size(); i++)
+        for (int i = 0; i < static_cast<int>(object_.size()); i++)
         {
             object_[i]->init_dependency_renderpass(render_stage_.get());
         }
         record_command_buffers();
 
         images_in_flight_.resize(swapchain_->get_image_views().size(), VK_NULL_HANDLE);
-        float width = size.first, height = size.second;
         vkcpp::MainCamera::getInstance()->update();
     }
+
     void PaintingApplication::reset_command_buffers_update_flag()
     {
         is_command_buffer_updated_ = std::move(std::vector<bool>(is_command_buffer_updated_.size(), false));
     }
 
 } // namespace painting
+
 /**
  * call back
  */
@@ -333,19 +336,9 @@ namespace painting
                     {0.0f, 0.0f, width + 200.0f},
                     {0.0f, 1.0f, 0.0f});
                 app->object_.back()->init_transform({width / 2.0f + width, height / 2.0f, -90.0f});
-                // canvas
-                //  app->object_.emplace_back(std::make_unique<vkcpp::Object2D>(app->device_.get(), app->render_stage_.get(), app->command_pool_.get(), extent));
-                //  app->object_.back()->init_transform({width / 2.0f, 0.0f, 60.0f});
                 int size = app->swapchain_->get_image_views().size();
 
                 app->picture_ = std::make_unique<Picture>(app->device_.get(), app->command_pool_.get(), app->render_stage_.get(), extent, size, 20u, 6u);
-                //  app->picture_->init_transform({width / 2.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f});
-                //app->init_offscreen(extent);
-                // app->object_[1]->sub_texture(app->object_[0]->get_image(), extent);
-                // app->object_[0]->sub_texture(app->picture_->get_image(), extent);
-                //   app->object_.emplace_back(std::make_unique<vkcpp::Object2D>(app->device_.get(), app->render_stage_.get(), app->command_pool_.get(), "../textures/brushes/1.png"));
-                // app->object_.back()->init_transform({width / 2.0f + width, height / 2.0f, -50.0f}, {0.05f, 0.05f, 1.0f});
-                //  app->object_.back()->init_color({0.2f, 0.05f, 0.2f, 0.2f});
                 app->recreate_swapchain();
             }
             else

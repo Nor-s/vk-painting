@@ -2,10 +2,6 @@
 #define VKCPP_RENDER_IMAGE_OFFSCREEN_H
 
 #include "image.h"
-#include <utility>
-
-#include <tuple>
-#include <memory>
 
 namespace vkcpp
 {
@@ -16,14 +12,14 @@ namespace vkcpp
 
         VkDeviceMemory staging_memory_{VK_NULL_HANDLE};
 
-        VkDeviceSize image_size_;
+        VkDeviceSize image_size_{0};
 
         bool is_mapping{false};
 
     public:
         explicit Offscreen(const Device *device, const CommandPool *command_pool, const VkExtent3D &extent, VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT);
 
-        virtual ~Offscreen() = default;
+        virtual ~Offscreen();
         void init_offscreen_image();
 
         void init_offscreen_view();

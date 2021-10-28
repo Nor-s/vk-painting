@@ -2,8 +2,6 @@
 #define VKCPP_RENDER_IMAGE_IMAGE_H
 
 #include "vulkan_header.h"
-#include <utility>
-#include <vector>
 
 namespace vkcpp
 {
@@ -20,18 +18,18 @@ namespace vkcpp
 
         const CommandPool *command_pool_{nullptr};
 
-        VkExtent3D extent_;
-        VkSampleCountFlagBits samples_;
-        VkImageUsageFlags usage_;
+        VkExtent3D extent_{};
+        VkSampleCountFlagBits samples_{};
+        VkImageUsageFlags usage_{};
         VkFormat format_ = VK_FORMAT_UNDEFINED;
         uint32_t mip_levels_ = 0;
-        uint32_t array_layers_;
+        uint32_t array_layers_{};
 
-        VkFilter filter_;
+        VkFilter filter_{};
 
-        VkSamplerAddressMode address_mode_;
+        VkSamplerAddressMode address_mode_{};
 
-        VkImageLayout layout_;
+        VkImageLayout layout_{};
 
         VkImage image_ = VK_NULL_HANDLE;
         VkDeviceMemory memory_ = VK_NULL_HANDLE;

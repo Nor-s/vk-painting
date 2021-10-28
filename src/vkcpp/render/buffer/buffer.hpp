@@ -9,8 +9,6 @@
 
 #include "utility/create.h"
 
-#include <vector>
-
 namespace vkcpp
 {
     template <typename T>
@@ -27,7 +25,9 @@ namespace vkcpp
 
         VkDeviceMemory memory_{VK_NULL_HANDLE};
 
-        VkBufferUsageFlagBits usage_;
+        VkBufferUsageFlagBits usage_{};
+
+        VkMemoryPropertyFlags memory_property_{};
 
     public:
         Buffer() = default;
@@ -49,6 +49,8 @@ namespace vkcpp
         operator const VkBuffer &() const;
 
         const VkBuffer &get_buffer() const;
+
+        const VkMemoryPropertyFlags &get_memory_property() const;
 
         VkBuffer &get_mutable_buffer();
 

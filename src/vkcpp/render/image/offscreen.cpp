@@ -1,10 +1,9 @@
 #include "offscreen.h"
 #include "device/device.h"
+#include "device/queue.h"
 #include "device/physical_device.h"
 #include "render/command/command_buffers.h"
 #include "render/command/command_pool.h"
-
-#include <iostream>
 
 #include "utility/create.h"
 namespace vkcpp
@@ -57,6 +56,17 @@ namespace vkcpp
 
         init_sampler(false, 1);
     }
+    Offscreen::~Offscreen()
+    {
+        vkQueueWaitIdle(*device_->get_graphics_queue());
+        if (is_mapping)
+        {
+            unmap_memory();
+        }
+        vkDestroyBuffer(*device_, staging_buffer_, nullptr);
+        vkFreeMemory(*device_, staging_memory_, nullptr);
+        uniq_command_pool_.reset();
+    }
 
     //TODO : fix hard coding "supportsBlit = false"
     const char *Offscreen::map_image_memory()
@@ -67,10 +77,10 @@ namespace vkcpp
         }
         is_mapping = true;
         const vkcpp::Device *device = device_;
-        VkFormat format = get_format();
-        bool supportsBlit = false; //= device_->check_support_blit(object->get_);
+        //   VkFormat format = get_format();
+        //  bool supportsBlit = false; //= device_->check_support_blit(object->get_);
         VkImage src_image = get_image();
-        VkExtent3D extent = extent_;
+        //  VkExtent3D extent = extent_;
 
         // Do the actual blit from the swapchain image to our host visible destination image
         vkcpp::CommandBuffers copy_cmd = std::move(vkcpp::CommandBuffers::beginSingleTimeCmd(device, command_pool_));

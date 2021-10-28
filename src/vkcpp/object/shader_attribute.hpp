@@ -6,8 +6,6 @@
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <array>
-#include <vector>
 
 namespace vkcpp
 {
@@ -17,9 +15,9 @@ namespace vkcpp
         {
             struct Vertex
             {
-                glm::vec3 pos;
-                glm::vec3 color;
-                glm::vec2 texCoord;
+                glm::vec3 pos{};
+                glm::vec3 color{};
+                glm::vec2 texCoord{};
 
                 static VkVertexInputBindingDescription getBindingDescription()
                 {
@@ -59,10 +57,10 @@ namespace vkcpp
             }; // struct Vertex2D
             struct TransformUBO
             {
-                alignas(16) glm::mat4 model;
-                alignas(16) glm::mat4 view;
-                alignas(16) glm::mat4 proj;
-                alignas(16) glm::vec4 color;
+                glm::mat4 model;
+                glm::mat4 view;
+                glm::mat4 proj;
+                glm::vec4 color;
             }; // TransformUB
         }
     }

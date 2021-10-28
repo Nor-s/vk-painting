@@ -4,9 +4,6 @@
 #include "vulkan_header.h"
 #include "pipeline.hpp"
 
-#include <memory>
-#include <string>
-
 namespace vkcpp
 {
     class Device;
@@ -30,6 +27,10 @@ namespace vkcpp
 
         std::string frag_shader_file_;
 
+        int subpass_idx_{};
+
+        VkPipelineBindPoint pipeline_bind_point_{};
+
         VkPipelineLayout layout_{VK_NULL_HANDLE};
 
         VkShaderModule vert_shader_module_{VK_NULL_HANDLE};
@@ -39,10 +40,6 @@ namespace vkcpp
         VkPipeline handle_{VK_NULL_HANDLE};
 
         CreateInfo info_{};
-
-        VkPipelineBindPoint pipeline_bind_point_;
-
-        int subpass_idx_{0};
 
     public:
         GraphicsPipeline() = default;

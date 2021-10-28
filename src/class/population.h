@@ -4,7 +4,7 @@
 #include "vulkan_header.h"
 #include "brush.h"
 #include <glm/glm.hpp>
-#include <vector>
+#include "vkcpp/stdafx.h"
 
 namespace painting
 {
@@ -24,8 +24,8 @@ namespace painting
     private:
         std::vector<std::unique_ptr<BrushAttributes>> population_;
         PopulationComponent component_{};
-        BrushAttributes::Probablity probablity_;
-        glm::vec2 scale_range_;
+        glm::vec2 scale_range_{};
+        BrushAttributes::Probablity probablity_{};
         double best_fit_{0.0};
 
     public:

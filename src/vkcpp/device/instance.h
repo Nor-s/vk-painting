@@ -1,9 +1,6 @@
 #ifndef VKCPP_DEVICE_INSTANCE_H
 #define VKCPP_DEVICE_INSTANCE_H
 
-#include <vector>
-#include <memory>
-
 #include "vulkan_header.h"
 
 //#define NDEBUG

@@ -2,10 +2,7 @@
 #define VKCPP_DEVICE_DEVICE_H
 
 #include "vulkan_header.h"
-#include <memory>
-#include <mutex>
-#include <iostream>
-
+#include "stdafx.h"
 namespace vkcpp
 {
     class Instance;

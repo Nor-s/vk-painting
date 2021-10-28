@@ -3,8 +3,6 @@
 
 #include "render/swapchain/render_pass.h"
 #include "render/swapchain/framebuffers.h"
-#include <memory>
-#include <vector>
 
 namespace vkcpp
 {
@@ -31,9 +29,9 @@ namespace vkcpp
 
         std::vector<VkClearValue> clear_values_;
 
-        VkFormat color_format_;
+        VkFormat color_format_{};
 
-        VkFormat depth_format_;
+        VkFormat depth_format_{};
 
     public:
         RenderStage(const Device *deivce, const Swapchain *swapchain);

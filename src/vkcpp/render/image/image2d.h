@@ -3,7 +3,7 @@
 
 #include "stb/stb_image.h"
 #include "image.h"
-#include <utility>
+#include "vulkan_header.h"
 
 namespace vkcpp
 {
@@ -12,11 +12,11 @@ namespace vkcpp
     private:
         const char *filename_{VK_NULL_HANDLE};
 
-        int tex_width_;
+        int tex_width_{};
 
-        int tex_height_;
+        int tex_height_{};
 
-        int tex_channels_;
+        int tex_channels_{};
 
     public:
         explicit Image2D(const Device *device,

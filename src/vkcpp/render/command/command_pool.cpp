@@ -4,8 +4,6 @@
 #include "device/physical_device.h"
 #include "device/queue.h"
 
-#include <iostream>
-
 namespace vkcpp
 {
     CommandPool::CommandPool(const Device *device, const Queue *queue, VkCommandPoolCreateFlags flags)

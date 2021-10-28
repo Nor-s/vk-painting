@@ -1,5 +1,4 @@
 #include "population.h"
-#include <algorithm>
 #include "utility/utility.h"
 
 namespace painting
@@ -74,7 +73,7 @@ namespace painting
             int parent1 = rand() % 3;
             int parent2 = rand() % 3;
             population_.push_back(population_[parent1]->cross_over(*population_[parent2]));
-            for (int j = 0; j < component_.attributes_size; j++)
+            for (uint32_t j = 0; j < component_.attributes_size; j++)
             {
                 if (rand() % 2 == 0)
                 {

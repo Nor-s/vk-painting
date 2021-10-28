@@ -56,6 +56,9 @@ namespace vkcpp
     const VkBuffer &Buffer<T>::get_buffer() const { return handle_; }
 
     template <typename T>
+    const VkMemoryPropertyFlags &Buffer<T>::get_memory_property() const { return memory_property_; }
+
+    template <typename T>
     VkBuffer &Buffer<T>::get_mutable_buffer() { return handle_; }
 
     template <typename T>
@@ -97,6 +100,7 @@ namespace vkcpp
     template <typename T>
     void Buffer<T>::create_host_memory()
     {
+        memory_property_ = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
         VkDeviceSize buffer_size;
         if (src_data_ != nullptr)
         {
@@ -110,7 +114,7 @@ namespace vkcpp
         create::buffer(device_,
                        buffer_size,
                        usage_,
-                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                       memory_property_,
                        handle_,
                        memory_);
 
@@ -126,6 +130,8 @@ namespace vkcpp
     template <typename T>
     void Buffer<T>::create_local_memory()
     {
+        memory_property_ = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
         VkDeviceSize buffer_size = sizeof((*src_data_)[0]) * (*src_data_).size();
         VkBuffer staging_buffer;
         VkDeviceMemory staging_buffer_memory;
@@ -145,7 +151,7 @@ namespace vkcpp
         create::buffer(device_,
                        buffer_size,
                        VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage_,
-                       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                       memory_property_,
                        handle_,
                        memory_);
 

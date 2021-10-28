@@ -56,6 +56,7 @@ namespace vkcpp
         std::unique_ptr<UniformBuffers<shader::attribute::TransformUBO>> uniform_buffers_{nullptr};
 
         std::vector<std::shared_ptr<Image2D>> texture_;
+
         // TODO : renderpass compatiblility and check
         std::shared_ptr<GraphicsPipeline> graphics_pipeline_{nullptr};
 

@@ -6,10 +6,6 @@
 #include "shader_attribute.hpp"
 #include "render/buffer/uniform_buffers.hpp"
 
-#include <vector>
-#include <string>
-#include <memory>
-
 namespace vkcpp
 {
     class Model

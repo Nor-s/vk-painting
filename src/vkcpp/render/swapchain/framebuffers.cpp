@@ -7,8 +7,6 @@
 #include "render/image/image.h"
 #include "render/image/image_depth.h"
 
-#include <iostream>
-
 namespace vkcpp
 {
     Framebuffers::Framebuffers(const Device *device, const RenderPass *render_pass)
@@ -61,7 +59,7 @@ namespace vkcpp
 
         handle_.resize(framebuffers_size_);
 
-        for (int i = 0; i < framebuffers_size_; i++)
+        for (uint32_t i = 0; i < framebuffers_size_; i++)
         {
             std::vector<VkImageView> attachments{image_views[i]};
             if (swapchain->get_depth_size() != 0)
@@ -83,7 +81,7 @@ namespace vkcpp
 
         handle_.resize(framebuffers_size_);
 
-        for (int i = 0; i < framebuffers_size_; i++)
+        for (uint32_t i = 0; i < framebuffers_size_; i++)
         {
             std::vector<VkImageView> attachments;
 

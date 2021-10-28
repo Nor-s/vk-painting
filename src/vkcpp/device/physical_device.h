@@ -3,9 +3,6 @@
 
 #include "vulkan_header.h"
 
-#include <optional>
-#include <vector>
-
 namespace vkcpp
 {
     class Instance;

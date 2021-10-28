@@ -2,7 +2,6 @@
 #define VKCPP_COMMAND_COMMAND_POOL_H
 
 #include "vulkan_header.h"
-#include <vector>
 namespace vkcpp
 {
     class Device;
@@ -16,7 +15,7 @@ namespace vkcpp
 
         const Queue *queue_;
 
-        VkCommandPool handle_;
+        VkCommandPool handle_{VK_NULL_HANDLE};
 
     public:
         CommandPool(const Device *device, const Queue *queue, VkCommandPoolCreateFlags flags);

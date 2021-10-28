@@ -5,10 +5,6 @@
 #include "physical_device.h"
 #include "queue.h"
 
-#include <iostream>
-#include <vector>
-#include <set>
-
 /**
  * query
 */

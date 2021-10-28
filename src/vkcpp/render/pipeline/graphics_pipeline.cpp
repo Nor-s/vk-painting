@@ -8,8 +8,6 @@
 #include "render/buffer/descriptor_sets.h"
 #include "utility/create.h"
 
-#include <iostream>
-
 namespace vkcpp
 {
     /**
