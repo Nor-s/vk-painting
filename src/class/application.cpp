@@ -338,7 +338,7 @@ namespace painting
                 app->object_.back()->init_transform({width / 2.0f + width, height / 2.0f, -90.0f});
                 int size = app->swapchain_->get_image_views().size();
 
-                app->picture_ = std::make_unique<Picture>(app->device_.get(), app->command_pool_.get(), app->render_stage_.get(), extent, size, 20u, 6u);
+                app->picture_ = std::make_unique<Picture>(app->device_.get(), app->command_pool_.get(), app->render_stage_.get(), extent, size, 20u, 6u, 3u);
                 app->recreate_swapchain();
             }
             else

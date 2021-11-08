@@ -1,5 +1,5 @@
 #ifndef VKCPP_RENDER_OBJECT_MODEL_H
-#define VKCPP_RENDER_OBJCET_MODEL_H
+#define VKCPP_RENDER_OBJECT_MODEL_H
 
 #include "vulkan_header.h"
 

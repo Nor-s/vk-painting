@@ -17,7 +17,8 @@ namespace painting
                      const VkExtent3D &extent,
                      uint32_t swapchain_image_size,
                      uint32_t population_size,
-                     uint32_t brush_count)
+                     uint32_t brush_count,
+                     uint32_t pop_count)
     {
         device_ = device;
         offscreens_image_size_ = swapchain_image_size;
@@ -33,12 +34,32 @@ namespace painting
 
         brushes_ = std::make_unique<Brushes>(device, render_stage_, command_pool_, brush_count);
 
-        population_ = std::make_unique<Population>(glm::vec2(0.0f, 0.0f),
-                                                   glm::vec2(static_cast<float>(extent.width), static_cast<float>(extent.height)),
-                                                   glm::vec2(0.003f, 0.05f),
-                                                   BrushAttributes::Probablity(0.1f, 0.05f, 0.8f, 0.5f),
-                                                   population_size,
-                                                   brush_count);
+        float before_height = 0.0f;
+        float height = static_cast<float>(extent.height / pop_count);
+        for (uint32_t i = 0; i < pop_count; i++)
+        {
+            population_.push_back(std::make_unique<Population>(glm::vec2(0.0f, before_height),
+                                                               glm::vec2(static_cast<float>(extent.width), height),
+                                                               glm::vec2(0.005f, 0.05f),
+                                                               BrushAttributes::Probablity(0.8f, 0.05f, 1.0f, 0.8f),
+                                                               population_size,
+                                                               brush_count));
+            before_height += height;
+            if (i == pop_count - 2)
+            {
+                before_height += static_cast<float>(extent.height % pop_count);
+            }
+            if (i != pop_count - 1)
+            {
+                population_.push_back(std::make_unique<Population>(glm::vec2(0.0f, before_height - height / 2.0f),
+                                                                   glm::vec2(static_cast<float>(extent.width), height),
+                                                                   glm::vec2(0.005f, 0.05f),
+                                                                   BrushAttributes::Probablity(0.8f, 0.5f, 1.0f, 0.8f),
+                                                                   population_size,
+                                                                   brush_count));
+            }
+        }
+
         camera_ = std::make_unique<vkcpp::SubCamera>(
             extent);
 
@@ -75,7 +96,11 @@ namespace painting
         }
         camera_.reset();
         brushes_.reset();
-        population_.reset();
+        for (size_t i = 0; i < population_.size(); i++)
+        {
+            population_[i].reset();
+        }
+        ubo_offscreens_.reset();
         offscreen_render_stage_.reset();
         offscreens_.reset();
         command_buffers_.reset();
@@ -97,6 +122,7 @@ namespace painting
             record_command_buffer(i);
         }
     }
+
     void Picture::record_command_buffer(int idx)
     {
         command_buffers_->begin_command_buffer(idx, 0);
@@ -116,8 +142,8 @@ namespace painting
     void Picture::run(const char *data)
     {
         current_frame_ = image_index_ = 0;
-        int size = population_->get_size();
-        population_->next_stage();
+        int size = population_[pop_idx_]->get_size();
+        population_[pop_idx_]->next_stage();
 
         init_transform({width_ / 2.0f, height_ / 2.0f, -90.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f});
 
@@ -128,15 +154,16 @@ namespace painting
             //  image_index_ = (image_index_ + 1) % offscreens_image_size_;
         }
         wait_thread();
-        population_->sort();
+        population_[pop_idx_]->sort();
 
-        if (population_->get_mutable_fitness(0) >= population_->get_best() - 0.001)
+        if (population_[pop_idx_]->get_mutable_fitness(0) >= population_[pop_idx_]->get_best() - 0.0005)
         {
             draw_frame(0, data, true);
             vkQueueWaitIdle(*device_->get_graphics_queue());
-            population_->set_best(population_->get_mutable_fitness(0));
-            offscreens_->get_mutable_offscreen(image_index_).screen_to_image(command_pool_, get_image(), extent_, VK_FORMAT_B8G8R8A8_SRGB);
+            population_[pop_idx_]->set_best(population_[pop_idx_]->get_mutable_fitness(0));
+            offscreens_->get_mutable_offscreen(image_index_).screen_to_image(command_pool_, get_image(), extent_, {0, 0, 0}, VK_FORMAT_B8G8R8A8_SRGB);
         }
+        pop_idx_ = (1 + pop_idx_) % population_.size();
     }
 
     void Picture::draw_frame(int population_idx, const char *data, bool is_top)
@@ -152,7 +179,7 @@ namespace painting
         int brushes_size = brushes_->get_brushes_size();
         for (int i = 0; i < brushes_size; i++)
         {
-            brushes_->update(population_->get(population_idx)->get_attribute(i), camera_.get(), i, image_index_);
+            brushes_->update(population_[pop_idx_]->get(population_idx)->get_attribute(i), camera_.get(), i, image_index_);
         }
 
         VkSubmitInfo submitInfo{};
@@ -181,7 +208,8 @@ namespace painting
             vkWaitForFences(*device_, 1, &in_flight_fences_[current_frame_], VK_TRUE, UINT64_MAX);
             const char *data2 = offscreen->map_image_memory();
 
-            population_->get_mutable_fitness(population_idx) = fitnessFunction(data, data2, 0, 0, extent.width, extent.height, 4, false);
+            auto tmp_pop_component = population_[pop_idx_]->get_component();
+            population_[pop_idx_]->get_mutable_fitness(population_idx) = fitnessFunction(data, data2, 0, tmp_pop_component.offset.y, extent.width, tmp_pop_component.extent.y, 4, false);
             offscreen->unmap_memory();
         }
     }
@@ -246,7 +274,7 @@ double fitnessFunction(const char *a, const char *b, int posx, int posy, int wid
     {
         for (int j = x; j < end_x; j += 4)
         {
-            int bi = (i - y) * line + (j - x);
+            int bi = i * line + j;
             int ai = i * line + j;
             dot += ua[ai] * ub[bi] + ua[ai + 1] * ub[bi + 1] + ua[ai + 2] * ub[bi + 2] + ua[ai + 3] * ub[bi + 3];
             denomA += ua[ai] * ua[ai] + ua[ai + 1] * ua[ai + 1] + ua[ai + 2] * ua[ai + 2] + ua[ai + 3] * ua[ai + 3];

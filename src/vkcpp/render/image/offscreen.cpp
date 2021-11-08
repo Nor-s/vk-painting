@@ -146,9 +146,9 @@ namespace vkcpp
         vkUnmapMemory(*device_, staging_memory_);
         is_mapping = false;
     }
-    void Offscreen::screen_to_image(const CommandPool *command_pool, VkImage host_dst_image, VkExtent3D src_extent, const VkFormat &color_format)
+    void Offscreen::screen_to_image(const CommandPool *command_pool, VkImage host_dst_image, const VkExtent3D &src_extent, const VkOffset3D &src_offset, const VkFormat &color_format)
     {
-        if (!(extent_.width == src_extent.width && extent_.height == src_extent.height))
+        if (!(extent_.width >= src_offset.x + src_extent.width && extent_.height >= src_offset.y + src_extent.height))
         {
             return;
         }
@@ -184,6 +184,8 @@ namespace vkcpp
             copy_cmd[0],
             supportsBlit,
             extent_,
+            src_offset,
+            src_offset,
             {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1},
             {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1},
             image_, host_dst_image);

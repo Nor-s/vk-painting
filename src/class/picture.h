@@ -19,6 +19,7 @@ namespace painting
         static const uint32_t MAX_THREAD_ = MAX_FRAMES_IN_FLIGHT_;
         //    std::thread frame_thread_[MAX_THREAD_];
         uint32_t thread_index_ = 0;
+        uint32_t pop_idx_ = 0;
 
     public:
         static void caculate_fun(const vkcpp::Device *device,
@@ -32,7 +33,7 @@ namespace painting
         std::unique_ptr<vkcpp::Offscreens> offscreens_{};
         std::unique_ptr<vkcpp::RenderStage> offscreen_render_stage_{nullptr};
         std::unique_ptr<vkcpp::CommandBuffers> command_buffers_{};
-        std::unique_ptr<Population> population_;
+        std::vector<std::unique_ptr<Population>> population_;
         std::unique_ptr<Brushes> brushes_;
         std::unique_ptr<vkcpp::SubCamera> camera_;
         std::unique_ptr<vkcpp::UniformBuffers<vkcpp::shader::attribute::TransformUBO>> ubo_offscreens_{nullptr};
@@ -58,12 +59,13 @@ namespace painting
                 const VkExtent3D &extent,
                 uint32_t swapchain_image_size,
                 uint32_t population_size,
-                uint32_t brush_count);
+                uint32_t brush_count,
+                uint32_t pop_count);
         virtual ~Picture();
 
         Brushes &get_mutable_brushes() { return *brushes_; }
 
-        Population &get_mutable_population() { return *population_; }
+        Population &get_mutable_population() { return *population_[pop_idx_]; }
 
         void run(const char *data);
 

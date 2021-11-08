@@ -26,8 +26,8 @@ namespace vkcpp
         const char *map_image_memory();
         std::unique_ptr<CommandPool> uniq_command_pool_;
 
-        void screen_to_image(const CommandPool *command_pool, VkImage host_dst_image, VkExtent3D src_extent, const VkFormat &color_format);
         void unmap_memory();
+        void screen_to_image(const CommandPool *command_pool, VkImage host_dst_image, const VkExtent3D &src_extent, const VkOffset3D &src_offset, const VkFormat &color_format);
     };
 
 } // namespace vkcpp

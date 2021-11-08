@@ -168,8 +168,10 @@ namespace vkcpp
             copy_cmd[0],
             supportsBlit,
             extent_,
-            {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1},
-            {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1},
+            {0, 0, 1},
+            {0, 0, 1},
+            {VK_IMAGE_ASPECT_COLOR_BIT, 0u, 0u, 1u},
+            {VK_IMAGE_ASPECT_COLOR_BIT, 0u, 0u, 1u},
             host_src_image, image_);
 
         // Transition destination image to general layout, which is the required layout for mapping the image memory later on

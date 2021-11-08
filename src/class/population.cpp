@@ -13,6 +13,7 @@ namespace painting
     {
         component_.offset = offset;
         component_.extent = extent;
+
         component_.min_population_size = min_population_size;
         component_.attributes_size = attributes_size;
         component_.stage_count = 0;

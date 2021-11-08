@@ -182,9 +182,11 @@ namespace vkcpp
 
     void CommandBuffers::cmdCopyImage(VkCommandBuffer cmd_buffer,
                                       bool supports_blit,
-                                      VkExtent3D extent,
-                                      VkImageSubresourceLayers src_subresource,
-                                      VkImageSubresourceLayers dst_subresource,
+                                      const VkExtent3D &extent,
+                                      const VkOffset3D &src_offset,
+                                      const VkOffset3D &dst_offset,
+                                      const VkImageSubresourceLayers &src_subresource,
+                                      const VkImageSubresourceLayers &dst_subresource,
                                       VkImage src_image,
                                       VkImage dst_image)
     {
@@ -202,11 +204,11 @@ namespace vkcpp
 
             VkImageBlit blig_region{};
             blig_region.srcSubresource = src_subresource;
-            blig_region.srcOffsets[0] = {0, 0, 0};
+            blig_region.srcOffsets[0] = src_offset;
             blig_region.srcOffsets[1] = blit_size;
 
             blig_region.dstSubresource = dst_subresource;
-            blig_region.dstOffsets[0] = {0, 0, 0};
+            blig_region.dstOffsets[0] = dst_offset;
             blig_region.dstOffsets[1] = blit_size;
 
             // Issue the blit command
@@ -222,9 +224,11 @@ namespace vkcpp
         {
             // Otherwise use image copy (requires us to manually flip components)
             VkImageCopy copy_region{};
+            copy_region.extent = extent;
+            copy_region.srcOffset = src_offset;
+            copy_region.dstOffset = dst_offset;
             copy_region.srcSubresource = src_subresource;
             copy_region.dstSubresource = dst_subresource;
-            copy_region.extent = extent;
 
             // Issue the copy command
             vkCmdCopyImage(

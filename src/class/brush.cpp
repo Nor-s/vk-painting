@@ -116,8 +116,8 @@ namespace painting
         }
         else
         {
-            //     set_rand_color(idx, true);
-            set_rand_rotation(idx, true);
+            set_rand_color(idx, true);
+            set_rand_rotation(idx);
             set_rand_scale(idx, true);
             set_rand_translation(idx, true);
         }
@@ -174,10 +174,10 @@ namespace painting
         BrushAttributeComponent &attribute = attributes_[idx];
         if (is_relative)
         {
-            //  attribute.color.r = std::clamp(vkcpp::getRandFloat(attribute.color.r - 0.02f, attribute.color.r + 0.02f), 0.0f, 1.0f);
-            //   attribute.color.g = std::clamp(vkcpp::getRandFloat(attribute.color.g - 0.02f, attribute.color.g + 0.02f), 0.0f, 1.0f);
-            //    attribute.color.b = std::clamp(vkcpp::getRandFloat(attribute.color.b - 0.02f, attribute.color.b + 0.02f), 0.0f, 1.0f);
-            attribute.color.a = std::clamp(vkcpp::getRandFloat(attribute.color.a - 0.05f, attribute.color.a + 0.05f), 0.0f, 1.0f);
+            attribute.color.r = std::clamp(vkcpp::getRandFloat(attribute.color.r - 0.02f, attribute.color.r + 0.02f), 0.0f, 1.0f);
+            attribute.color.g = std::clamp(vkcpp::getRandFloat(attribute.color.g - 0.02f, attribute.color.g + 0.02f), 0.0f, 1.0f);
+            attribute.color.b = std::clamp(vkcpp::getRandFloat(attribute.color.b - 0.02f, attribute.color.b + 0.02f), 0.0f, 1.0f);
+            attribute.color.a = std::clamp(vkcpp::getRandFloat(attribute.color.a, attribute.color.a + 0.001f), 0.0f, 1.0f);
         }
         else
         {

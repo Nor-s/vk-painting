@@ -42,6 +42,18 @@ namespace painting
         {
             return component_;
         }
+        const PopulationComponent &get_component() const
+        {
+            return component_;
+        }
+        const VkExtent3D get_extent3d() const
+        {
+            return {static_cast<uint32_t>(component_.extent.x), static_cast<uint32_t>(component_.extent.y), 1u};
+        }
+        const VkOffset3D get_offset3d() const
+        {
+            return {static_cast<int32_t>(component_.offset.x), static_cast<int32_t>(component_.offset.y), 0};
+        }
         BrushAttributes *get(int idx)
         {
             return population_[idx].get();

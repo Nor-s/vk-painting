@@ -62,9 +62,11 @@ namespace vkcpp
 
         static void cmdCopyImage(VkCommandBuffer cmd_buffer,
                                  bool supports_blit,
-                                 VkExtent3D extent,
-                                 VkImageSubresourceLayers src_subresource,
-                                 VkImageSubresourceLayers dst_subresource,
+                                 const VkExtent3D &extent,
+                                 const VkOffset3D &src_offset,
+                                 const VkOffset3D &dst_offset,
+                                 const VkImageSubresourceLayers &src_subresource,
+                                 const VkImageSubresourceLayers &dst_subresource,
                                  VkImage src_image,
                                  VkImage dst_image);
 
