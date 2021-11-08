@@ -55,12 +55,13 @@ set(APP_SRC_FILES
 add_executable(${CMAKE_PROJECT_NAME} ${APP_SRC_FILES} ${VKCPP_SRC_FILES})
 # 컴파일 옵션 설정
 target_compile_options(${CMAKE_PROJECT_NAME}  PUBLIC
-    -Wall    
-    -Werror
+   # -Wall    
+   # -Werror
     -O2
     -std=c++17
     )
 
+if(WIN32)
 # include
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC 
     ${CMAKE_SOURCE_DIR}/external
@@ -81,5 +82,30 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 -lgdi32
 -static
 )
+endif(WIN32)
 
+
+if(APPLE)
+# include
+target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC 
+    /opt/homebrew/include
+    /Users/soongunno/VulkanSDK/1.2.182.0/macOS/include
+    ${CMAKE_SOURCE_DIR}/external/
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src/vkcpp
+)
+# lib
+target_link_directories(${CMAKE_PROJECT_NAME} PUBLIC
+    /opt/homebrew/lib
+    /Users/soongunno/VulkanSDK/1.2.182.0/macOS/Lib
+)
+# l
+target_link_libraries(${CMAKE_PROJECT_NAME} 
+-lglfw
+-lvulkan
+ -ldl 
+ -lpthread
+)
+
+endif(APPLE)
 

@@ -98,7 +98,7 @@ namespace vkcpp
     {
         std::pair<int, int> size;
         glfwGetFramebufferSize(handle_, &size.first, &size.second);
-        set_size(size.first, size.second);
+        Window::set_size(size.first, size.second);
         return size;
     }
 
@@ -106,6 +106,8 @@ namespace vkcpp
     {
         MainWindow::set_size(width, height);
         MainWindow::set_title(title);
+        std::cout << "width: " << get_width() << " "
+                  << " height" << get_height() << "\n";
     }
 
     void MainWindow::set_size(uint32_t width, uint32_t height)

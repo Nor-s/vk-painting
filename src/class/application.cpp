@@ -134,8 +134,7 @@ namespace painting
         if (picture_ != nullptr)
         {
             float width = static_cast<float>(picture_->get_extent_3d().width) / 2.0f;
-            float height = static_cast<float>(picture_->get_extent_3d().height) / 2.0f;
-            picture_->init_transform({width - 10.0f, height, -90.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f});
+            picture_->init_transform({width, 0.0f, 0.0f});
             picture_->update_with_main_camera(image_index);
         }
 
@@ -330,15 +329,11 @@ namespace painting
                 auto extent = app->object_[0]->get_extent_3d();
                 float width = static_cast<float>(extent.width);
                 float height = static_cast<float>(extent.height);
-                vkcpp::MainWindow::getInstance()->set_window(width * 2, height, "painting");
-                vkcpp::MainCamera::getInstance()->update_view_to_look_at(
-                    {width, height / 2.0f, width},
-                    {0.0f, 0.0f, width + 200.0f},
-                    {0.0f, 1.0f, 0.0f});
-                app->object_.back()->init_transform({width / 2.0f + width, height / 2.0f, -90.0f});
+
+                app->object_.back()->init_transform({-width / 2.0f, 0.0f, 0.0f});
                 int size = app->swapchain_->get_image_views().size();
 
-                app->picture_ = std::make_unique<Picture>(app->device_.get(), app->command_pool_.get(), app->render_stage_.get(), extent, size, 20u, 6u, 3u);
+                app->picture_ = std::make_unique<Picture>(app->device_.get(), app->command_pool_.get(), app->render_stage_.get(), extent, size, 12u, 3u, 2u);
                 app->recreate_swapchain();
             }
             else

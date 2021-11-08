@@ -56,6 +56,9 @@ namespace vkcpp
         render_area_.offset.x = 0.0;
         render_area_.offset.y = 0.0;
         render_area_.extent = extent;
+#ifndef NDEBUG
+        std::cout << render_area_.extent.width << " " << render_area_.extent.height << "\n";
+#endif
     }
 
     void RenderStage::destroy()
