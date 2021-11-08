@@ -79,6 +79,8 @@ namespace vkcpp
         void add_ortho(glm::vec2 x_range, glm::vec2 y_range = {0.0f, 0.0f}, glm::vec2 z_range = {0.0f, 0.0f});
 
         void add_perspective(float fovy, float aspect = 0.0f, glm::vec2 z_range = {0, 0});
+
+        void forward_look_at(float forward = 0.1f);
     };
 
 } // namespace vkcpp

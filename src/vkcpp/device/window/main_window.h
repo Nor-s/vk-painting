@@ -39,6 +39,7 @@ namespace vkcpp
         void set_user_pointer(void *pointer);
         void set_framebuffer_size_callback(void (*fp)(GLFWwindow *window, int width, int height));
         void set_drop_callback(void (*fp)(GLFWwindow *window, int count, const char **paths));
+        void set_scroll_callback(void (*fp)(GLFWwindow *window, double xoffset, double yoffset));
     };
 } // namespace vkcpp
 #endif // #ifndef VKCPP_MAIN_WINDOW_H

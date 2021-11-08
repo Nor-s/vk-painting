@@ -27,6 +27,7 @@ namespace painting
         vkcpp::MainWindow::getInstance()->set_user_pointer(this);
         vkcpp::MainWindow::getInstance()->set_framebuffer_size_callback(framebufferResizeCallback);
         vkcpp::MainWindow::getInstance()->set_drop_callback(dropCallback);
+        vkcpp::MainWindow::getInstance()->set_scroll_callback(scrollCallback);
 
         instance_ = std::make_unique<vkcpp::Instance>();
         surface_ = std::make_unique<vkcpp::Surface>(instance_.get(), vkcpp::MainWindow::getInstance()->create_surface(*instance_));
@@ -303,6 +304,18 @@ namespace painting
  */
 namespace painting
 {
+    void PaintingApplication::scrollCallback(GLFWwindow *window, double xoffset, double yoffset)
+    {
+        if (yoffset > 0)
+        {
+            // scrolled up
+            vkcpp::MainCamera::getInstance()->forward_look_at(-2.0f);
+        }
+        else if (yoffset < 0)
+        {
+            vkcpp::MainCamera::getInstance()->forward_look_at(2.0f);
+        }
+    }
     void PaintingApplication::framebufferResizeCallback(GLFWwindow *window, int width, int height)
     {
         auto app = reinterpret_cast<PaintingApplication *>(glfwGetWindowUserPointer(window));

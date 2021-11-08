@@ -32,6 +32,7 @@ namespace painting
         const uint32_t MAX_FRAMES_IN_FLIGHT = 3;
 
     public:
+        static void scrollCallback(GLFWwindow *window, double xoffset, double yoffset);
         static void framebufferResizeCallback(GLFWwindow *window, int width, int height);
         static void dropCallback(GLFWwindow *window, int count, const char **paths);
 

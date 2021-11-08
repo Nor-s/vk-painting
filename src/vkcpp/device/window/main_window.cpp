@@ -136,5 +136,9 @@ namespace vkcpp
     {
         glfwSetDropCallback(handle_, fp);
     }
+    void MainWindow::set_scroll_callback(void (*fp)(GLFWwindow *window, double xoffset, double yoffset))
+    {
+        glfwSetScrollCallback(handle_, fp);
+    }
 
 } // namespace vkcpp

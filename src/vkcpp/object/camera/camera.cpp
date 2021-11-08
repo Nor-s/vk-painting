@@ -61,6 +61,11 @@ namespace vkcpp
         lookat_info_.camera_up = camera_up;
         view_ = lookat_info_.get_mat4();
     }
+    void Camera::forward_look_at(float forward)
+    {
+        lookat_info_.camera_pos += glm::normalize(lookat_info_.camera_front) * forward;
+        view_ = lookat_info_.get_mat4();
+    }
     void Camera::update_proj_to_ortho(glm::vec2 x_range, glm::vec2 y_range, glm::vec2 z_range)
     {
         ortho_info_.x_range = x_range;
